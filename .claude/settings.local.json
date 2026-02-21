@@ -15,7 +15,14 @@
       "Bash(pkill:*)",
       "Bash(cut:*)",
       "Bash(head:*)",
-      "Bash(curl:*)"
+      "Bash(curl:*)",
+      "Bash(gh auth:*)",
+      "Bash(echo gh not found:*)",
+      "Bash(winget install:*)",
+      "Bash(export PATH=\"$PATH:/c/Program Files/GitHub CLI\" && \"/c/Program Files/GitHub CLI/gh.exe\" --version 2>&1)",
+      "Bash(\"/c/Program Files/GitHub CLI/gh.exe\" auth:*)",
+      "Bash(git config:*)",
+      "Bash(echo \"\" | \"/c/Program Files/GitHub CLI/gh.exe\" auth login --web --git-protocol https 2>&1)"
     ]
   }
 }
