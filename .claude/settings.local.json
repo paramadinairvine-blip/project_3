@@ -1,0 +1,21 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(export PATH=\"/c/Program Files/PostgreSQL/17/bin:$PATH\" && psql -U postgres -c \"SELECT 1;\" 2>&1)",
+      "Bash(export PATH=\"/c/Program Files/PostgreSQL/17/bin:$PATH\" && PGPASSWORD=password psql -U postgres -c \"SELECT 1;\" 2>&1)",
+      "Bash(powershell.exe:*)",
+      "Bash(export PATH=\"/c/Program Files/PostgreSQL/17/bin:$PATH\" && pg_ctl restart -D \"/c/Program Files/PostgreSQL/17/data\" 2>&1)",
+      "Bash(export PATH=\"/c/Program Files/PostgreSQL/17/bin:$PATH\" && psql -U postgres -h localhost -c \"SELECT 1;\" 2>&1)",
+      "Bash(export PATH=\"/c/Program Files/PostgreSQL/17/bin:$PATH\" && psql -U postgres -h localhost -c \"ALTER USER postgres WITH PASSWORD 'password';\" 2>&1)",
+      "Bash(export PATH=\"/c/Program Files/PostgreSQL/17/bin:$PATH\" && PGPASSWORD=password psql -U postgres -h localhost -c \"SELECT 1;\" 2>&1)",
+      "Bash(export PATH=\"/c/Program Files/PostgreSQL/17/bin:$PATH\" && PGPASSWORD=password psql -U postgres -h localhost -c \"CREATE DATABASE project_3;\" 2>&1)",
+      "Bash(export PATH=\"/c/Program Files/PostgreSQL/17/bin:$PATH\" && PGPASSWORD=password psql -U postgres -h localhost -d project_3 -c \"\\\\dt\" 2>&1)",
+      "Bash(export PATH=\"/c/Program Files/PostgreSQL/17/bin:$PATH\" && PGPASSWORD=password psql -U postgres -h localhost -d project_3 -c \"\nSELECT 'users' as tabel, count\\(*\\) FROM users\nUNION ALL SELECT 'categories', count\\(*\\) FROM categories\nUNION ALL SELECT 'brands', count\\(*\\) FROM brands\nUNION ALL SELECT 'unit_of_measures', count\\(*\\) FROM unit_of_measures\nUNION ALL SELECT 'unit_lembaga', count\\(*\\) FROM unit_lembaga\nUNION ALL SELECT 'suppliers', count\\(*\\) FROM suppliers\nUNION ALL SELECT 'products', count\\(*\\) FROM products;\n\" 2>&1)",
+      "Bash(kill %1:*)",
+      "Bash(pkill:*)",
+      "Bash(cut:*)",
+      "Bash(head:*)",
+      "Bash(curl:*)"
+    ]
+  }
+}

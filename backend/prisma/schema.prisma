@@ -1,0 +1,523 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ==================== ENUMS ====================
+
+enum Role {
+  ADMIN
+  OPERATOR
+  VIEWER
+}
+
+enum TransactionType {
+  CASH
+  BON
+  ANGGARAN
+}
+
+enum TransactionStatus {
+  COMPLETED
+  PENDING
+  CANCELLED
+}
+
+enum MovementType {
+  IN
+  OUT
+  ADJUSTMENT
+  OPNAME
+}
+
+enum ReferenceType {
+  PO
+  TRANSACTION
+  OPNAME
+  MANUAL
+}
+
+enum POStatus {
+  DRAFT
+  SENT
+  RECEIVED
+  CANCELLED
+}
+
+enum ProjectStatus {
+  PLANNING
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+enum OpnameStatus {
+  DRAFT
+  IN_PROGRESS
+  COMPLETED
+}
+
+enum NotificationStatus {
+  PENDING
+  SENT
+  FAILED
+}
+
+// ==================== MODELS ====================
+
+model Brand {
+  id        String   @id @default(uuid())
+  name      String   @unique
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  products Product[]
+
+  @@map("brands")
+}
+
+model UnitOfMeasure {
+  id           String   @id @default(uuid())
+  name         String
+  abbreviation String   @unique
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  products     Product[]
+  productUnits ProductUnit[]
+
+  @@map("unit_of_measures")
+}
+
+model UnitLembaga {
+  id        String   @id @default(uuid())
+  name      String   @unique
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  transactions Transaction[]
+
+  @@map("unit_lembaga")
+}
+
+model User {
+  id        String   @id @default(uuid())
+  username  String   @unique
+  email     String   @unique
+  password  String
+  fullName  String
+  phone     String?
+  role      Role     @default(OPERATOR)
+  isActive  Boolean  @default(true)
+  avatar    String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations - items created/updated by this user
+  createdProducts         Product[]          @relation("ProductCreatedBy")
+  updatedProducts         Product[]          @relation("ProductUpdatedBy")
+  createdTransactions     Transaction[]      @relation("TransactionCreatedBy")
+  updatedTransactions     Transaction[]      @relation("TransactionUpdatedBy")
+  createdPurchaseOrders   PurchaseOrder[]    @relation("POCreatedBy")
+  updatedPurchaseOrders   PurchaseOrder[]    @relation("POUpdatedBy")
+  createdProjects         Project[]          @relation("ProjectCreatedBy")
+  updatedProjects         Project[]          @relation("ProjectUpdatedBy")
+  createdStockMovements   StockMovement[]    @relation("MovementCreatedBy")
+  createdStockOpnames     StockOpname[]      @relation("OpnameCreatedBy")
+  updatedStockOpnames     StockOpname[]      @relation("OpnameUpdatedBy")
+  createdSuppliers        Supplier[]         @relation("SupplierCreatedBy")
+  updatedSuppliers        Supplier[]         @relation("SupplierUpdatedBy")
+  createdCategories       Category[]         @relation("CategoryCreatedBy")
+  updatedCategories       Category[]         @relation("CategoryUpdatedBy")
+  auditLogs               AuditLog[]
+  notifications           Notification[]
+  refreshTokens           RefreshToken[]
+  priceChanges            PriceHistory[]     @relation("PriceChangedBy")
+
+  @@map("users")
+}
+
+model Category {
+  id          String   @id @default(uuid())
+  name        String
+  description String?
+  parentId    String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  createdBy   String?
+  updatedBy   String?
+
+  // Self-relation for sub-categories
+  parent   Category?  @relation("CategoryHierarchy", fields: [parentId], references: [id])
+  children Category[] @relation("CategoryHierarchy")
+
+  // Relations
+  creator  User?     @relation("CategoryCreatedBy", fields: [createdBy], references: [id])
+  updater  User?     @relation("CategoryUpdatedBy", fields: [updatedBy], references: [id])
+  products Product[]
+
+  @@map("categories")
+}
+
+model Supplier {
+  id          String   @id @default(uuid())
+  name        String
+  contactName String?
+  phone       String?
+  email       String?
+  address     String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  createdBy   String?
+  updatedBy   String?
+
+  // Relations
+  creator        User?           @relation("SupplierCreatedBy", fields: [createdBy], references: [id])
+  updater        User?           @relation("SupplierUpdatedBy", fields: [updatedBy], references: [id])
+  products       Product[]
+  purchaseOrders PurchaseOrder[]
+
+  @@map("suppliers")
+}
+
+model Product {
+  id           String   @id @default(uuid())
+  name         String
+  sku          String   @unique
+  barcode      String?  @unique
+  description  String?
+  categoryId   String?
+  supplierId   String?
+  brandId      String?
+  unitId       String?
+  unit         String   @default("pcs")
+  buyPrice     Decimal  @default(0) @db.Decimal(15, 2)
+  sellPrice    Decimal  @default(0) @db.Decimal(15, 2)
+  stock        Int      @default(0)
+  minStock     Int      @default(0)
+  maxStock     Int?
+  image        String?
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  createdBy    String?
+  updatedBy    String?
+
+  // Relations
+  category          Category?          @relation(fields: [categoryId], references: [id])
+  supplier          Supplier?          @relation(fields: [supplierId], references: [id])
+  brand             Brand?             @relation(fields: [brandId], references: [id])
+  unitOfMeasure     UnitOfMeasure?     @relation(fields: [unitId], references: [id])
+  creator           User?              @relation("ProductCreatedBy", fields: [createdBy], references: [id])
+  updater           User?              @relation("ProductUpdatedBy", fields: [updatedBy], references: [id])
+  transactionItems  TransactionItem[]
+  stockMovements    StockMovement[]
+  purchaseOrderItems PurchaseOrderItem[]
+  opnameItems       StockOpnameItem[]
+  productUnits      ProductUnit[]
+  variants          ProductVariant[]
+  priceHistories    PriceHistory[]
+  projectMaterials  ProjectMaterial[]
+
+  @@index([sku])
+  @@index([barcode])
+  @@map("products")
+}
+
+model ProductUnit {
+  id               String  @id @default(uuid())
+  productId        String
+  unitId           String
+  conversionFactor Decimal @db.Decimal(15, 4)
+  isBaseUnit       Boolean @default(false)
+
+  product Product       @relation(fields: [productId], references: [id], onDelete: Cascade)
+  unit    UnitOfMeasure @relation(fields: [unitId], references: [id])
+
+  @@unique([productId, unitId])
+  @@map("product_units")
+}
+
+model ProductVariant {
+  id        String   @id @default(uuid())
+  productId String
+  name      String
+  sku       String   @unique
+  barcode   String?  @unique
+  buyPrice  Decimal  @default(0) @db.Decimal(15, 2)
+  sellPrice Decimal  @default(0) @db.Decimal(15, 2)
+  stock     Int      @default(0)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([sku])
+  @@index([barcode])
+  @@map("product_variants")
+}
+
+model PriceHistory {
+  id        String   @id @default(uuid())
+  productId String
+  oldBuy    Decimal  @db.Decimal(15, 2)
+  newBuy    Decimal  @db.Decimal(15, 2)
+  oldSell   Decimal  @db.Decimal(15, 2)
+  newSell   Decimal  @db.Decimal(15, 2)
+  changedBy String?
+  createdAt DateTime @default(now())
+
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  user    User?   @relation("PriceChangedBy", fields: [changedBy], references: [id])
+
+  @@map("price_histories")
+}
+
+model Transaction {
+  id                String            @id @default(uuid())
+  transactionNumber String            @unique
+  type              TransactionType
+  status            TransactionStatus @default(PENDING)
+  customerName      String?
+  customerPhone     String?
+  notes             String?
+  subtotal          Decimal           @default(0) @db.Decimal(15, 2)
+  discount          Decimal           @default(0) @db.Decimal(15, 2)
+  tax               Decimal           @default(0) @db.Decimal(15, 2)
+  total             Decimal           @default(0) @db.Decimal(15, 2)
+  paidAmount        Decimal           @default(0) @db.Decimal(15, 2)
+  changeAmount      Decimal           @default(0) @db.Decimal(15, 2)
+  dueDate           DateTime?
+  paidAt            DateTime?
+  projectId         String?
+  unitLembagaId     String?
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+  createdBy         String?
+  updatedBy         String?
+
+  // Relations
+  creator     User?             @relation("TransactionCreatedBy", fields: [createdBy], references: [id])
+  updater     User?             @relation("TransactionUpdatedBy", fields: [updatedBy], references: [id])
+  project     Project?          @relation(fields: [projectId], references: [id])
+  unitLembaga UnitLembaga?      @relation(fields: [unitLembagaId], references: [id])
+  items       TransactionItem[]
+
+  @@index([transactionNumber])
+  @@map("transactions")
+}
+
+model TransactionItem {
+  id            String  @id @default(uuid())
+  transactionId String
+  productId     String
+  quantity      Int
+  price         Decimal @db.Decimal(15, 2)
+  discount      Decimal @default(0) @db.Decimal(15, 2)
+  subtotal      Decimal @db.Decimal(15, 2)
+
+  // Relations
+  transaction Transaction @relation(fields: [transactionId], references: [id], onDelete: Cascade)
+  product     Product     @relation(fields: [productId], references: [id])
+
+  @@map("transaction_items")
+}
+
+model StockMovement {
+  id            String        @id @default(uuid())
+  productId     String
+  type          MovementType
+  quantity      Int
+  previousStock Int
+  newStock      Int
+  referenceType ReferenceType?
+  referenceId   String?
+  notes         String?
+  createdAt     DateTime      @default(now())
+  createdBy     String?
+
+  // Relations
+  product Product @relation(fields: [productId], references: [id])
+  creator User?   @relation("MovementCreatedBy", fields: [createdBy], references: [id])
+
+  @@map("stock_movements")
+}
+
+model PurchaseOrder {
+  id         String   @id @default(uuid())
+  poNumber   String   @unique
+  supplierId String
+  status     POStatus @default(DRAFT)
+  notes      String?
+  totalAmount Decimal  @default(0) @db.Decimal(15, 2)
+  orderDate  DateTime @default(now())
+  receivedAt DateTime?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  createdBy  String?
+  updatedBy  String?
+
+  // Relations
+  supplier Supplier            @relation(fields: [supplierId], references: [id])
+  creator  User?               @relation("POCreatedBy", fields: [createdBy], references: [id])
+  updater  User?               @relation("POUpdatedBy", fields: [updatedBy], references: [id])
+  items    PurchaseOrderItem[]
+
+  @@index([poNumber])
+  @@map("purchase_orders")
+}
+
+model PurchaseOrderItem {
+  id              String  @id @default(uuid())
+  purchaseOrderId String
+  productId       String
+  quantity        Int
+  receivedQty     Int     @default(0)
+  price           Decimal @db.Decimal(15, 2)
+  subtotal        Decimal @db.Decimal(15, 2)
+
+  // Relations
+  purchaseOrder PurchaseOrder @relation(fields: [purchaseOrderId], references: [id], onDelete: Cascade)
+  product       Product       @relation(fields: [productId], references: [id])
+
+  @@map("purchase_order_items")
+}
+
+model Project {
+  id          String        @id @default(uuid())
+  name        String
+  description String?
+  status      ProjectStatus @default(PLANNING)
+  budget      Decimal       @default(0) @db.Decimal(15, 2)
+  spent       Decimal       @default(0) @db.Decimal(15, 2)
+  startDate   DateTime?
+  endDate     DateTime?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  createdBy   String?
+  updatedBy   String?
+
+  isActive    Boolean       @default(true)
+
+  // Relations
+  creator      User?              @relation("ProjectCreatedBy", fields: [createdBy], references: [id])
+  updater      User?              @relation("ProjectUpdatedBy", fields: [updatedBy], references: [id])
+  transactions Transaction[]
+  materials    ProjectMaterial[]
+
+  @@map("projects")
+}
+
+model ProjectMaterial {
+  id            String   @id @default(uuid())
+  projectId     String
+  productId     String
+  estimatedQty  Int      @default(0)
+  usedQty       Int      @default(0)
+  unitPrice     Decimal  @default(0) @db.Decimal(15, 2)
+  notes         String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id])
+
+  @@unique([projectId, productId])
+  @@map("project_materials")
+}
+
+model StockOpname {
+  id           String      @id @default(uuid())
+  opnameNumber String      @unique
+  status       OpnameStatus @default(DRAFT)
+  notes        String?
+  opnameDate   DateTime    @default(now())
+  completedAt  DateTime?
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+  createdBy    String?
+  updatedBy    String?
+
+  // Relations
+  creator User?             @relation("OpnameCreatedBy", fields: [createdBy], references: [id])
+  updater User?             @relation("OpnameUpdatedBy", fields: [updatedBy], references: [id])
+  items   StockOpnameItem[]
+
+  @@index([opnameNumber])
+  @@map("stock_opnames")
+}
+
+model StockOpnameItem {
+  id           String @id @default(uuid())
+  stockOpnameId String
+  productId    String
+  systemStock  Int
+  actualStock  Int
+  difference   Int
+  notes        String?
+
+  // Relations
+  stockOpname StockOpname @relation(fields: [stockOpnameId], references: [id], onDelete: Cascade)
+  product     Product     @relation(fields: [productId], references: [id])
+
+  @@map("stock_opname_items")
+}
+
+model AuditLog {
+  id         String   @id @default(uuid())
+  userId     String?
+  action     String
+  entity     String
+  entityId   String?
+  oldData    Json?
+  newData    Json?
+  ipAddress  String?
+  userAgent  String?
+  createdAt  DateTime @default(now())
+
+  // Relations
+  user User? @relation(fields: [userId], references: [id])
+
+  @@map("audit_logs")
+}
+
+model RefreshToken {
+  id        String   @id @default(uuid())
+  token     String   @unique
+  userId    String
+  expiresAt DateTime
+  revoked   Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([token])
+  @@map("refresh_tokens")
+}
+
+model Notification {
+  id        String             @id @default(uuid())
+  userId    String
+  title     String
+  message   String
+  type      String
+  status    NotificationStatus @default(PENDING)
+  sentAt    DateTime?
+  readAt    DateTime?
+  createdAt DateTime           @default(now())
+
+  // Relations
+  user User @relation(fields: [userId], references: [id])
+
+  @@map("notifications")
+}
