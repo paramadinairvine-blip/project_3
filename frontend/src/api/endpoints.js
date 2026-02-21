@@ -27,6 +27,15 @@ export const categoryAPI = {
   remove: (id) => api.delete(`/categories/${id}`),
 };
 
+// ==================== Brand ====================
+export const brandAPI = {
+  getAll: (params) => api.get('/brands', { params }),
+  getById: (id) => api.get(`/brands/${id}`),
+  create: (data) => api.post('/brands', data),
+  update: (id, data) => api.put(`/brands/${id}`, data),
+  remove: (id) => api.delete(`/brands/${id}`),
+};
+
 // ==================== Product ====================
 export const productAPI = {
   getAll: (params) => api.get('/products', { params }),

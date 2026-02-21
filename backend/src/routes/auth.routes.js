@@ -2,11 +2,11 @@ const express = require('express');
 const router = express.Router();
 const authController = require('../controllers/auth.controller');
 const { authenticate } = require('../middlewares/auth');
-const { validateLogin } = require('../middlewares/validator');
+const { validateLogin, validateRefreshToken } = require('../middlewares/validator');
 
 // Public routes
 router.post('/login', validateLogin, authController.login);
-router.post('/refresh', authController.refresh);
+router.post('/refresh', validateRefreshToken, authController.refresh);
 
 // Protected routes
 router.post('/logout', authenticate, authController.logout);

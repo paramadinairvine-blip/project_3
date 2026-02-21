@@ -30,6 +30,12 @@ const validateLogin = [
   handleValidationErrors,
 ];
 
+const validateRefreshToken = [
+  body('refreshToken')
+    .notEmpty().withMessage('Refresh token wajib diisi'),
+  handleValidationErrors,
+];
+
 // ==================== User ====================
 
 const validateUser = [
@@ -45,6 +51,37 @@ const validateUser = [
   body('role')
     .notEmpty().withMessage('Role wajib diisi')
     .isIn(Object.values(ROLES)).withMessage(`Role harus salah satu dari: ${Object.values(ROLES).join(', ')}`),
+  handleValidationErrors,
+];
+
+const validateUserUpdate = [
+  body('fullName')
+    .optional()
+    .isLength({ min: 2 }).withMessage('Nama lengkap minimal 2 karakter'),
+  body('email')
+    .optional()
+    .isEmail().withMessage('Format email tidak valid'),
+  body('role')
+    .optional()
+    .isIn(Object.values(ROLES)).withMessage(`Role harus salah satu dari: ${Object.values(ROLES).join(', ')}`),
+  handleValidationErrors,
+];
+
+const validateChangePassword = [
+  body('currentPassword')
+    .notEmpty().withMessage('Password lama wajib diisi'),
+  body('newPassword')
+    .notEmpty().withMessage('Password baru wajib diisi')
+    .isLength({ min: 6 }).withMessage('Password baru minimal 6 karakter'),
+  handleValidationErrors,
+];
+
+// ==================== Category ====================
+
+const validateCategory = [
+  body('name')
+    .notEmpty().withMessage('Nama kategori wajib diisi')
+    .isLength({ min: 2 }).withMessage('Nama kategori minimal 2 karakter'),
   handleValidationErrors,
 ];
 
@@ -138,13 +175,32 @@ const validateProject = [
   handleValidationErrors,
 ];
 
+// ==================== Stock Opname ====================
+
+const validateStockOpname = [
+  body('items')
+    .notEmpty().withMessage('Item opname wajib diisi')
+    .isArray({ min: 1 }).withMessage('Item opname harus berupa array minimal 1 item'),
+  body('items.*.productId')
+    .notEmpty().withMessage('Product ID wajib diisi pada setiap item'),
+  body('items.*.actualStock')
+    .notEmpty().withMessage('Stok aktual wajib diisi pada setiap item')
+    .isInt({ min: 0 }).withMessage('Stok aktual harus berupa angka positif'),
+  handleValidationErrors,
+];
+
 module.exports = {
   handleValidationErrors,
   validateLogin,
+  validateRefreshToken,
   validateUser,
+  validateUserUpdate,
+  validateChangePassword,
+  validateCategory,
   validateProduct,
   validateTransaction,
   validatePurchaseOrder,
   validateSupplier,
   validateProject,
+  validateStockOpname,
 };

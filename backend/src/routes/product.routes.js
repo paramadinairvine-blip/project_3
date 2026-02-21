@@ -16,7 +16,7 @@ router.get('/:id', productController.getById);
 
 // ADMIN & OPERATOR can create/update/upload
 router.post('/', authorize(ROLES.ADMIN, ROLES.OPERATOR), validateProduct, productController.create);
-router.put('/:id', authorize(ROLES.ADMIN, ROLES.OPERATOR), productController.update);
+router.put('/:id', authorize(ROLES.ADMIN, ROLES.OPERATOR), validateProduct, productController.update);
 router.post('/:id/generate-barcode', authorize(ROLES.ADMIN, ROLES.OPERATOR), productController.generateBarcode);
 router.post('/upload-image', authorize(ROLES.ADMIN, ROLES.OPERATOR), productController.upload.single('image'), productController.uploadImage);
 

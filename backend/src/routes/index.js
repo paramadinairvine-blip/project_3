@@ -14,6 +14,7 @@ const stockRoutes = require('./stock.routes');
 const stockOpnameRoutes = require('./stockOpname.routes');
 const projectRoutes = require('./project.routes');
 const reportRoutes = require('./report.routes');
+const brandRoutes = require('./brand.routes');
 const notificationRoutes = require('./notification.routes');
 
 router.use('/auth', authRoutes);
@@ -29,6 +30,7 @@ router.use('/stock', stockRoutes);
 router.use('/stock-opname', stockOpnameRoutes);
 router.use('/projects', projectRoutes);
 router.use('/reports', reportRoutes);
+router.use('/brands', brandRoutes);
 router.use('/notifications', notificationRoutes);
 
 module.exports = router;
