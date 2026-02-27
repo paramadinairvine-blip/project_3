@@ -195,16 +195,16 @@ export default function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose
       {/* Header — Logo + Version */}
       <div className="flex items-center justify-between px-4 py-4 border-b border-gray-700">
         {!collapsed ? (
-          <div className="flex items-center gap-3 min-w-0">
+          <div className="flex items-center gap-2.5 min-w-0">
             <img src="/logo-white.svg" alt="Logo" className="w-10 h-10 flex-shrink-0 opacity-90" />
             <div className="min-w-0">
-              <h1 className="text-white font-bold text-[13px] leading-tight tracking-wide">
+              <h1 className="text-white font-bold text-sm leading-tight tracking-wide">
                 TOKO MATERIAL
               </h1>
-              <p className="text-gray-300 text-[11px] leading-tight tracking-wide">
+              <p className="text-gray-300 text-xs leading-tight tracking-wide">
                 PESANTREN
               </p>
-              <p className="text-gray-400 text-[10px] leading-tight tracking-wide">
+              <p className="text-gray-400 text-[11px] leading-tight tracking-wide">
                 DARUNNAJAH 2
               </p>
               <p className="text-gray-500 text-[9px] mt-0.5">V.1.0.0</p>
@@ -283,17 +283,17 @@ export default function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose
         ))}
       </nav>
 
-      {/* Technical Support */}
+      {/* TECHNICAL SUPPORT */}
       <div className="border-t border-gray-700 p-2">
         <a
           href="https://wa.me/6285156526862"
           target="_blank"
           rel="noopener noreferrer"
           className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-gray-400 hover:bg-gray-800 hover:text-green-400 transition-colors ${collapsed ? 'justify-center' : ''}`}
-          title="Technical Support"
+          title="TECHNICAL SUPPORT"
         >
           <HiSupport className="w-5 h-5 flex-shrink-0" />
-          {!collapsed && <span>Technical Support</span>}
+          {!collapsed && <span>TECHNICAL SUPPORT</span>}
         </a>
       </div>
     </div>
