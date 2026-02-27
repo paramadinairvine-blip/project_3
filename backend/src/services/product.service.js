@@ -93,17 +93,29 @@ const getById = async (id) => {
 const create = async (data, userId) => {
   const { variants, units, ...productData } = data;
 
+  // Look up category code for SKU/barcode generation
+  let categoryCode = 'GEN';
+  if (productData.categoryId) {
+    const category = await prisma.category.findUnique({
+      where: { id: productData.categoryId },
+    });
+    if (category) {
+      categoryCode = category.name.substring(0, 3);
+    }
+  }
+
+  // Auto-generate SKU if not provided
+  if (!productData.sku) {
+    const nameCode = productData.name
+      .toUpperCase()
+      .replace(/[^A-Z0-9]/g, '')
+      .slice(0, 3) || 'PRD';
+    const random = String(Math.floor(10000 + Math.random() * 90000));
+    productData.sku = `SKU-${nameCode}-${random}`;
+  }
+
   // Auto-generate barcode if not provided
   if (!productData.barcode) {
-    let categoryCode = 'GEN';
-    if (productData.categoryId) {
-      const category = await prisma.category.findUnique({
-        where: { id: productData.categoryId },
-      });
-      if (category) {
-        categoryCode = category.name.substring(0, 3);
-      }
-    }
     productData.barcode = generateBarcode(categoryCode);
   }
 
