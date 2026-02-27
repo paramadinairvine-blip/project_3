@@ -1,92 +1,69 @@
-import { NavLink, useLocation } from 'react-router-dom';
-import { useState } from 'react';
+import { NavLink, useLocation, useNavigate } from 'react-router-dom';
+import { useState, useRef, useEffect } from 'react';
 import {
   HiHome,
   HiCube,
-  HiTruck,
-  HiShoppingCart,
   HiArchive,
-  HiOfficeBuilding,
   HiChartBar,
-  HiUsers,
-  HiClipboardList,
+  HiCurrencyDollar,
   HiCog,
   HiChevronDown,
-  HiChevronRight,
   HiX,
+  HiLogout,
+  HiUser,
 } from 'react-icons/hi';
 import useAuth from '../hooks/useAuth';
 import { ROLES, ROLE_LABELS } from '../utils/constants';
 
 const menuItems = [
   {
-    label: 'Dashboard',
+    label: 'DASHBOARD',
     path: '/',
     icon: HiHome,
   },
   {
-    label: 'Produk',
+    label: 'PRODUK',
     icon: HiCube,
     children: [
-      { label: 'Daftar Produk', path: '/produk' },
-      { label: 'Kategori', path: '/kategori' },
+      { label: 'Kategori', code: 'KT', path: '/kategori' },
+      { label: 'Master Produk', code: 'MP', path: '/produk' },
     ],
   },
   {
-    label: 'Supplier',
-    icon: HiTruck,
-    children: [
-      { label: 'Daftar Supplier', path: '/supplier' },
-      { label: 'Purchase Order', path: '/purchase-order' },
-    ],
-  },
-  {
-    label: 'Transaksi',
-    path: '/transaksi',
-    icon: HiShoppingCart,
-  },
-  {
-    label: 'Stok',
+    label: 'INVENTORI',
     icon: HiArchive,
     children: [
-      { label: 'Overview Stok', path: '/stok' },
-      { label: 'Opname Stok', path: '/stok/opname' },
+      { label: 'Monitoring Stock', code: 'MS', path: '/stok' },
+      { label: 'Purchase Order', code: 'PO', path: '/purchase-order' },
+      { label: 'Stock Opname', code: 'SO', path: '/stok/opname', roles: [ROLES.ADMIN, ROLES.OPERATOR] },
+      { label: 'Supplier', code: 'SP', path: '/supplier' },
     ],
   },
   {
-    label: 'Proyek',
-    icon: HiOfficeBuilding,
-    children: [
-      { label: 'Daftar Proyek', path: '/proyek' },
-    ],
-  },
-  {
-    label: 'Laporan',
+    label: 'LAPORAN',
     icon: HiChartBar,
     children: [
-      { label: 'Stok', path: '/laporan/stok' },
-      { label: 'Keuangan', path: '/laporan/keuangan', roles: [ROLES.ADMIN, ROLES.VIEWER] },
-      { label: 'Tren', path: '/laporan/tren', roles: [ROLES.ADMIN, ROLES.VIEWER] },
+      { label: 'Laporan Stok', code: 'LS', path: '/laporan/stok' },
+      { label: 'Laporan Keuangan', code: 'LK', path: '/laporan/keuangan', roles: [ROLES.ADMIN, ROLES.VIEWER] },
+      { label: 'Laporan Tren', code: 'LT', path: '/laporan/tren', roles: [ROLES.ADMIN, ROLES.VIEWER] },
     ],
   },
   {
-    label: 'Pengguna',
-    path: '/pengguna',
-    icon: HiUsers,
-    roles: [ROLES.ADMIN],
+    label: 'KEUANGAN',
+    icon: HiCurrencyDollar,
+    children: [
+      { label: 'Transaksi', code: 'TR', path: '/transaksi' },
+      { label: 'Proyek', code: 'PY', path: '/proyek' },
+    ],
   },
   {
-    label: 'Audit Log',
-    path: '/audit-log',
-    icon: HiClipboardList,
-    roles: [ROLES.ADMIN],
-  },
-  {
-    label: 'Setting',
+    label: 'SETTING',
     icon: HiCog,
     roles: [ROLES.ADMIN, ROLES.OPERATOR],
     children: [
-      { label: 'Satuan', path: '/setting/satuan' },
+      { label: 'Satuan', code: 'ST', path: '/setting/satuan', roles: [ROLES.ADMIN, ROLES.OPERATOR] },
+      { label: 'Pengguna', code: 'PG', path: '/pengguna', roles: [ROLES.ADMIN] },
+      { label: 'Audit Log', code: 'AL', path: '/audit-log', roles: [ROLES.ADMIN] },
     ],
   },
 ];
@@ -100,8 +77,9 @@ function MenuItem({ item, collapsed, closeMobile }) {
 
   const hasChildren = item.children && item.children.length > 0;
 
-  // Check if any child is active
-  const isChildActive = hasChildren && item.children.some((c) => location.pathname === c.path);
+  const isChildActive = hasChildren && item.children.some((c) =>
+    c.path === '/' ? location.pathname === '/' : location.pathname.startsWith(c.path)
+  );
   const isActive = item.path === '/'
     ? location.pathname === '/'
     : item.path && location.pathname.startsWith(item.path);
@@ -109,7 +87,6 @@ function MenuItem({ item, collapsed, closeMobile }) {
   const Icon = item.icon;
 
   if (hasChildren) {
-    // Filter children by role
     const visibleChildren = item.children.filter(
       (child) => !child.roles || checkPermission(child.roles)
     );
@@ -121,40 +98,46 @@ function MenuItem({ item, collapsed, closeMobile }) {
       <div>
         <button
           onClick={() => setOpen(!isOpen)}
-          className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+          className={`w-full flex items-center justify-between px-4 py-3 text-[13px] font-semibold tracking-wide transition-colors ${
             isChildActive
               ? 'bg-blue-600/20 text-blue-400'
               : 'text-gray-400 hover:bg-gray-800 hover:text-gray-200'
           }`}
         >
-          <Icon className="w-5 h-5 flex-shrink-0" />
+          <div className="flex items-center gap-3">
+            <Icon className="w-5 h-5 flex-shrink-0" />
+            {!collapsed && <span>{item.label}</span>}
+          </div>
           {!collapsed && (
-            <>
-              <span className="flex-1 text-left">{item.label}</span>
-              {isOpen ? (
-                <HiChevronDown className="w-4 h-4" />
-              ) : (
-                <HiChevronRight className="w-4 h-4" />
-              )}
-            </>
+            <HiChevronDown
+              className={`w-4 h-4 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}
+            />
           )}
         </button>
         {!collapsed && isOpen && (
-          <div className="ml-8 mt-1 space-y-1">
+          <div className="bg-gray-950/50">
             {visibleChildren.map((child) => (
               <NavLink
                 key={child.path}
                 to={child.path}
                 onClick={closeMobile}
                 className={({ isActive: active }) =>
-                  `block px-3 py-2 rounded-lg text-sm transition-colors ${
+                  `flex items-center gap-3 pl-8 pr-4 py-2.5 text-sm transition-colors ${
                     active
                       ? 'bg-blue-600 text-white'
                       : 'text-gray-400 hover:bg-gray-800 hover:text-gray-200'
                   }`
                 }
               >
-                {child.label}
+                {/* 2-letter abbreviation code badge */}
+                <span className={`w-7 h-7 rounded-md flex items-center justify-center text-[11px] font-bold flex-shrink-0 ${
+                  location.pathname === child.path || (child.path !== '/' && location.pathname.startsWith(child.path))
+                    ? 'bg-white/20 text-white'
+                    : 'bg-gray-700 text-gray-300'
+                }`}>
+                  {child.code}
+                </span>
+                <span>{child.label}</span>
               </NavLink>
             ))}
           </div>
@@ -169,7 +152,7 @@ function MenuItem({ item, collapsed, closeMobile }) {
       end={item.path === '/'}
       onClick={closeMobile}
       className={({ isActive: active }) =>
-        `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+        `flex items-center gap-3 px-4 py-3 text-[13px] font-semibold tracking-wide transition-colors ${
           active
             ? 'bg-blue-600 text-white'
             : 'text-gray-400 hover:bg-gray-800 hover:text-gray-200'
@@ -183,26 +166,46 @@ function MenuItem({ item, collapsed, closeMobile }) {
 }
 
 export default function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose }) {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
+  const [profileOpen, setProfileOpen] = useState(false);
+  const profileRef = useRef(null);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (profileRef.current && !profileRef.current.contains(e.target)) {
+        setProfileOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const handleLogout = async () => {
+    setProfileOpen(false);
+    onMobileClose?.();
+    await logout();
+    navigate('/login');
+  };
 
   const sidebarContent = (
     <div className="flex flex-col h-full">
-      {/* Header */}
+      {/* Header — Logo + Version */}
       <div className="flex items-center justify-between px-4 py-5 border-b border-gray-700">
-        {!collapsed && (
+        {!collapsed ? (
           <div className="min-w-0">
-            <h1 className="text-white font-bold text-lg leading-tight truncate">
-              Toko Material
+            <h1 className="text-white font-bold text-base leading-tight tracking-wide">
+              TOKO MATERIAL
             </h1>
-            <p className="text-gray-400 text-xs mt-0.5">Pesantren</p>
+            <p className="text-gray-400 text-xs mt-0.5 tracking-wider">PESANTREN</p>
+            <p className="text-gray-500 text-[10px] mt-1">V.1.0.0</p>
           </div>
-        )}
-        {collapsed && (
+        ) : (
           <div className="mx-auto">
             <span className="text-white font-bold text-xl">TM</span>
           </div>
         )}
-        {/* Mobile close button */}
         <button
           onClick={onMobileClose}
           className="lg:hidden text-gray-400 hover:text-white p-1"
@@ -211,8 +214,56 @@ export default function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose
         </button>
       </div>
 
+      {/* User Profile — Click to toggle dropdown */}
+      {user && (
+        <div className="border-b border-gray-700 relative" ref={profileRef}>
+          <button
+            onClick={() => setProfileOpen(!profileOpen)}
+            className="w-full px-4 py-4 hover:bg-gray-800 transition-colors cursor-pointer"
+          >
+            {!collapsed ? (
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center text-white text-sm font-bold flex-shrink-0">
+                  {user.fullName?.charAt(0)?.toUpperCase() || 'U'}
+                </div>
+                <div className="min-w-0 flex-1 text-left">
+                  <p className="text-white text-sm font-semibold truncate">{user.fullName}</p>
+                  <p className="text-gray-400 text-xs mt-0.5">
+                    {ROLE_LABELS[user.role] || user.role}
+                  </p>
+                </div>
+                <HiChevronDown
+                  className={`w-4 h-4 text-gray-400 transition-transform duration-200 flex-shrink-0 ${profileOpen ? 'rotate-180' : ''}`}
+                />
+              </div>
+            ) : (
+              <div className="flex justify-center">
+                <div className="w-9 h-9 rounded-full bg-blue-600 flex items-center justify-center text-white text-xs font-bold">
+                  {user.fullName?.charAt(0)?.toUpperCase()}
+                </div>
+              </div>
+            )}
+          </button>
+
+          {/* Profile Dropdown Menu */}
+          {profileOpen && !collapsed && (
+            <div className="bg-gray-950/60">
+              <button
+                onClick={handleLogout}
+                className="w-full flex items-center gap-3 pl-8 pr-4 py-2.5 text-sm text-gray-400 hover:bg-red-600/20 hover:text-red-400 transition-colors"
+              >
+                <span className="w-7 h-7 rounded-md flex items-center justify-center text-[11px] font-bold bg-gray-700 text-gray-300">
+                  <HiLogout className="w-3.5 h-3.5" />
+                </span>
+                <span>Logout</span>
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Navigation */}
-      <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
+      <nav className="flex-1 py-2 overflow-y-auto">
         {menuItems.map((item) => (
           <MenuItem
             key={item.label}
@@ -222,26 +273,6 @@ export default function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose
           />
         ))}
       </nav>
-
-      {/* User info */}
-      {user && (
-        <div className="px-4 py-4 border-t border-gray-700">
-          {!collapsed ? (
-            <div className="min-w-0">
-              <p className="text-white text-sm font-medium truncate">{user.fullName}</p>
-              <p className="text-gray-400 text-xs mt-0.5">
-                {ROLE_LABELS[user.role] || user.role}
-              </p>
-            </div>
-          ) : (
-            <div className="flex justify-center">
-              <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white text-xs font-bold">
-                {user.fullName?.charAt(0)?.toUpperCase()}
-              </div>
-            </div>
-          )}
-        </div>
-      )}
     </div>
   );
 

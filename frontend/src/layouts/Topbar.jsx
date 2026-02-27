@@ -1,19 +1,11 @@
-import { useState, useRef, useEffect } from 'react';
-import { useLocation, useNavigate, Link } from 'react-router-dom';
+import { useLocation, Link } from 'react-router-dom';
 import {
   HiMenuAlt2,
   HiChevronLeft,
   HiChevronRight,
   HiBell,
-  HiUser,
-  HiKey,
-  HiLogout,
-  HiChevronDown,
 } from 'react-icons/hi';
-import useAuth from '../hooks/useAuth';
-import { ROLE_LABELS } from '../utils/constants';
 
-// Breadcrumb label map
 const breadcrumbMap = {
   '': 'Dashboard',
   produk: 'Produk',
@@ -31,6 +23,8 @@ const breadcrumbMap = {
   tren: 'Tren',
   pengguna: 'Pengguna',
   'audit-log': 'Audit Log',
+  setting: 'Setting',
+  satuan: 'Satuan',
 };
 
 function Breadcrumbs() {
@@ -69,28 +63,6 @@ function Breadcrumbs() {
 }
 
 export default function Topbar({ collapsed, onToggle, onMobileOpen }) {
-  const { user, logout } = useAuth();
-  const navigate = useNavigate();
-  const [dropdownOpen, setDropdownOpen] = useState(false);
-  const dropdownRef = useRef(null);
-
-  // Close dropdown on click outside
-  useEffect(() => {
-    const handler = (e) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
-        setDropdownOpen(false);
-      }
-    };
-    document.addEventListener('mousedown', handler);
-    return () => document.removeEventListener('mousedown', handler);
-  }, []);
-
-  const handleLogout = async () => {
-    setDropdownOpen(false);
-    await logout();
-    navigate('/login');
-  };
-
   return (
     <header className="sticky top-0 z-20 bg-white border-b border-gray-200">
       <div className="flex items-center justify-between h-16 px-4 lg:px-6">
@@ -128,67 +100,6 @@ export default function Topbar({ collapsed, onToggle, onMobileOpen }) {
           <button className="relative text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg p-2 transition-colors">
             <HiBell className="w-5 h-5" />
           </button>
-
-          {/* User dropdown */}
-          <div className="relative" ref={dropdownRef}>
-            <button
-              onClick={() => setDropdownOpen(!dropdownOpen)}
-              className="flex items-center gap-2 hover:bg-gray-100 rounded-lg px-2.5 py-1.5 transition-colors"
-            >
-              <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white text-sm font-bold">
-                {user?.fullName?.charAt(0)?.toUpperCase() || 'U'}
-              </div>
-              <div className="hidden md:block text-left">
-                <p className="text-sm font-medium text-gray-700 leading-tight">
-                  {user?.fullName || 'User'}
-                </p>
-                <p className="text-xs text-gray-500 leading-tight">
-                  {ROLE_LABELS[user?.role] || user?.role}
-                </p>
-              </div>
-              <HiChevronDown className="hidden md:block w-4 h-4 text-gray-400" />
-            </button>
-
-            {/* Dropdown menu */}
-            {dropdownOpen && (
-              <div className="absolute right-0 mt-2 w-56 bg-white border border-gray-200 rounded-xl shadow-lg py-1.5 z-50">
-                {/* User info (mobile) */}
-                <div className="md:hidden px-4 py-2.5 border-b border-gray-100">
-                  <p className="text-sm font-medium text-gray-700">{user?.fullName}</p>
-                  <p className="text-xs text-gray-500">{user?.email}</p>
-                </div>
-
-                <button
-                  onClick={() => {
-                    setDropdownOpen(false);
-                    navigate('/profil');
-                  }}
-                  className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
-                >
-                  <HiUser className="w-4 h-4 text-gray-400" />
-                  Profil Saya
-                </button>
-                <button
-                  onClick={() => {
-                    setDropdownOpen(false);
-                    navigate('/ganti-password');
-                  }}
-                  className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
-                >
-                  <HiKey className="w-4 h-4 text-gray-400" />
-                  Ganti Password
-                </button>
-                <div className="border-t border-gray-100 my-1" />
-                <button
-                  onClick={handleLogout}
-                  className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors"
-                >
-                  <HiLogout className="w-4 h-4" />
-                  Keluar
-                </button>
-              </div>
-            )}
-          </div>
         </div>
       </div>
     </header>
