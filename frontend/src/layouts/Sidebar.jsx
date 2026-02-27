@@ -11,6 +11,7 @@ import {
   HiX,
   HiLogout,
   HiUser,
+  HiSupport,
 } from 'react-icons/hi';
 import useAuth from '../hooks/useAuth';
 import { ROLES, ROLE_LABELS } from '../utils/constants';
@@ -273,6 +274,20 @@ export default function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose
           />
         ))}
       </nav>
+
+      {/* Technical Support */}
+      <div className="border-t border-gray-700 p-2">
+        <a
+          href="https://wa.me/6285156526862"
+          target="_blank"
+          rel="noopener noreferrer"
+          className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-gray-400 hover:bg-gray-800 hover:text-green-400 transition-colors ${collapsed ? 'justify-center' : ''}`}
+          title="Technical Support"
+        >
+          <HiSupport className="w-5 h-5 flex-shrink-0" />
+          {!collapsed && <span>Technical Support</span>}
+        </a>
+      </div>
     </div>
   );
 
