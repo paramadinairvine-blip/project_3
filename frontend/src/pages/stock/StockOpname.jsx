@@ -297,7 +297,6 @@ function ActiveOpnameTab({ opnameId, onBack }) {
                     <td className="px-4 py-3 text-gray-500">{idx + 1}</td>
                     <td className="px-4 py-3">
                       <p className="font-medium text-gray-900">{item.product?.name || '-'}</p>
-                      <p className="text-xs text-gray-500 font-mono">{item.product?.sku}</p>
                     </td>
                     <td className="text-center px-4 py-3 font-medium text-gray-700">
                       {item.systemStock}

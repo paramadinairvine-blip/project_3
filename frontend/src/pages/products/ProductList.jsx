@@ -68,10 +68,7 @@ export default function ProductList() {
       header: 'Nama Produk',
       sortable: true,
       render: (_, row) => (
-        <div>
-          <p className="font-medium text-gray-900">{row.name}</p>
-          <p className="text-xs text-gray-500">{row.sku}</p>
-        </div>
+        <p className="font-medium text-gray-900">{row.name}</p>
       ),
     },
     {

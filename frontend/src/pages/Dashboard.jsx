@@ -209,7 +209,6 @@ export default function Dashboard() {
                     <tr key={item.id} className="hover:bg-gray-50">
                       <td className="px-6 py-3">
                         <p className="font-medium text-gray-900">{item.name}</p>
-                        <p className="text-xs text-gray-500">{item.sku}</p>
                       </td>
                       <td className="text-center px-4 py-3 font-semibold text-red-600">
                         {item.stock} {item.unit}

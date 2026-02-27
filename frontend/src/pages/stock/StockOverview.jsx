@@ -274,7 +274,6 @@ export default function StockOverview() {
       render: (_, row) => (
         <div>
           <p className="font-medium text-gray-900">{row.name}</p>
-          <p className="text-xs text-gray-500 font-mono">{row.sku}</p>
         </div>
       ),
     },

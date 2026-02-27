@@ -54,7 +54,6 @@ export default function TransactionDetail() {
       render: (_, row) => (
         <div>
           <p className="font-medium text-gray-900">{row.product?.name || '-'}</p>
-          <p className="text-xs text-gray-500 font-mono">{row.product?.sku}</p>
         </div>
       ),
     },
