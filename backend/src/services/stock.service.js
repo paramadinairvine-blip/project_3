@@ -307,16 +307,16 @@ const createOpname = async (userId) => {
       },
     });
 
-    // Create an item for each active product
-    for (const p of products) {
-      await tx.stockOpnameItem.create({
-        data: {
+    // Batch create all items at once (prevents transaction timeout)
+    if (products.length > 0) {
+      await tx.stockOpnameItem.createMany({
+        data: products.map((p) => ({
           stockOpnameId: created.id,
           productId: p.id,
           systemStock: p.stock,
-          actualStock: p.stock, // default to system stock, operator updates later
+          actualStock: p.stock,
           difference: 0,
-        },
+        })),
       });
     }
 
@@ -330,7 +330,7 @@ const createOpname = async (userId) => {
         },
       },
     });
-  });
+  }, { timeout: 30000 });
 
   await createLog({
     userId,
