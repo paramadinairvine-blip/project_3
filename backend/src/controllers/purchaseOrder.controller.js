@@ -67,9 +67,11 @@ const send = async (req, res) => {
 const receive = async (req, res) => {
   try {
     const { receivedItems } = req.body;
+    console.log('[PO RECEIVE] id:', req.params.id, '| receivedItems:', JSON.stringify(receivedItems), '| userId:', req.user.id);
     const po = await poService.receive(req.params.id, receivedItems, req.user.id);
     return successResponse(res, po, 'Barang dari purchase order berhasil diterima');
   } catch (err) {
+    console.error('[PO RECEIVE ERROR]', err.message, err.stack);
     return errorResponse(res, err.message, err.status || 500);
   }
 };
