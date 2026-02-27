@@ -1,10 +1,10 @@
 import { useState, useRef, useEffect } from 'react';
-import { HiChevronLeft, HiChevronRight, HiCalendar } from 'react-icons/hi';
+import { HiChevronLeft, HiChevronRight } from 'react-icons/hi';
 
-const DAYS = ['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab'];
+const DAYS_SHORT = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 const MONTHS = [
-  'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
-  'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember',
+  'January', 'February', 'March', 'April', 'May', 'June',
+  'July', 'August', 'September', 'October', 'November', 'December',
 ];
 
 function getDaysInMonth(year, month) {
@@ -15,7 +15,14 @@ function getFirstDayOfMonth(year, month) {
   return new Date(year, month, 1).getDay();
 }
 
-function formatDate(date) {
+function getWeekNumber(date) {
+  const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+  d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay() || 7));
+  const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+  return Math.ceil(((d - yearStart) / 86400000 + 1) / 7);
+}
+
+function formatDateISO(date) {
   if (!date) return '';
   const y = date.getFullYear();
   const m = String(date.getMonth() + 1).padStart(2, '0');
@@ -23,9 +30,12 @@ function formatDate(date) {
   return `${y}-${m}-${d}`;
 }
 
-function formatDisplay(date) {
+function formatDateDisplay(date) {
   if (!date) return '';
-  return `${date.getDate()} ${MONTHS[date.getMonth()].slice(0, 3)} ${date.getFullYear()}`;
+  const d = String(date.getDate()).padStart(2, '0');
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const y = date.getFullYear();
+  return `${d}/${m}/${y}`;
 }
 
 function isSameDay(a, b) {
@@ -36,68 +46,118 @@ function isSameDay(a, b) {
 function isInRange(day, start, end) {
   if (!start || !end) return false;
   const t = day.getTime();
-  return t > start.getTime() && t < end.getTime();
+  const s = Math.min(start.getTime(), end.getTime());
+  const e = Math.max(start.getTime(), end.getTime());
+  return t > s && t < e;
 }
 
-function CalendarMonth({ year, month, startDate, endDate, hoverDate, onSelect, onHover }) {
+function CalendarMonth({ year, month, startDate, endDate, hoverDate, onSelect, onHover, onPrev, onNext, showPrev, showNext }) {
   const daysInMonth = getDaysInMonth(year, month);
   const firstDay = getFirstDayOfMonth(year, month);
   const today = new Date();
 
-  const cells = [];
-  for (let i = 0; i < firstDay; i++) {
-    cells.push(<div key={`empty-${i}`} />);
-  }
+  // Build weeks array for week numbers
+  const weeks = [];
+  let currentWeek = new Array(firstDay).fill(null);
 
   for (let d = 1; d <= daysInMonth; d++) {
-    const date = new Date(year, month, d);
-    const isStart = isSameDay(date, startDate);
-    const isEnd = isSameDay(date, endDate);
-    const isSelected = isStart || isEnd;
-
-    const effectiveEnd = endDate || hoverDate;
-    const inRange = startDate && effectiveEnd
-      ? isInRange(date, startDate, effectiveEnd) || isInRange(date, effectiveEnd, startDate)
-      : false;
-
-    const isToday = isSameDay(date, today);
-
-    let cls = 'w-8 h-8 text-sm rounded-full flex items-center justify-center cursor-pointer transition-colors ';
-    if (isSelected) {
-      cls += 'bg-blue-600 text-white font-semibold ';
-    } else if (inRange) {
-      cls += 'bg-blue-100 text-blue-800 ';
-    } else if (isToday) {
-      cls += 'border border-blue-400 text-blue-600 font-medium hover:bg-blue-50 ';
-    } else {
-      cls += 'text-gray-700 hover:bg-gray-100 ';
+    currentWeek.push(d);
+    if (currentWeek.length === 7) {
+      weeks.push(currentWeek);
+      currentWeek = [];
     }
-
-    cells.push(
-      <div
-        key={d}
-        className={cls}
-        onClick={() => onSelect(date)}
-        onMouseEnter={() => onHover(date)}
-      >
-        {d}
-      </div>
-    );
+  }
+  if (currentWeek.length > 0) {
+    while (currentWeek.length < 7) currentWeek.push(null);
+    weeks.push(currentWeek);
   }
 
   return (
-    <div className="w-64">
-      <div className="text-center font-semibold text-gray-800 mb-3 text-sm">
-        {MONTHS[month]} {year}
+    <div className="flex-1 min-w-[280px]">
+      {/* Blue header with month/year and navigation */}
+      <div className="bg-blue-600 text-white rounded-t-lg px-3 py-2.5 flex items-center justify-between">
+        {showPrev ? (
+          <button type="button" onClick={onPrev} className="p-0.5 hover:bg-blue-500 rounded transition-colors">
+            <HiChevronLeft className="w-5 h-5" />
+          </button>
+        ) : <div className="w-6" />}
+        <span className="font-semibold text-sm">{MONTHS[month]} {year}</span>
+        {showNext ? (
+          <button type="button" onClick={onNext} className="p-0.5 hover:bg-blue-500 rounded transition-colors">
+            <HiChevronRight className="w-5 h-5" />
+          </button>
+        ) : <div className="w-6" />}
       </div>
-      <div className="grid grid-cols-7 gap-1 mb-1">
-        {DAYS.map((day) => (
-          <div key={day} className="w-8 h-8 flex items-center justify-center text-xs font-medium text-gray-400">
-            {day}
-          </div>
-        ))}
+
+      {/* Day headers */}
+      <div className="border border-t-0 border-gray-200">
+        <div className="grid grid-cols-8 bg-blue-50">
+          <div className="py-1.5 text-center text-xs font-medium text-blue-400" />
+          {DAYS_SHORT.map((day) => (
+            <div key={day} className="py-1.5 text-center text-xs font-semibold text-blue-600">
+              {day}
+            </div>
+          ))}
+        </div>
+
+        {/* Weeks */}
+        {weeks.map((week, wi) => {
+          // Get week number from first valid day in this week
+          const firstDayInWeek = week.find((d) => d !== null);
+          const weekNum = firstDayInWeek ? getWeekNumber(new Date(year, month, firstDayInWeek)) : '';
+
+          return (
+            <div key={wi} className="grid grid-cols-8 border-t border-gray-100">
+              {/* Week number */}
+              <div className="py-1 text-center text-xs text-blue-400 font-medium flex items-center justify-center">
+                {weekNum}
+              </div>
+              {/* Day cells */}
+              {week.map((day, di) => {
+                if (day === null) {
+                  return <div key={`e-${di}`} className="py-1" />;
+                }
+
+                const date = new Date(year, month, day);
+                const isStart = isSameDay(date, startDate);
+                const isEnd = isSameDay(date, endDate);
+                const isSelected = isStart || isEnd;
+                const effectiveEnd = endDate || hoverDate;
+                const inRange = startDate && effectiveEnd ? isInRange(date, startDate, effectiveEnd) : false;
+                const isToday = isSameDay(date, today);
+
+                let cellBg = '';
+                let textCls = 'text-gray-700';
+                let circle = '';
+
+                if (isSelected) {
+                  circle = 'bg-blue-500 text-white';
+                  textCls = '';
+                } else if (inRange) {
+                  cellBg = 'bg-blue-50';
+                  textCls = 'text-blue-700';
+                } else if (isToday) {
+                  circle = 'border-2 border-blue-400 text-blue-600';
+                  textCls = '';
+                }
+
+                return (
+                  <div
+                    key={day}
+                    className={`py-1 flex items-center justify-center cursor-pointer hover:bg-blue-50 transition-colors ${cellBg}`}
+                    onClick={() => onSelect(date)}
+                    onMouseEnter={() => onHover(date)}
+                  >
+                    <span className={`w-7 h-7 flex items-center justify-center text-sm rounded-full ${circle} ${textCls}`}>
+                      {day}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          );
+        })}
       </div>
-      <div className="grid grid-cols-7 gap-1">{cells}</div>
     </div>
   );
 }
@@ -115,7 +175,7 @@ export default function DateRangePicker({ dateFrom, dateTo, onChange }) {
   const [startDate, setStartDate] = useState(() => dateFrom ? new Date(dateFrom) : null);
   const [endDate, setEndDate] = useState(() => dateTo ? new Date(dateTo) : null);
   const [hoverDate, setHoverDate] = useState(null);
-  const [picking, setPicking] = useState('start'); // 'start' or 'end'
+  const [picking, setPicking] = useState('start');
   const ref = useRef(null);
 
   const rightMonth = {
@@ -125,32 +185,23 @@ export default function DateRangePicker({ dateFrom, dateTo, onChange }) {
 
   useEffect(() => {
     const handler = (e) => {
-      if (ref.current && !ref.current.contains(e.target)) {
-        setOpen(false);
-      }
+      if (ref.current && !ref.current.contains(e.target)) setOpen(false);
     };
     document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
   }, []);
 
-  // Sync external props
   useEffect(() => {
     setStartDate(dateFrom ? new Date(dateFrom) : null);
     setEndDate(dateTo ? new Date(dateTo) : null);
   }, [dateFrom, dateTo]);
 
   const prevMonth = () => {
-    setLeftMonth((prev) => {
-      if (prev.month === 0) return { year: prev.year - 1, month: 11 };
-      return { ...prev, month: prev.month - 1 };
-    });
+    setLeftMonth((prev) => prev.month === 0 ? { year: prev.year - 1, month: 11 } : { ...prev, month: prev.month - 1 });
   };
 
   const nextMonth = () => {
-    setLeftMonth((prev) => {
-      if (prev.month === 11) return { year: prev.year + 1, month: 0 };
-      return { ...prev, month: prev.month + 1 };
-    });
+    setLeftMonth((prev) => prev.month === 11 ? { year: prev.year + 1, month: 0 } : { ...prev, month: prev.month + 1 });
   };
 
   const handleSelect = (date) => {
@@ -166,62 +217,36 @@ export default function DateRangePicker({ dateFrom, dateTo, onChange }) {
         setEndDate(date);
       }
       setPicking('start');
+      // Auto-apply when both dates selected
+      setTimeout(() => {
+        const s = date < startDate ? date : startDate;
+        const e = date < startDate ? startDate : date;
+        onChange(formatDateISO(s), formatDateISO(e));
+        setOpen(false);
+      }, 150);
     }
   };
 
-  const handleApply = () => {
-    onChange(formatDate(startDate), formatDate(endDate));
-    setOpen(false);
-  };
-
-  const handleReset = () => {
-    setStartDate(null);
-    setEndDate(null);
-    setPicking('start');
-    onChange('', '');
-    setOpen(false);
-  };
-
   const displayText = startDate && endDate
-    ? `${formatDisplay(startDate)}  —  ${formatDisplay(endDate)}`
+    ? `${formatDateDisplay(startDate)} - ${formatDateDisplay(endDate)}`
     : startDate
-      ? `${formatDisplay(startDate)}  —  ...`
-      : 'Pilih rentang tanggal';
+      ? `${formatDateDisplay(startDate)} - ...`
+      : 'Pilih tanggal';
 
   return (
     <div ref={ref} className="relative">
-      <button
-        type="button"
+      <input
+        type="text"
+        readOnly
+        value={startDate ? displayText : ''}
+        placeholder="Pilih tanggal"
         onClick={() => setOpen(!open)}
-        className="inline-flex items-center gap-2 px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white hover:bg-gray-50 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors min-w-[260px]"
-      >
-        <HiCalendar className="w-4 h-4 text-gray-400" />
-        <span className={startDate ? 'text-gray-800' : 'text-gray-400'}>{displayText}</span>
-      </button>
+        className="w-52 px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white cursor-pointer focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+      />
 
       {open && (
-        <div className="absolute z-50 mt-2 left-0 bg-white border border-gray-200 rounded-xl shadow-xl p-5 animate-in fade-in">
-          {/* Navigation */}
-          <div className="flex items-center justify-between mb-4">
-            <button
-              type="button"
-              onClick={prevMonth}
-              className="p-1.5 hover:bg-gray-100 rounded-lg transition-colors"
-            >
-              <HiChevronLeft className="w-5 h-5 text-gray-600" />
-            </button>
-            <div className="flex-1" />
-            <button
-              type="button"
-              onClick={nextMonth}
-              className="p-1.5 hover:bg-gray-100 rounded-lg transition-colors"
-            >
-              <HiChevronRight className="w-5 h-5 text-gray-600" />
-            </button>
-          </div>
-
-          {/* Dual Calendars */}
-          <div className="flex gap-8">
+        <div className="absolute z-50 mt-1 left-0 bg-white rounded-lg shadow-2xl border border-gray-200 p-4">
+          <div className="flex gap-4">
             <CalendarMonth
               year={leftMonth.year}
               month={leftMonth.month}
@@ -230,6 +255,9 @@ export default function DateRangePicker({ dateFrom, dateTo, onChange }) {
               hoverDate={picking === 'end' ? hoverDate : null}
               onSelect={handleSelect}
               onHover={setHoverDate}
+              onPrev={prevMonth}
+              showPrev
+              showNext={false}
             />
             <CalendarMonth
               year={rightMonth.year}
@@ -239,26 +267,10 @@ export default function DateRangePicker({ dateFrom, dateTo, onChange }) {
               hoverDate={picking === 'end' ? hoverDate : null}
               onSelect={handleSelect}
               onHover={setHoverDate}
+              onNext={nextMonth}
+              showPrev={false}
+              showNext
             />
-          </div>
-
-          {/* Footer */}
-          <div className="flex items-center justify-between mt-4 pt-4 border-t border-gray-100">
-            <button
-              type="button"
-              onClick={handleReset}
-              className="text-sm text-gray-500 hover:text-gray-700 transition-colors"
-            >
-              Reset
-            </button>
-            <button
-              type="button"
-              onClick={handleApply}
-              disabled={!startDate || !endDate}
-              className="px-4 py-1.5 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-            >
-              Terapkan
-            </button>
           </div>
         </div>
       )}
