@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { HiPlus, HiTrash, HiUpload, HiArrowLeft, HiRefresh } from 'react-icons/hi';
 import toast from 'react-hot-toast';
-import { productAPI, categoryAPI } from '../../api/endpoints';
+import { productAPI, categoryAPI, unitAPI } from '../../api/endpoints';
 import { Button, Input, Select, Card, Breadcrumb } from '../../components/common';
 import { getErrorMessage } from '../../utils/handleError';
 import useUnsavedChanges from '../../hooks/useUnsavedChanges';
@@ -30,6 +30,11 @@ export default function ProductForm() {
   const { data: categories } = useQuery({
     queryKey: ['categories'],
     queryFn: async () => { const { data } = await categoryAPI.getAll(); return data.data; },
+  });
+
+  const { data: unitMeasures } = useQuery({
+    queryKey: ['unitMeasures'],
+    queryFn: async () => { const { data } = await unitAPI.getMeasures(); return data.data; },
   });
 
   // ─── Load existing product ──────────────────────────
@@ -105,6 +110,10 @@ export default function ProductForm() {
   const updateSellUnit = (idx, field, value) => {
     setSellUnits((prev) => prev.map((u, i) => {
       if (i !== idx) return field === 'isDefault' && value ? { ...u, isDefault: false } : u;
+      if (field === 'unitId') {
+        const selected = unitMeasures?.find((m) => m.id === value);
+        return { ...u, unitId: value, unitName: selected?.name || '' };
+      }
       return { ...u, [field]: value };
     }));
     setIsDirty(true);
@@ -197,13 +206,11 @@ export default function ProductForm() {
 
     if (sellUnits.length > 0) {
       payload.units = sellUnits
-        .filter((u) => u.unitName || u.unitId)
+        .filter((u) => u.unitId || u.unitName)
         .map((u) => ({
           unitId: u.unitId || undefined,
-          unitName: u.unitName,
+          unitName: u.unitName || undefined,
           conversionFactor: parseFloat(u.qty) || 1,
-          buyPrice: parseFloat(u.buyPrice) || 0,
-          sellPrice: parseFloat(u.sellPrice) || 0,
           isBaseUnit: u.isDefault,
         }));
     }
@@ -374,9 +381,10 @@ export default function ProductForm() {
                         <tr key={idx} className="border-b border-gray-100">
                           <td className="px-2 py-2 text-center"><span className="text-gray-400 text-xs">{idx + 2}</span></td>
                           <td className="px-3 py-2">
-                            <select value={su.unitName || ''} onChange={(e) => updateSellUnit(idx, 'unitName', e.target.value)} className="w-full rounded border-gray-300 text-sm py-1.5 px-2 focus:border-blue-500 focus:ring-blue-500">
+                            <select value={su.unitId || ''} onChange={(e) => updateSellUnit(idx, 'unitId', e.target.value)} className="w-full rounded border-gray-300 text-sm py-1.5 px-2 focus:border-blue-500 focus:ring-blue-500">
                               <option value="">Pilih...</option>
-                              {commonUnits.map((u) => (<option key={u} value={u}>{u.charAt(0).toUpperCase() + u.slice(1)}</option>))}
+                              {unitMeasures?.map((u) => (<option key={u.id} value={u.id}>{u.name}</option>))}
+                              {commonUnits.filter(cu => !unitMeasures?.some(m => m.name.toLowerCase() === cu)).map((u) => (<option key={u} value={u}>{u.charAt(0).toUpperCase() + u.slice(1)}</option>))}
                             </select>
                           </td>
                           <td className="px-3 py-2"><div className="flex items-center gap-1"><input type="number" value={su.qty} onChange={(e) => updateSellUnit(idx, 'qty', e.target.value)} placeholder="1" min="1" className="w-16 rounded border-gray-300 text-sm py-1.5 px-2 focus:border-blue-500 focus:ring-blue-500" /><span className="text-gray-500 text-xs capitalize">{form.unit}</span></div></td>
