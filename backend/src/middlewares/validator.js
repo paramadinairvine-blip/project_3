@@ -6,13 +6,15 @@ const { TRANSACTION_TYPES, ROLES, PROJECT_STATUS } = require('../utils/constants
 const handleValidationErrors = (req, res, next) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
+    const errorDetails = errors.array().map((err) => ({
+      field: err.path,
+      message: err.msg,
+    }));
+    console.log('[VALIDATION] Failed:', JSON.stringify(errorDetails), '| Body:', JSON.stringify(req.body));
     return res.status(422).json({
       success: false,
       message: 'Validasi gagal',
-      errors: errors.array().map((err) => ({
-        field: err.path,
-        message: err.msg,
-      })),
+      errors: errorDetails,
     });
   }
   next();
@@ -137,16 +139,31 @@ const validatePurchaseOrder = [
   body('supplierId')
     .notEmpty().withMessage('Supplier wajib diisi'),
   body('items')
-    .notEmpty().withMessage('Item purchase order wajib diisi')
     .isArray({ min: 1 }).withMessage('Item purchase order harus berupa array minimal 1 item'),
   body('items.*.productId')
     .notEmpty().withMessage('Product ID wajib diisi pada setiap item'),
   body('items.*.quantity')
-    .notEmpty().withMessage('Jumlah wajib diisi pada setiap item')
-    .isInt({ min: 1 }).withMessage('Jumlah harus minimal 1'),
+    .custom((value) => {
+      if (value === undefined || value === null || value === '') {
+        throw new Error('Jumlah wajib diisi pada setiap item');
+      }
+      const num = Number(value);
+      if (isNaN(num) || num < 1 || !Number.isInteger(num)) {
+        throw new Error('Jumlah harus bilangan bulat minimal 1');
+      }
+      return true;
+    }),
   body('items.*.price')
-    .notEmpty().withMessage('Harga wajib diisi pada setiap item')
-    .isFloat({ min: 0 }).withMessage('Harga harus berupa angka positif'),
+    .custom((value) => {
+      if (value === undefined || value === null || value === '') {
+        throw new Error('Harga wajib diisi pada setiap item');
+      }
+      const num = Number(value);
+      if (isNaN(num) || num < 0) {
+        throw new Error('Harga harus berupa angka positif');
+      }
+      return true;
+    }),
   handleValidationErrors,
 ];
 
