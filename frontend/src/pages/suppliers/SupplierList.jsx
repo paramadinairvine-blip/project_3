@@ -5,7 +5,7 @@ import { HiPlus, HiPencil, HiTrash, HiEye } from 'react-icons/hi';
 import toast from 'react-hot-toast';
 import { supplierAPI } from '../../api/endpoints';
 import { getErrorMessage } from '../../utils/handleError';
-import { Table, Button, SearchBar, Pagination, Modal, Breadcrumb } from '../../components/common';
+import { Table, Button, SearchBar, Pagination, Modal } from '../../components/common';
 import useAuth from '../../hooks/useAuth';
 
 export default function SupplierList() {
@@ -118,8 +118,6 @@ export default function SupplierList() {
 
   return (
     <div className="space-y-6">
-      <Breadcrumb items={[{ label: 'Supplier' }]} className="mb-4" />
-
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>

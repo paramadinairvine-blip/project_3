@@ -6,7 +6,7 @@ import {
   HiPrinter, HiDocumentDownload, HiTable,
 } from 'react-icons/hi';
 import { reportAPI, categoryAPI } from '../../api/endpoints';
-import { Card, Badge, Button, Select, Loading, Table, Breadcrumb, Skeleton } from '../../components/common';
+import { Card, Badge, Button, Select, Loading, Table, Skeleton } from '../../components/common';
 import { formatRupiah } from '../../utils/formatCurrency';
 import { exportTableToPDF } from '../../utils/exportPDF';
 import { exportToExcel } from '../../utils/exportExcel';
@@ -143,8 +143,6 @@ export default function StockReport() {
 
   return (
     <div className="space-y-6">
-      <Breadcrumb items={[{ label: 'Laporan' }, { label: 'Stok' }]} className="mb-4" />
-
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>

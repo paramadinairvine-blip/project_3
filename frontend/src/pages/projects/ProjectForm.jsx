@@ -5,7 +5,7 @@ import { HiArrowLeft, HiPlus, HiTrash } from 'react-icons/hi';
 import toast from 'react-hot-toast';
 import { projectAPI, productAPI, unitAPI } from '../../api/endpoints';
 import { getErrorMessage } from '../../utils/handleError';
-import { Breadcrumb, Card, Button, Input, Select } from '../../components/common';
+import { Card, Button, Input, Select } from '../../components/common';
 import { PROJECT_STATUS, PROJECT_STATUS_LABELS } from '../../utils/constants';
 import useUnsavedChanges from '../../hooks/useUnsavedChanges';
 
@@ -223,8 +223,6 @@ export default function ProjectForm() {
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
-      <Breadcrumb items={[{ label: 'Proyek', to: '/proyek' }, { label: isEdit ? 'Edit Proyek' : 'Tambah Proyek' }]} className="mb-4" />
-
       {/* Header */}
       <div className="flex items-center gap-3">
         <button

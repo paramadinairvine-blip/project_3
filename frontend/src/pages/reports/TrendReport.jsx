@@ -7,7 +7,7 @@ import {
 } from 'recharts';
 import { HiPrinter, HiDocumentDownload, HiTable } from 'react-icons/hi';
 import { reportAPI } from '../../api/endpoints';
-import { Card, Button, Input, Loading, Breadcrumb, Skeleton } from '../../components/common';
+import { Card, Button, Input, Loading, Skeleton } from '../../components/common';
 import TrendChart from '../../components/charts/TrendChart';
 import { formatRupiah } from '../../utils/formatCurrency';
 import { formatTanggal } from '../../utils/formatDate';
@@ -105,8 +105,6 @@ export default function TrendReport() {
 
   return (
     <div className="space-y-6">
-      <Breadcrumb items={[{ label: 'Laporan' }, { label: 'Tren' }]} className="mb-4" />
-
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>

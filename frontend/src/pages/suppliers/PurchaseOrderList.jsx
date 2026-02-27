@@ -5,7 +5,7 @@ import { HiPlus, HiPencil, HiEye, HiPaperAirplane, HiCheck, HiBan } from 'react-
 import toast from 'react-hot-toast';
 import { purchaseOrderAPI } from '../../api/endpoints';
 import { getErrorMessage } from '../../utils/handleError';
-import { Table, Badge, Button, SearchBar, Pagination, Modal, Breadcrumb } from '../../components/common';
+import { Table, Badge, Button, SearchBar, Pagination, Modal } from '../../components/common';
 import { formatRupiah } from '../../utils/formatCurrency';
 import { formatTanggal } from '../../utils/formatDate';
 import { PO_STATUS, PO_STATUS_LABELS, PO_STATUS_COLORS } from '../../utils/constants';
@@ -222,8 +222,6 @@ export default function PurchaseOrderList() {
 
   return (
     <div className="space-y-6">
-      <Breadcrumb items={[{ label: 'Supplier', to: '/supplier' }, { label: 'Purchase Order' }]} className="mb-4" />
-
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>

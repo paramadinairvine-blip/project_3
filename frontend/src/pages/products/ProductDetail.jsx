@@ -2,7 +2,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { HiPencil, HiArrowLeft, HiPrinter } from 'react-icons/hi';
 import { productAPI, stockAPI } from '../../api/endpoints';
-import { Card, Badge, Button, Loading, Table, Breadcrumb } from '../../components/common';
+import { Card, Badge, Button, Loading, Table } from '../../components/common';
 import BarcodePrint from '../../components/BarcodePrint';
 import { formatRupiah } from '../../utils/formatCurrency';
 import { formatTanggalWaktu } from '../../utils/formatDate';
@@ -66,8 +66,6 @@ export default function ProductDetail() {
 
   return (
     <div className="max-w-5xl mx-auto space-y-6">
-      <Breadcrumb items={[{ label: 'Produk', to: '/produk' }, { label: product?.name || 'Detail' }]} className="mb-4" />
-
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div className="flex items-center gap-3">

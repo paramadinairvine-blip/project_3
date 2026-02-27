@@ -5,7 +5,7 @@ import { HiPlus, HiEye, HiBan } from 'react-icons/hi';
 import toast from 'react-hot-toast';
 import { transactionAPI } from '../../api/endpoints';
 import { getErrorMessage } from '../../utils/handleError';
-import { Table, Badge, Button, SearchBar, Pagination, Modal, Breadcrumb } from '../../components/common';
+import { Table, Badge, Button, SearchBar, Pagination, Modal } from '../../components/common';
 import { formatRupiah } from '../../utils/formatCurrency';
 import { formatTanggalWaktu } from '../../utils/formatDate';
 import {
@@ -122,8 +122,6 @@ export default function TransactionList() {
 
   return (
     <div className="space-y-6">
-      <Breadcrumb items={[{ label: 'Transaksi' }]} className="mb-4" />
-
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>

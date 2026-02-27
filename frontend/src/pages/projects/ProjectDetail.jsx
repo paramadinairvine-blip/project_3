@@ -6,7 +6,7 @@ import { HiArrowLeft, HiPencil, HiPrinter } from 'react-icons/hi';
 import toast from 'react-hot-toast';
 import { projectAPI } from '../../api/endpoints';
 import { getErrorMessage } from '../../utils/handleError';
-import { Breadcrumb, Card, Badge, Button, Loading, Modal, Input } from '../../components/common';
+import { Card, Badge, Button, Loading, Modal, Input } from '../../components/common';
 import { formatRupiah } from '../../utils/formatCurrency';
 import { formatTanggal, formatTanggalPanjang, formatTanggalWaktu } from '../../utils/formatDate';
 import { PROJECT_STATUS_LABELS, PROJECT_STATUS_COLORS } from '../../utils/constants';
@@ -198,8 +198,6 @@ export default function ProjectDetail() {
 
   return (
     <div className="max-w-5xl mx-auto space-y-6">
-      <Breadcrumb items={[{ label: 'Proyek', to: '/proyek' }, { label: project?.name || 'Detail' }]} className="mb-4" />
-
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div className="flex items-center gap-3">

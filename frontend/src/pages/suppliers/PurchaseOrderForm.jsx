@@ -5,7 +5,7 @@ import { HiPlus, HiTrash, HiArrowLeft } from 'react-icons/hi';
 import toast from 'react-hot-toast';
 import { purchaseOrderAPI, supplierAPI, productAPI, unitAPI } from '../../api/endpoints';
 import { getErrorMessage } from '../../utils/handleError';
-import { Card, Button, Select, Breadcrumb } from '../../components/common';
+import { Card, Button, Select } from '../../components/common';
 import useUnsavedChanges from '../../hooks/useUnsavedChanges';
 import { formatRupiah } from '../../utils/formatCurrency';
 
@@ -269,8 +269,6 @@ export default function PurchaseOrderForm() {
 
   return (
     <div className="max-w-5xl mx-auto space-y-6">
-      <Breadcrumb items={[{ label: 'Purchase Order', to: '/purchase-order' }, { label: isEdit ? 'Edit PO' : 'Buat PO' }]} className="mb-4" />
-
       <div className="flex items-center gap-3">
         <button
           onClick={() => navigate('/purchase-order')}

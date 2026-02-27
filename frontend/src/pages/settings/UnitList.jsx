@@ -4,7 +4,7 @@ import { HiPlus, HiPencil, HiTrash } from 'react-icons/hi';
 import toast from 'react-hot-toast';
 import { unitAPI } from '../../api/endpoints';
 import { getErrorMessage } from '../../utils/handleError';
-import { Button, Badge, Modal, Loading, Breadcrumb, Input } from '../../components/common';
+import { Button, Badge, Modal, Loading, Input } from '../../components/common';
 import useAuth from '../../hooks/useAuth';
 
 function UnitFormModal({ unit, onClose }) {
@@ -119,8 +119,6 @@ export default function UnitList() {
 
   return (
     <div className="space-y-6">
-      <Breadcrumb items={[{ label: 'Setting' }, { label: 'Satuan' }]} className="mb-4" />
-
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>

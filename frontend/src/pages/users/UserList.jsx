@@ -4,7 +4,7 @@ import { HiPlus, HiPencil, HiLockClosed, HiBan, HiCheck } from 'react-icons/hi';
 import toast from 'react-hot-toast';
 import { userAPI } from '../../api/endpoints';
 import { getErrorMessage } from '../../utils/handleError';
-import { Table, Badge, Button, SearchBar, Pagination, Modal, Input, Breadcrumb } from '../../components/common';
+import { Table, Badge, Button, SearchBar, Pagination, Modal, Input } from '../../components/common';
 import { ROLE_LABELS, ROLE_COLORS } from '../../utils/constants';
 import UserForm from './UserForm';
 
@@ -151,8 +151,6 @@ export default function UserList() {
 
   return (
     <div className="space-y-6">
-      <Breadcrumb items={[{ label: 'Pengguna' }]} className="mb-4" />
-
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>

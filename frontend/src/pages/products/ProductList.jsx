@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { HiPlus, HiPencil, HiTrash, HiEye } from 'react-icons/hi';
 import toast from 'react-hot-toast';
 import { productAPI } from '../../api/endpoints';
-import { Table, Button, SearchBar, Pagination, Modal, Breadcrumb, Skeleton } from '../../components/common';
+import { Table, Button, SearchBar, Pagination, Modal, Skeleton } from '../../components/common';
 import { formatRupiah } from '../../utils/formatCurrency';
 import { getErrorMessage } from '../../utils/handleError';
 import useAuth from '../../hooks/useAuth';
@@ -130,8 +130,6 @@ export default function ProductList() {
 
   return (
     <div className="space-y-6">
-      <Breadcrumb items={[{ label: 'Produk' }]} className="mb-4" />
-
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Daftar Produk</h1>

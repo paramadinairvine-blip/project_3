@@ -7,7 +7,7 @@ import {
 import toast from 'react-hot-toast';
 import { stockAPI, productAPI } from '../../api/endpoints';
 import { getErrorMessage } from '../../utils/handleError';
-import { Table, Badge, Button, SearchBar, Pagination, Modal, Card, Input, Loading, Breadcrumb, Skeleton } from '../../components/common';
+import { Table, Badge, Button, SearchBar, Pagination, Modal, Card, Input, Loading, Skeleton } from '../../components/common';
 import { formatRupiah } from '../../utils/formatCurrency';
 import { formatTanggalWaktu } from '../../utils/formatDate';
 import { MOVEMENT_TYPE_LABELS, MOVEMENT_TYPE_COLORS } from '../../utils/constants';
@@ -321,8 +321,6 @@ export default function StockOverview() {
 
   return (
     <div className="space-y-6">
-      <Breadcrumb items={[{ label: 'Stok' }]} className="mb-4" />
-
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
