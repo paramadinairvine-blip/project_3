@@ -193,18 +193,26 @@ export default function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose
   const sidebarContent = (
     <div className="flex flex-col h-full">
       {/* Header — Logo + Version */}
-      <div className="flex items-center justify-between px-4 py-5 border-b border-gray-700">
+      <div className="flex items-center justify-between px-4 py-4 border-b border-gray-700">
         {!collapsed ? (
-          <div className="min-w-0">
-            <h1 className="text-white font-bold text-base leading-tight tracking-wide">
-              TOKO MATERIAL
-            </h1>
-            <p className="text-gray-400 text-xs mt-0.5 tracking-wider">PESANTREN</p>
-            <p className="text-gray-500 text-[10px] mt-1">V.1.0.0</p>
+          <div className="flex items-center gap-3 min-w-0">
+            <img src="/logo-white.svg" alt="Logo" className="w-10 h-10 flex-shrink-0 opacity-90" />
+            <div className="min-w-0">
+              <h1 className="text-white font-bold text-[13px] leading-tight tracking-wide">
+                TOKO MATERIAL
+              </h1>
+              <p className="text-gray-300 text-[11px] leading-tight tracking-wide">
+                PESANTREN
+              </p>
+              <p className="text-gray-400 text-[10px] leading-tight tracking-wide">
+                DARUNNAJAH 2
+              </p>
+              <p className="text-gray-500 text-[9px] mt-0.5">V.1.0.0</p>
+            </div>
           </div>
         ) : (
           <div className="mx-auto">
-            <span className="text-white font-bold text-xl">TM</span>
+            <img src="/logo-white.svg" alt="Logo" className="w-8 h-8 opacity-90" />
           </div>
         )}
         <button
