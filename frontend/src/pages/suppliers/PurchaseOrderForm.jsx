@@ -5,7 +5,7 @@ import { HiPlus, HiTrash, HiArrowLeft } from 'react-icons/hi';
 import toast from 'react-hot-toast';
 import { purchaseOrderAPI, supplierAPI, productAPI, unitAPI } from '../../api/endpoints';
 import { getErrorMessage } from '../../utils/handleError';
-import { Card, Button, Input, Select, Breadcrumb } from '../../components/common';
+import { Card, Button, Select, Breadcrumb } from '../../components/common';
 import useUnsavedChanges from '../../hooks/useUnsavedChanges';
 import { formatRupiah } from '../../utils/formatCurrency';
 
@@ -14,9 +14,10 @@ const emptyItem = () => ({
   productId: '',
   variantId: '',
   unitId: '',
-  quantity: '',
+  quantity: '1',
   unitPrice: '',
-  product: null,   // cached product object
+  discount: '0',
+  product: null,
 });
 
 export default function PurchaseOrderForm() {
@@ -77,8 +78,9 @@ export default function PurchaseOrderForm() {
             productId: item.productId || '',
             variantId: item.variantId || '',
             unitId: item.unitId || '',
-            quantity: item.quantity?.toString() || '',
+            quantity: item.quantity?.toString() || '1',
             unitPrice: item.unitPrice?.toString() || '',
+            discount: item.discount?.toString() || '0',
             product: item.product || null,
           }))
         );
@@ -95,7 +97,7 @@ export default function PurchaseOrderForm() {
   // ─── Product options ───────────────────────────────
   const productOptions = (products || []).map((p) => ({
     value: p.id,
-    label: `${p.name} (${p.sku})`,
+    label: p.name,
     product: p,
   }));
 
@@ -104,26 +106,15 @@ export default function PurchaseOrderForm() {
     return (products || []).find((p) => p.id === productId) || null;
   };
 
-  const getVariantOptions = (productId) => {
-    const product = getProductById(productId);
-    if (!product?.variants?.length) return [];
-    return product.variants.map((v) => ({
-      value: v.id,
-      label: `${v.name} — ${v.sku}`,
-    }));
-  };
-
   const getUnitOptions = (productId) => {
     const product = getProductById(productId);
     const opts = [];
-    // Base unit from product
     if (product?.unitOfMeasure) {
       opts.push({ value: product.unitOfMeasure.id, label: product.unitOfMeasure.name });
     } else if (product?.unitId) {
       const u = (units || []).find((un) => un.id === product.unitId);
       if (u) opts.push({ value: u.id, label: u.name });
     }
-    // Additional units from productUnits
     if (product?.productUnits?.length > 0) {
       product.productUnits.forEach((pu) => {
         if (pu.unit && !opts.find((o) => o.value === pu.unit.id)) {
@@ -131,11 +122,17 @@ export default function PurchaseOrderForm() {
         }
       });
     }
-    // Fallback: all units
     if (opts.length === 0) {
       return (units || []).map((u) => ({ value: u.id, label: u.name }));
     }
     return opts;
+  };
+
+  const getUnitLabel = (productId) => {
+    const product = getProductById(productId);
+    if (product?.unit) return product.unit.charAt(0).toUpperCase() + product.unit.slice(1);
+    if (product?.unitOfMeasure?.name) return product.unitOfMeasure.name;
+    return 'Pcs';
   };
 
   const updateItem = (index, field, value) => {
@@ -144,7 +141,6 @@ export default function PurchaseOrderForm() {
       const updated = [...prev];
       updated[index] = { ...updated[index], [field]: value };
 
-      // Auto-fill when product changes
       if (field === 'productId') {
         const product = getProductById(value);
         updated[index].product = product;
@@ -167,7 +163,9 @@ export default function PurchaseOrderForm() {
   const calcItemTotal = (item) => {
     const qty = parseFloat(item.quantity) || 0;
     const price = parseFloat(item.unitPrice) || 0;
-    return qty * price;
+    const disc = parseFloat(item.discount) || 0;
+    const subtotal = qty * price;
+    return subtotal - (subtotal * disc / 100);
   };
 
   const grandTotal = items.reduce((sum, item) => sum + calcItemTotal(item), 0);
@@ -250,6 +248,7 @@ export default function PurchaseOrderForm() {
         unitId: item.unitId || null,
         quantity: parseFloat(item.quantity),
         price: parseFloat(item.unitPrice),
+        discount: parseFloat(item.discount) || 0,
       })),
   });
 
@@ -259,7 +258,7 @@ export default function PurchaseOrderForm() {
     saveMutation.mutate(buildPayload());
   };
 
-  const handleSaveAndSend = () => {
+  const handleSavePO = () => {
     if (!validate()) return;
     saveAndSendMutation.mutate(buildPayload());
   };
@@ -269,10 +268,9 @@ export default function PurchaseOrderForm() {
   useUnsavedChanges(isDirty && !saveMutation.isSuccess && !saveAndSendMutation.isSuccess);
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
+    <div className="max-w-5xl mx-auto space-y-6">
       <Breadcrumb items={[{ label: 'Purchase Order', to: '/purchase-order' }, { label: isEdit ? 'Edit PO' : 'Buat PO' }]} className="mb-4" />
 
-      {/* Header */}
       <div className="flex items-center gap-3">
         <button
           onClick={() => navigate('/purchase-order')}
@@ -292,9 +290,9 @@ export default function PurchaseOrderForm() {
       </div>
 
       <form onSubmit={handleSaveDraft}>
-        {/* Supplier */}
-        <Card title="Informasi PO" padding="md" className="mb-6">
-          <div className="space-y-4">
+        {/* Informasi PO */}
+        <Card title="INFORMASI PO" padding="md" className="mb-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Select
               label="Supplier *"
               value={supplierId}
@@ -305,25 +303,34 @@ export default function PurchaseOrderForm() {
               error={errors.supplierId}
               autoFocus
             />
-            <Input
-              label="Catatan"
-              value={notes}
-              onChange={(e) => { setNotes(e.target.value); setIsDirty(true); }}
-              placeholder="Catatan untuk PO ini (opsional)"
-              textarea
-              rows={2}
-            />
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-1.5">Catatan</label>
+              <input
+                type="text"
+                value={notes}
+                onChange={(e) => { setNotes(e.target.value); setIsDirty(true); }}
+                placeholder="Catatan untuk PO ini (opsional)"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+              />
+            </div>
           </div>
         </Card>
 
-        {/* Items */}
+        {/* Item Pesanan */}
         <Card
-          title="Item Pesanan"
+          title={
+            <span className="flex items-center gap-2">
+              ITEM PESANAN
+              <span className="inline-flex items-center justify-center w-6 h-6 text-xs font-bold text-white bg-blue-500 rounded-full">
+                {items.filter(i => i.productId).length || items.length}
+              </span>
+            </span>
+          }
           padding="none"
           className="mb-6"
           headerAction={
-            <Button variant="outline" size="sm" icon={HiPlus} onClick={addItem}>
-              Tambah Item
+            <Button variant="outline" size="sm" icon={HiPlus} onClick={addItem} type="button">
+              Tambah
             </Button>
           }
         >
@@ -336,22 +343,22 @@ export default function PurchaseOrderForm() {
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="bg-gray-50 border-b border-gray-100">
-                  <th className="text-left px-4 py-3 text-xs font-semibold text-gray-600 w-8">#</th>
-                  <th className="text-left px-4 py-3 text-xs font-semibold text-gray-600 min-w-[200px]">Produk</th>
-                  <th className="text-left px-4 py-3 text-xs font-semibold text-gray-600 min-w-[140px]">Varian</th>
-                  <th className="text-left px-4 py-3 text-xs font-semibold text-gray-600 min-w-[120px]">Satuan</th>
-                  <th className="text-left px-4 py-3 text-xs font-semibold text-gray-600 w-24">Jumlah</th>
-                  <th className="text-left px-4 py-3 text-xs font-semibold text-gray-600 w-36">Harga Satuan</th>
-                  <th className="text-right px-4 py-3 text-xs font-semibold text-gray-600 w-36">Total</th>
-                  <th className="w-10"></th>
+                <tr className="border-b border-gray-200">
+                  <th className="text-left px-3 py-2.5 text-xs font-bold text-gray-500 uppercase tracking-wider w-8">#</th>
+                  <th className="text-left px-3 py-2.5 text-xs font-bold text-gray-500 uppercase tracking-wider min-w-[160px]">Produk</th>
+                  <th className="text-left px-3 py-2.5 text-xs font-bold text-gray-500 uppercase tracking-wider w-28">Satuan</th>
+                  <th className="text-center px-3 py-2.5 text-xs font-bold text-gray-500 uppercase tracking-wider w-20">Qty</th>
+                  <th className="text-center px-3 py-2.5 text-xs font-bold text-gray-500 uppercase tracking-wider w-28">Harga</th>
+                  <th className="text-center px-3 py-2.5 text-xs font-bold text-gray-500 uppercase tracking-wider w-20">Disk%</th>
+                  <th className="text-right px-3 py-2.5 text-xs font-bold text-gray-500 uppercase tracking-wider w-28">Subtotal</th>
+                  <th className="w-8"></th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-50">
+              <tbody>
                 {items.map((item, idx) => (
-                  <tr key={item._key} className="hover:bg-gray-50/50">
-                    <td className="px-4 py-3 text-gray-500">{idx + 1}</td>
-                    <td className="px-4 py-3">
+                  <tr key={item._key} className="border-b border-gray-100">
+                    <td className="px-3 py-2 text-gray-400 font-medium">{idx + 1}</td>
+                    <td className="px-3 py-2">
                       <Select
                         value={item.productId}
                         onChange={(val) => updateItem(idx, 'productId', val)}
@@ -360,55 +367,58 @@ export default function PurchaseOrderForm() {
                         searchable
                       />
                     </td>
-                    <td className="px-4 py-3">
-                      <Select
-                        value={item.variantId}
-                        onChange={(val) => updateItem(idx, 'variantId', val)}
-                        options={getVariantOptions(item.productId)}
-                        placeholder="—"
-                        disabled={!getVariantOptions(item.productId).length}
-                      />
+                    <td className="px-3 py-2">
+                      {item.productId ? (
+                        <Select
+                          value={item.unitId}
+                          onChange={(val) => updateItem(idx, 'unitId', val)}
+                          options={getUnitOptions(item.productId)}
+                          placeholder={getUnitLabel(item.productId)}
+                        />
+                      ) : (
+                        <span className="text-gray-400 text-sm">Pcs</span>
+                      )}
                     </td>
-                    <td className="px-4 py-3">
-                      <Select
-                        value={item.unitId}
-                        onChange={(val) => updateItem(idx, 'unitId', val)}
-                        options={getUnitOptions(item.productId)}
-                        placeholder="Satuan"
-                        disabled={!item.productId}
-                      />
-                    </td>
-                    <td className="px-4 py-3">
+                    <td className="px-3 py-2">
                       <input
                         type="number"
-                        min="0"
-                        step="1"
+                        min="1"
                         value={item.quantity}
                         onChange={(e) => updateItem(idx, 'quantity', e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none"
-                        placeholder="0"
+                        className="w-full px-2 py-1.5 border border-gray-300 rounded-lg text-sm text-center focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                        placeholder="1"
                       />
                     </td>
-                    <td className="px-4 py-3">
+                    <td className="px-3 py-2">
                       <input
                         type="number"
                         min="0"
-                        step="100"
                         value={item.unitPrice}
                         onChange={(e) => updateItem(idx, 'unitPrice', e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+                        className="w-full px-2 py-1.5 border border-gray-300 rounded-lg text-sm text-center focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                         placeholder="0"
                       />
                     </td>
-                    <td className="px-4 py-3 text-right font-medium text-gray-900">
+                    <td className="px-3 py-2">
+                      <input
+                        type="number"
+                        min="0"
+                        max="100"
+                        value={item.discount}
+                        onChange={(e) => updateItem(idx, 'discount', e.target.value)}
+                        className="w-full px-2 py-1.5 border border-gray-300 rounded-lg text-sm text-center focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                        placeholder="0"
+                      />
+                    </td>
+                    <td className="px-3 py-2 text-right font-medium text-gray-700 whitespace-nowrap">
                       {formatRupiah(calcItemTotal(item))}
                     </td>
-                    <td className="px-2 py-3">
+                    <td className="px-1 py-2">
                       {items.length > 1 && (
                         <button
                           type="button"
                           onClick={() => removeItem(idx)}
-                          className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                          className="p-1 text-red-400 hover:text-red-600 transition-colors"
                           aria-label="Hapus item"
                         >
                           <HiTrash className="w-4 h-4" />
@@ -418,18 +428,13 @@ export default function PurchaseOrderForm() {
                   </tr>
                 ))}
               </tbody>
-              <tfoot>
-                <tr className="bg-gray-50 border-t border-gray-200">
-                  <td colSpan={6} className="px-4 py-3 text-right font-semibold text-gray-700">
-                    Total Keseluruhan
-                  </td>
-                  <td className="px-4 py-3 text-right font-bold text-lg text-blue-600">
-                    {formatRupiah(grandTotal)}
-                  </td>
-                  <td></td>
-                </tr>
-              </tfoot>
             </table>
+          </div>
+
+          {/* Total */}
+          <div className="flex items-center justify-end gap-4 px-4 py-3 border-t border-gray-200">
+            <span className="text-sm font-semibold text-gray-600">Total Keseluruhan</span>
+            <span className="text-xl font-bold text-blue-600">{formatRupiah(grandTotal)}</span>
           </div>
         </Card>
 
@@ -441,8 +446,8 @@ export default function PurchaseOrderForm() {
           <Button type="submit" variant="outline" loading={saveMutation.isPending} disabled={isSubmitting}>
             Simpan Draft
           </Button>
-          <Button type="button" onClick={handleSaveAndSend} loading={saveAndSendMutation.isPending} disabled={isSubmitting}>
-            Simpan & Kirim
+          <Button type="button" onClick={handleSavePO} loading={saveAndSendMutation.isPending} disabled={isSubmitting}>
+            Simpan PO
           </Button>
         </div>
       </form>
