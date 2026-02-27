@@ -116,6 +116,7 @@ function ActiveOpnameDetail({ opnameId, onBack }) {
   const items = opname.items || [];
   const isActive = opname.status === 'IN_PROGRESS' || opname.status === 'DRAFT';
   const cartItems = items.filter((item) => cartItemIds.has(item.id));
+  const totalChecked = items.filter((i) => i.actualStock !== null && i.actualStock !== undefined).length;
 
   return (
     <div className="space-y-4">
