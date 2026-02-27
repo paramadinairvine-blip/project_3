@@ -148,10 +148,25 @@ const create = async (data, userId) => {
     // Create unit conversions if provided
     if (units && units.length > 0) {
       for (const u of units) {
+        let unitId = u.unitId;
+        if (!unitId && u.unitName) {
+          const found = await tx.unitOfMeasure.findFirst({
+            where: { name: { equals: u.unitName, mode: 'insensitive' } },
+          });
+          if (found) {
+            unitId = found.id;
+          } else {
+            const newUnit = await tx.unitOfMeasure.create({
+              data: { name: u.unitName, abbreviation: u.unitName.toLowerCase().slice(0, 5) },
+            });
+            unitId = newUnit.id;
+          }
+        }
+        if (!unitId) continue;
         await tx.productUnit.create({
           data: {
             productId: created.id,
-            unitId: u.unitId,
+            unitId,
             conversionFactor: u.conversionFactor,
             isBaseUnit: u.isBaseUnit || false,
           },
@@ -241,10 +256,25 @@ const update = async (id, data, userId) => {
       await tx.productUnit.deleteMany({ where: { productId: id } });
       if (units.length > 0) {
         for (const u of units) {
+          let unitId = u.unitId;
+          if (!unitId && u.unitName) {
+            const found = await tx.unitOfMeasure.findFirst({
+              where: { name: { equals: u.unitName, mode: 'insensitive' } },
+            });
+            if (found) {
+              unitId = found.id;
+            } else {
+              const newUnit = await tx.unitOfMeasure.create({
+                data: { name: u.unitName, abbreviation: u.unitName.toLowerCase().slice(0, 5) },
+              });
+              unitId = newUnit.id;
+            }
+          }
+          if (!unitId) continue;
           await tx.productUnit.create({
             data: {
               productId: id,
-              unitId: u.unitId,
+              unitId,
               conversionFactor: u.conversionFactor,
               isBaseUnit: u.isBaseUnit || false,
             },
