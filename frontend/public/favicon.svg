@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <!-- Crescent moon -->
+  <path d="M30 4c-4 0-7 3-7 7s3 7 7 7c-2.5 0-5-2.5-5-7s2.5-7 5-7z" fill="#1e3a5f"/>
+  <circle cx="32" cy="8" r="1.5" fill="#1e3a5f"/>
+
+  <!-- Dome -->
+  <path d="M20 28 Q20 14 32 14 Q44 14 44 28 Z" fill="#1e3a5f"/>
+  <!-- Dome highlight -->
+  <path d="M24 26 Q24 17 32 15.5" stroke="#fff" stroke-width="1" fill="none" opacity="0.4"/>
+
+  <!-- Building body -->
+  <rect x="18" y="28" width="28" height="20" rx="1" fill="#1e3a5f"/>
+  <!-- Window -->
+  <rect x="24" y="32" width="5" height="6" rx="0.5" fill="#fff"/>
+
+  <!-- Bricks -->
+  <rect x="33" y="32" width="10" height="4" rx="0.3" fill="#2d5a8a" stroke="#fff" stroke-width="0.5"/>
+  <rect x="33" y="36" width="10" height="4" rx="0.3" fill="#2d5a8a" stroke="#fff" stroke-width="0.5"/>
+  <rect x="33" y="40" width="10" height="4" rx="0.3" fill="#2d5a8a" stroke="#fff" stroke-width="0.5"/>
+  <line x1="38" y1="32" x2="38" y2="36" stroke="#fff" stroke-width="0.5"/>
+  <line x1="36" y1="36" x2="36" y2="40" stroke="#fff" stroke-width="0.5"/>
+  <line x1="39" y1="40" x2="39" y2="44" stroke="#fff" stroke-width="0.5"/>
+
+  <!-- Ruler -->
+  <rect x="44" y="20" width="4" height="30" rx="0.5" fill="#3b82f6" transform="rotate(25 46 35)"/>
+  <line x1="46.5" y1="23" x2="48" y2="23.5" stroke="#fff" stroke-width="0.5" transform="rotate(25 46 35)"/>
+  <line x1="46.5" y1="26" x2="48" y2="26.5" stroke="#fff" stroke-width="0.5" transform="rotate(25 46 35)"/>
+  <line x1="46.5" y1="29" x2="48.5" y2="29.5" stroke="#fff" stroke-width="0.5" transform="rotate(25 46 35)"/>
+  <line x1="46.5" y1="32" x2="48" y2="32.5" stroke="#fff" stroke-width="0.5" transform="rotate(25 46 35)"/>
+  <line x1="46.5" y1="35" x2="48" y2="35.5" stroke="#fff" stroke-width="0.5" transform="rotate(25 46 35)"/>
+  <line x1="46.5" y1="38" x2="48.5" y2="38.5" stroke="#fff" stroke-width="0.5" transform="rotate(25 46 35)"/>
+  <line x1="46.5" y1="41" x2="48" y2="41.5" stroke="#fff" stroke-width="0.5" transform="rotate(25 46 35)"/>
+  <line x1="46.5" y1="44" x2="48" y2="44.5" stroke="#fff" stroke-width="0.5" transform="rotate(25 46 35)"/>
+
+  <!-- Ground -->
+  <ellipse cx="28" cy="49" rx="16" ry="2" fill="#1e3a5f" opacity="0.3"/>
+</svg>
