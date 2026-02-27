@@ -186,8 +186,15 @@ export default function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose
   const handleLogout = async () => {
     setProfileOpen(false);
     onMobileClose?.();
-    await logout();
-    navigate('/login');
+    try {
+      await logout();
+    } catch {
+      // Force clear even if API call fails
+      localStorage.removeItem('accessToken');
+      localStorage.removeItem('refreshToken');
+      localStorage.removeItem('user');
+    }
+    window.location.href = '/login';
   };
 
   const sidebarContent = (
