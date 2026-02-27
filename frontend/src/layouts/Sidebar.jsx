@@ -10,6 +10,7 @@ import {
   HiChartBar,
   HiUsers,
   HiClipboardList,
+  HiCog,
   HiChevronDown,
   HiChevronRight,
   HiX,
@@ -79,6 +80,14 @@ const menuItems = [
     path: '/audit-log',
     icon: HiClipboardList,
     roles: [ROLES.ADMIN],
+  },
+  {
+    label: 'Setting',
+    icon: HiCog,
+    roles: [ROLES.ADMIN, ROLES.OPERATOR],
+    children: [
+      { label: 'Satuan', path: '/setting/satuan' },
+    ],
   },
 ];
 

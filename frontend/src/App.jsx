@@ -41,6 +41,8 @@ const UserList = lazy(() => import('./pages/users/UserList'));
 const UserForm = lazy(() => import('./pages/users/UserForm'));
 const AuditLog = lazy(() => import('./pages/audit/AuditLog'));
 
+const UnitList = lazy(() => import('./pages/settings/UnitList'));
+
 // ─── Suspense wrapper ────────────────────────────────
 function PageLoader() {
   return <Loading text="Memuat halaman..." className="min-h-[60vh]" />;
@@ -168,6 +170,13 @@ function App() {
           <Route path="audit-log" element={
             <ProtectedRoute allowedRoles={[ROLES.ADMIN]}>
               <AuditLog />
+            </ProtectedRoute>
+          } />
+
+          {/* Setting */}
+          <Route path="setting/satuan" element={
+            <ProtectedRoute allowedRoles={[ROLES.ADMIN, ROLES.OPERATOR]}>
+              <UnitList />
             </ProtectedRoute>
           } />
 
