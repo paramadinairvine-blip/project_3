@@ -19,8 +19,8 @@ function ActiveOpnameDetail({ opnameId, onBack }) {
   const [showComplete, setShowComplete] = useState(false);
   const [barcodeSearch, setBarcodeSearch] = useState('');
   const [nameSearch, setNameSearch] = useState('');
-  const [searchResults, setSearchResults] = useState([]);
   const [cartItemIds, setCartItemIds] = useState(new Set());
+  const [localActualStock, setLocalActualStock] = useState({});
 
   const { data: opname, isLoading } = useQuery({
     queryKey: ['opname', opnameId],
@@ -51,8 +51,14 @@ function ActiveOpnameDetail({ opnameId, onBack }) {
     onError: (err) => toast.error(getErrorMessage(err, 'Gagal menyelesaikan opname')),
   });
 
-  const handleActualStockChange = (item, value) => {
-    const actualStock = parseInt(value, 10);
+  const handleActualStockLocal = (itemId, value) => {
+    setLocalActualStock((prev) => ({ ...prev, [itemId]: value }));
+  };
+
+  const handleActualStockSave = (item) => {
+    const raw = localActualStock[item.id];
+    if (raw === undefined) return;
+    const actualStock = parseInt(raw, 10);
     if (isNaN(actualStock) || actualStock < 0) return;
     updateItemMutation.mutate({
       itemId: item.id,
@@ -69,7 +75,9 @@ function ActiveOpnameDetail({ opnameId, onBack }) {
     );
     if (found.length > 0) {
       setBarcodeSearch(barcodeValue);
-      setSearchResults(found);
+      found.forEach((f) => {
+        if (!cartItemIds.has(f.id)) addToCart(f);
+      });
       toast.success(`Ditemukan ${found.length} produk`);
     } else {
       toast.error(`Produk dengan barcode "${barcodeValue}" tidak ditemukan`);
@@ -77,24 +85,19 @@ function ActiveOpnameDetail({ opnameId, onBack }) {
   };
 
   const handleBarcodeSearchSubmit = () => {
-    if (!barcodeSearch.trim()) { setSearchResults([]); return; }
+    if (!barcodeSearch.trim()) return;
     const items = opname?.items || [];
-    const results = items.filter(
+    const found = items.filter(
       (item) => (item.product?.barcode || '').toLowerCase().includes(barcodeSearch.toLowerCase()) ||
                 (item.product?.sku || '').toLowerCase().includes(barcodeSearch.toLowerCase())
     );
-    setSearchResults(results);
-    if (results.length === 0) toast.error('Produk tidak ditemukan');
-  };
-
-  const handleNameSearchSubmit = () => {
-    if (!nameSearch.trim()) { setSearchResults([]); return; }
-    const items = opname?.items || [];
-    const results = items.filter(
-      (item) => (item.product?.name || '').toLowerCase().includes(nameSearch.toLowerCase())
-    );
-    setSearchResults(results);
-    if (results.length === 0) toast.error('Produk tidak ditemukan');
+    if (found.length > 0) {
+      found.forEach((f) => {
+        if (!cartItemIds.has(f.id)) addToCart(f);
+      });
+    } else {
+      toast.error('Produk tidak ditemukan');
+    }
   };
 
   const addToCart = (item) => {
@@ -162,57 +165,61 @@ function ActiveOpnameDetail({ opnameId, onBack }) {
             </div>
           </div>
 
-          {/* Name search */}
+          {/* Name search - live filter */}
           <div>
             <label className="block text-sm font-medium text-gray-600 mb-1">Cari nama</label>
-            <div className="flex gap-1">
+            <div className="relative">
+              <HiSearch className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
               <input
                 type="text"
                 value={nameSearch}
                 onChange={(e) => setNameSearch(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && handleNameSearchSubmit()}
-                placeholder="Cari nama produk (F3)"
-                className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="Ketik nama produk..."
+                className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-500"
               />
-              <button type="button" onClick={handleNameSearchSubmit} className="p-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
-                <HiSearch className="w-4 h-4 text-gray-500" />
-              </button>
             </div>
           </div>
 
-          {/* Search results */}
-          {searchResults.length > 0 && (
-            <div className="border border-gray-200 rounded-lg overflow-hidden">
-              <div className="bg-gray-50 px-3 py-2 text-xs font-semibold text-gray-600 border-b">
-                Hasil Pencarian ({searchResults.length})
-              </div>
-              <div className="max-h-[250px] overflow-y-auto divide-y divide-gray-50">
-                {searchResults.map((item) => {
-                  const alreadyInCart = cartItemIds.has(item.id);
-                  return (
-                    <div key={item.id} className="flex items-center justify-between px-3 py-2 hover:bg-gray-50">
-                      <div>
-                        <p className="text-sm font-medium text-gray-900">{item.product?.name}</p>
-                        <p className="text-xs text-gray-500">Stok: {item.systemStock}</p>
+          {/* Live search results */}
+          {(() => {
+            const liveResults = nameSearch.trim()
+              ? items.filter((item) => (item.product?.name || '').toLowerCase().includes(nameSearch.toLowerCase()))
+              : [];
+            return liveResults.length > 0 ? (
+              <div className="border border-gray-200 rounded-lg overflow-hidden">
+                <div className="bg-gray-50 px-3 py-2 text-xs font-semibold text-gray-600 border-b">
+                  Hasil Pencarian ({liveResults.length})
+                </div>
+                <div className="max-h-[250px] overflow-y-auto divide-y divide-gray-50">
+                  {liveResults.map((item) => {
+                    const alreadyInCart = cartItemIds.has(item.id);
+                    return (
+                      <div key={item.id} className="flex items-center justify-between px-3 py-2 hover:bg-gray-50">
+                        <div>
+                          <p className="text-sm font-medium text-gray-900">{item.product?.name}</p>
+                          <p className="text-xs text-gray-500">Stok: {item.systemStock}</p>
+                        </div>
+                        {alreadyInCart ? (
+                          <span className="text-xs text-green-600 font-medium">Sudah ditambah</span>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => addToCart(item)}
+                            className="p-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                            title="Tambah ke keranjang"
+                          >
+                            <HiPlus className="w-4 h-4" />
+                          </button>
+                        )}
                       </div>
-                      {alreadyInCart ? (
-                        <span className="text-xs text-green-600 font-medium">Sudah ditambah</span>
-                      ) : (
-                        <button
-                          type="button"
-                          onClick={() => addToCart(item)}
-                          className="p-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-                          title="Tambah ke keranjang"
-                        >
-                          <HiPlus className="w-4 h-4" />
-                        </button>
-                      )}
-                    </div>
-                  );
-                })}
+                    );
+                  })}
+                </div>
               </div>
-            </div>
-          )}
+            ) : nameSearch.trim() ? (
+              <p className="text-xs text-gray-400 italic">Tidak ada produk yang cocok</p>
+            ) : null;
+          })()}
         </div>
 
         {/* Right: Cart table */}
@@ -250,8 +257,10 @@ function ActiveOpnameDetail({ opnameId, onBack }) {
                             <input
                               type="number"
                               min="0"
-                              value={item.actualStock ?? ''}
-                              onChange={(e) => handleActualStockChange(item, e.target.value)}
+                              value={localActualStock[item.id] !== undefined ? localActualStock[item.id] : (item.actualStock ?? '')}
+                              onChange={(e) => handleActualStockLocal(item.id, e.target.value)}
+                              onBlur={() => handleActualStockSave(item)}
+                              onKeyDown={(e) => { if (e.key === 'Enter') { e.target.blur(); } }}
                               className="w-20 px-2 py-1 border border-gray-300 rounded text-sm text-center outline-none focus:ring-2 focus:ring-blue-500"
                               placeholder="—"
                             />
