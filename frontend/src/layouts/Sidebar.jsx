@@ -167,13 +167,10 @@ function MenuItem({ item, collapsed, closeMobile }) {
 
 export default function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose }) {
   const { user } = useAuth();
+  const [profileOpen, setProfileOpen] = useState(false);
 
-  const handleLogout = (e) => {
-    e.stopPropagation();
-    e.preventDefault();
-    // Clear everything immediately
+  const handleLogout = () => {
     localStorage.clear();
-    // Hard redirect - most reliable way
     window.location.replace('/login');
   };
 
@@ -210,10 +207,13 @@ export default function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose
         </button>
       </div>
 
-      {/* User Profile + Logout */}
+      {/* User Profile + Submenu */}
       {user && (
         <div className="border-b border-gray-700">
-          <div className="px-4 py-4">
+          <button
+            onClick={() => setProfileOpen(!profileOpen)}
+            className="w-full px-4 py-4 hover:bg-gray-800 transition-colors cursor-pointer"
+          >
             {!collapsed ? (
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center text-white text-sm font-bold flex-shrink-0">
@@ -225,29 +225,33 @@ export default function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose
                     {ROLE_LABELS[user.role] || user.role}
                   </p>
                 </div>
-                <button
-                  onClick={handleLogout}
-                  className="p-2 rounded-lg text-gray-400 hover:bg-red-600/20 hover:text-red-400 transition-colors flex-shrink-0"
-                  title="Logout"
-                >
-                  <HiLogout className="w-5 h-5" />
-                </button>
+                <HiChevronDown
+                  className={`w-4 h-4 text-gray-400 transition-transform duration-200 flex-shrink-0 ${profileOpen ? 'rotate-180' : ''}`}
+                />
               </div>
             ) : (
-              <div className="flex flex-col items-center gap-2">
+              <div className="flex justify-center">
                 <div className="w-9 h-9 rounded-full bg-blue-600 flex items-center justify-center text-white text-xs font-bold">
                   {user.fullName?.charAt(0)?.toUpperCase()}
                 </div>
-                <button
-                  onClick={handleLogout}
-                  className="p-1.5 rounded-lg text-gray-400 hover:bg-red-600/20 hover:text-red-400 transition-colors"
-                  title="Logout"
-                >
-                  <HiLogout className="w-4 h-4" />
-                </button>
               </div>
             )}
-          </div>
+          </button>
+
+          {/* Profile Submenu */}
+          {profileOpen && !collapsed && (
+            <div className="bg-gray-950/50">
+              <button
+                onClick={handleLogout}
+                className="w-full flex items-center gap-3 pl-8 pr-4 py-2.5 text-sm text-gray-400 hover:bg-red-600/20 hover:text-red-400 transition-colors"
+              >
+                <span className="w-7 h-7 rounded-md flex items-center justify-center bg-gray-700 text-gray-300">
+                  <HiLogout className="w-3.5 h-3.5" />
+                </span>
+                <span>Logout</span>
+              </button>
+            </div>
+          )}
         </div>
       )}
 
