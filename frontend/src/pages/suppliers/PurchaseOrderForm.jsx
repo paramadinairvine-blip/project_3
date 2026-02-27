@@ -183,7 +183,14 @@ export default function PurchaseOrderForm() {
       queryClient.invalidateQueries({ queryKey: ['purchase-orders'] });
       navigate('/purchase-order');
     },
-    onError: (err) => toast.error(getErrorMessage(err, 'Gagal menyimpan PO')),
+    onError: (err) => {
+      const fieldErrors = err?.response?.data?.errors;
+      if (Array.isArray(fieldErrors) && fieldErrors.length > 0) {
+        fieldErrors.forEach((e) => toast.error(`${e.field}: ${e.message}`));
+      } else {
+        toast.error(getErrorMessage(err, 'Gagal menyimpan PO'));
+      }
+    },
   });
 
   const saveAndSendMutation = useMutation({
@@ -203,7 +210,14 @@ export default function PurchaseOrderForm() {
       queryClient.invalidateQueries({ queryKey: ['purchase-orders'] });
       navigate('/purchase-order');
     },
-    onError: (err) => toast.error(getErrorMessage(err, 'Gagal menyimpan & mengirim PO')),
+    onError: (err) => {
+      const fieldErrors = err?.response?.data?.errors;
+      if (Array.isArray(fieldErrors) && fieldErrors.length > 0) {
+        fieldErrors.forEach((e) => toast.error(`${e.field}: ${e.message}`));
+      } else {
+        toast.error(getErrorMessage(err, 'Gagal menyimpan & mengirim PO'));
+      }
+    },
   });
 
   const validate = () => {
