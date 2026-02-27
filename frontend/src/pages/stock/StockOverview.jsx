@@ -69,9 +69,11 @@ function MovementHistoryModal({ product, onClose }) {
 export default function StockOverview() {
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
+  const [barcode, setBarcode] = useState('');
   const [categoryId, setCategoryId] = useState('');
-  const [date, setDate] = useState('');
-  const [appliedFilters, setAppliedFilters] = useState({ search: '', categoryId: '', date: '' });
+  const [dateFrom, setDateFrom] = useState('');
+  const [dateTo, setDateTo] = useState('');
+  const [appliedFilters, setAppliedFilters] = useState({ search: '', barcode: '', categoryId: '', dateFrom: '', dateTo: '' });
   const [historyProduct, setHistoryProduct] = useState(null);
 
   const { data: categories } = useQuery({
@@ -87,8 +89,10 @@ export default function StockOverview() {
     queryFn: async () => {
       const params = { page, limit: 20 };
       if (appliedFilters.search) params.search = appliedFilters.search;
+      if (appliedFilters.barcode) params.barcode = appliedFilters.barcode;
       if (appliedFilters.categoryId) params.categoryId = appliedFilters.categoryId;
-      if (appliedFilters.date) params.date = appliedFilters.date;
+      if (appliedFilters.dateFrom) params.dateFrom = appliedFilters.dateFrom;
+      if (appliedFilters.dateTo) params.dateTo = appliedFilters.dateTo;
       const { data: res } = await stockAPI.getAll(params);
       return res;
     },
@@ -98,7 +102,7 @@ export default function StockOverview() {
   const pagination = data?.pagination || {};
 
   const applyFilters = () => {
-    setAppliedFilters({ search, categoryId, date });
+    setAppliedFilters({ search, barcode, categoryId, dateFrom, dateTo });
     setPage(1);
   };
 
@@ -188,19 +192,31 @@ export default function StockOverview() {
       </div>
 
       {/* Filter Bar */}
-      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-        <input
-          type="date"
-          value={date}
-          onChange={(e) => setDate(e.target.value)}
-          onKeyDown={handleKeyDown}
-          className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 outline-none"
-          placeholder="Tanggal"
-        />
+      <div className="flex flex-col lg:flex-row items-stretch lg:items-center gap-3">
+        {/* Date Range */}
+        <div className="flex items-center gap-2">
+          <input
+            type="date"
+            value={dateFrom}
+            onChange={(e) => setDateFrom(e.target.value)}
+            onKeyDown={handleKeyDown}
+            className="w-36 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 outline-none"
+            title="Dari tanggal"
+          />
+          <span className="text-gray-400 text-sm">—</span>
+          <input
+            type="date"
+            value={dateTo}
+            onChange={(e) => setDateTo(e.target.value)}
+            onKeyDown={handleKeyDown}
+            className="w-36 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 outline-none"
+            title="Sampai tanggal"
+          />
+        </div>
         <select
           value={categoryId}
           onChange={(e) => setCategoryId(e.target.value)}
-          className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 outline-none bg-white"
+          className="w-40 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 outline-none bg-white"
         >
           <option value="">Semua Kategori</option>
           {categoryOptions.map((cat) => (
@@ -213,7 +229,15 @@ export default function StockOverview() {
           onChange={(e) => setSearch(e.target.value)}
           onKeyDown={handleKeyDown}
           placeholder="Cari produk"
-          className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 outline-none"
+          className="w-36 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 outline-none"
+        />
+        <input
+          type="text"
+          value={barcode}
+          onChange={(e) => setBarcode(e.target.value)}
+          onKeyDown={handleKeyDown}
+          placeholder="Cari barcode"
+          className="w-36 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 outline-none"
         />
         <button
           type="button"
