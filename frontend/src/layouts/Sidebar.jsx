@@ -1,5 +1,5 @@
-import { NavLink, useLocation, useNavigate } from 'react-router-dom';
-import { useState, useRef, useEffect } from 'react';
+import { NavLink, useLocation } from 'react-router-dom';
+import { useState } from 'react';
 import {
   HiHome,
   HiCube,
@@ -10,7 +10,6 @@ import {
   HiChevronDown,
   HiX,
   HiLogout,
-  HiUser,
   HiSupport,
 } from 'react-icons/hi';
 import useAuth from '../hooks/useAuth';
@@ -167,33 +166,15 @@ function MenuItem({ item, collapsed, closeMobile }) {
 }
 
 export default function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose }) {
-  const { user, logout } = useAuth();
-  const navigate = useNavigate();
-  const [profileOpen, setProfileOpen] = useState(false);
-  const profileRef = useRef(null);
+  const { user } = useAuth();
 
-  // Close dropdown when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (e) => {
-      if (profileRef.current && !profileRef.current.contains(e.target)) {
-        setProfileOpen(false);
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
-
-  const handleLogout = () => {
-    setProfileOpen(false);
-    onMobileClose?.();
-    // Clear local state immediately, don't wait for API
-    localStorage.removeItem('accessToken');
-    localStorage.removeItem('refreshToken');
-    localStorage.removeItem('user');
-    // Fire-and-forget API call to revoke token on server
-    logout().catch(() => {});
-    // Redirect immediately
-    window.location.href = '/login';
+  const handleLogout = (e) => {
+    e.stopPropagation();
+    e.preventDefault();
+    // Clear everything immediately
+    localStorage.clear();
+    // Hard redirect - most reliable way
+    window.location.replace('/login');
   };
 
   const sidebarContent = (
@@ -229,13 +210,10 @@ export default function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose
         </button>
       </div>
 
-      {/* User Profile — Click to toggle dropdown */}
+      {/* User Profile + Logout */}
       {user && (
-        <div className="border-b border-gray-700 relative" ref={profileRef}>
-          <button
-            onClick={() => setProfileOpen(!profileOpen)}
-            className="w-full px-4 py-4 hover:bg-gray-800 transition-colors cursor-pointer"
-          >
+        <div className="border-b border-gray-700">
+          <div className="px-4 py-4">
             {!collapsed ? (
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center text-white text-sm font-bold flex-shrink-0">
@@ -247,33 +225,29 @@ export default function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose
                     {ROLE_LABELS[user.role] || user.role}
                   </p>
                 </div>
-                <HiChevronDown
-                  className={`w-4 h-4 text-gray-400 transition-transform duration-200 flex-shrink-0 ${profileOpen ? 'rotate-180' : ''}`}
-                />
+                <button
+                  onClick={handleLogout}
+                  className="p-2 rounded-lg text-gray-400 hover:bg-red-600/20 hover:text-red-400 transition-colors flex-shrink-0"
+                  title="Logout"
+                >
+                  <HiLogout className="w-5 h-5" />
+                </button>
               </div>
             ) : (
-              <div className="flex justify-center">
+              <div className="flex flex-col items-center gap-2">
                 <div className="w-9 h-9 rounded-full bg-blue-600 flex items-center justify-center text-white text-xs font-bold">
                   {user.fullName?.charAt(0)?.toUpperCase()}
                 </div>
+                <button
+                  onClick={handleLogout}
+                  className="p-1.5 rounded-lg text-gray-400 hover:bg-red-600/20 hover:text-red-400 transition-colors"
+                  title="Logout"
+                >
+                  <HiLogout className="w-4 h-4" />
+                </button>
               </div>
             )}
-          </button>
-
-          {/* Profile Dropdown Menu */}
-          {profileOpen && !collapsed && (
-            <div className="bg-gray-950/60">
-              <button
-                onClick={handleLogout}
-                className="w-full flex items-center gap-3 pl-8 pr-4 py-2.5 text-sm text-gray-400 hover:bg-red-600/20 hover:text-red-400 transition-colors"
-              >
-                <span className="w-7 h-7 rounded-md flex items-center justify-center text-[11px] font-bold bg-gray-700 text-gray-300">
-                  <HiLogout className="w-3.5 h-3.5" />
-                </span>
-                <span>Logout</span>
-              </button>
-            </div>
-          )}
+          </div>
         </div>
       )}
 
