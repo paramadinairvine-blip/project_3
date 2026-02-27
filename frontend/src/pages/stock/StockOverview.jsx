@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { HiEye, HiFilter } from 'react-icons/hi';
 import { stockAPI, categoryAPI } from '../../api/endpoints';
-import { Table, Badge, Pagination, Modal, Loading } from '../../components/common';
+import { Table, Badge, Pagination, Modal, Loading, DateRangePicker } from '../../components/common';
 import { formatTanggalWaktu } from '../../utils/formatDate';
 import { MOVEMENT_TYPE_LABELS, MOVEMENT_TYPE_COLORS } from '../../utils/constants';
 
@@ -194,25 +194,11 @@ export default function StockOverview() {
       {/* Filter Bar */}
       <div className="flex flex-col lg:flex-row items-stretch lg:items-center gap-3">
         {/* Date Range */}
-        <div className="flex items-center gap-2">
-          <input
-            type="date"
-            value={dateFrom}
-            onChange={(e) => setDateFrom(e.target.value)}
-            onKeyDown={handleKeyDown}
-            className="w-36 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 outline-none"
-            title="Dari tanggal"
-          />
-          <span className="text-gray-400 text-sm">—</span>
-          <input
-            type="date"
-            value={dateTo}
-            onChange={(e) => setDateTo(e.target.value)}
-            onKeyDown={handleKeyDown}
-            className="w-36 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 outline-none"
-            title="Sampai tanggal"
-          />
-        </div>
+        <DateRangePicker
+          dateFrom={dateFrom}
+          dateTo={dateTo}
+          onChange={(from, to) => { setDateFrom(from); setDateTo(to); }}
+        />
         <select
           value={categoryId}
           onChange={(e) => setCategoryId(e.target.value)}
