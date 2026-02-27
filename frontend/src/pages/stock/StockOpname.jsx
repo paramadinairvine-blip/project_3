@@ -4,7 +4,7 @@ import { HiPlus, HiEye, HiCheck, HiQrcode } from 'react-icons/hi';
 import toast from 'react-hot-toast';
 import { stockAPI } from '../../api/endpoints';
 import { getErrorMessage } from '../../utils/handleError';
-import { Table, Badge, Button, Modal, Loading, Card, Input, Breadcrumb } from '../../components/common';
+import { Table, Badge, Button, Modal, Loading, Card, Input } from '../../components/common';
 import BarcodeScanner from '../../components/BarcodeScanner';
 import { formatTanggalWaktu } from '../../utils/formatDate';
 import { OPNAME_STATUS_LABELS, OPNAME_STATUS_COLORS } from '../../utils/constants';
@@ -427,8 +427,6 @@ export default function StockOpname() {
 
   return (
     <div className="space-y-6">
-      <Breadcrumb items={[{ label: 'Stok', to: '/stok' }, { label: 'Opname Stok' }]} className="mb-4" />
-
       {/* Header */}
       <div>
         <h1 className="text-2xl font-bold text-gray-900">Stock Opname</h1>

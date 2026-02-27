@@ -5,7 +5,7 @@ import { HiPlus, HiPencil, HiTrash, HiEye } from 'react-icons/hi';
 import toast from 'react-hot-toast';
 import { projectAPI } from '../../api/endpoints';
 import { getErrorMessage } from '../../utils/handleError';
-import { Badge, Breadcrumb, Button, Modal, Loading } from '../../components/common';
+import { Badge, Button, Modal, Loading } from '../../components/common';
 import { formatRupiah } from '../../utils/formatCurrency';
 import { formatTanggal } from '../../utils/formatDate';
 import { PROJECT_STATUS, PROJECT_STATUS_LABELS, PROJECT_STATUS_COLORS } from '../../utils/constants';
@@ -149,8 +149,6 @@ export default function ProjectList() {
 
   return (
     <div className="space-y-6">
-      <Breadcrumb items={[{ label: 'Proyek' }]} className="mb-4" />
-
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>

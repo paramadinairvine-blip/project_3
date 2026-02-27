@@ -5,7 +5,7 @@ import { HiPlus, HiTrash, HiQrcode, HiArrowLeft } from 'react-icons/hi';
 import toast from 'react-hot-toast';
 import { transactionAPI, productAPI, unitAPI } from '../../api/endpoints';
 import { getErrorMessage } from '../../utils/handleError';
-import { Card, Button, Input, Select, Breadcrumb } from '../../components/common';
+import { Card, Button, Input, Select } from '../../components/common';
 import BarcodeScanner from '../../components/BarcodeScanner';
 import { formatRupiah } from '../../utils/formatCurrency';
 import { TRANSACTION_TYPES, TRANSACTION_TYPE_LABELS } from '../../utils/constants';
@@ -272,8 +272,6 @@ export default function TransactionForm() {
 
   return (
     <div className="max-w-5xl mx-auto space-y-6">
-      <Breadcrumb items={[{ label: 'Transaksi', to: '/transaksi' }, { label: 'Transaksi Baru' }]} className="mb-4" />
-
       {/* Header */}
       <div className="flex items-center gap-3">
         <Button variant="outline" size="sm" icon={HiArrowLeft} onClick={() => navigate('/transaksi')}>Kembali</Button>

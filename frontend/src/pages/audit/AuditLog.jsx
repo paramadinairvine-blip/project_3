@@ -4,7 +4,7 @@ import { HiEye, HiRewind, HiTable } from 'react-icons/hi';
 import toast from 'react-hot-toast';
 import { auditLogAPI, userAPI } from '../../api/endpoints';
 import { getErrorMessage } from '../../utils/handleError';
-import { Table, Badge, Button, Select, Input, Pagination, Modal, Loading, Breadcrumb } from '../../components/common';
+import { Table, Badge, Button, Select, Input, Pagination, Modal, Loading } from '../../components/common';
 import { formatTanggalWaktu } from '../../utils/formatDate';
 import { exportToExcel } from '../../utils/exportExcel';
 
@@ -310,8 +310,6 @@ export default function AuditLog() {
 
   return (
     <div className="space-y-6">
-      <Breadcrumb items={[{ label: 'Audit Log' }]} className="mb-4" />
-
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>

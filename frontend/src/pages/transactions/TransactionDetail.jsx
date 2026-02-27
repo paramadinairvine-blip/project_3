@@ -5,7 +5,7 @@ import toast from 'react-hot-toast';
 import { useState } from 'react';
 import { transactionAPI } from '../../api/endpoints';
 import { getErrorMessage } from '../../utils/handleError';
-import { Card, Badge, Button, Loading, Table, Modal, Breadcrumb } from '../../components/common';
+import { Card, Badge, Button, Loading, Table, Modal } from '../../components/common';
 import { formatRupiah } from '../../utils/formatCurrency';
 import { formatTanggalWaktu, formatTanggalPanjang } from '../../utils/formatDate';
 import {
@@ -90,8 +90,6 @@ export default function TransactionDetail() {
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
-      <Breadcrumb items={[{ label: 'Transaksi', to: '/transaksi' }, { label: trx ? trx.transactionNumber : 'Detail' }]} className="mb-4" />
-
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div className="flex items-center gap-3">

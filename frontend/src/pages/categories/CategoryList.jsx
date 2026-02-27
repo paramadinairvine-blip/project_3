@@ -4,7 +4,7 @@ import { HiPlus, HiPencil, HiTrash, HiChevronDown, HiChevronRight } from 'react-
 import toast from 'react-hot-toast';
 import { categoryAPI } from '../../api/endpoints';
 import { getErrorMessage } from '../../utils/handleError';
-import { Button, Badge, Modal, Loading, Breadcrumb } from '../../components/common';
+import { Button, Badge, Modal, Loading } from '../../components/common';
 import CategoryForm from './CategoryForm';
 import useAuth from '../../hooks/useAuth';
 
@@ -154,8 +154,6 @@ export default function CategoryList() {
 
   return (
     <div className="space-y-6">
-      <Breadcrumb items={[{ label: 'Produk', to: '/produk' }, { label: 'Kategori' }]} className="mb-4" />
-
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>

@@ -4,7 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { HiPlus, HiTrash, HiUpload, HiArrowLeft, HiRefresh } from 'react-icons/hi';
 import toast from 'react-hot-toast';
 import { productAPI, categoryAPI, unitAPI } from '../../api/endpoints';
-import { Button, Input, Select, Card, Breadcrumb } from '../../components/common';
+import { Button, Input, Select, Card } from '../../components/common';
 import { getErrorMessage } from '../../utils/handleError';
 import useUnsavedChanges from '../../hooks/useUnsavedChanges';
 
@@ -220,8 +220,6 @@ export default function ProductForm() {
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
-      <Breadcrumb items={[{ label: 'Produk', to: '/produk' }, { label: isEdit ? 'Edit Produk' : 'Tambah Produk' }]} className="mb-4" />
-
       <div className="flex items-center gap-3">
         <Button variant="outline" size="sm" icon={HiArrowLeft} onClick={() => navigate('/produk')}>Kembali</Button>
         <div>

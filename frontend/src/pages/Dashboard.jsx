@@ -13,7 +13,7 @@ import {
   BarChart, Bar,
 } from 'recharts';
 import { reportAPI } from '../api/endpoints';
-import { Card, Breadcrumb } from '../components/common';
+import { Card } from '../components/common';
 import { formatRupiah } from '../utils/formatCurrency';
 
 // ─── Helpers ──────────────────────────────────────────
@@ -168,7 +168,6 @@ export default function Dashboard() {
   if (isLoading) {
     return (
       <div className="space-y-6">
-        <Breadcrumb items={[{ label: 'Dashboard' }]} className="mb-4" />
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {[1, 2, 3, 4].map((i) => <StatCardSkeleton key={i} />)}
         </div>
@@ -182,8 +181,6 @@ export default function Dashboard() {
 
   return (
     <div className="space-y-6">
-      <Breadcrumb items={[{ label: 'Dashboard' }]} className="mb-4" />
-
       {/* Header + Date Filter */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>

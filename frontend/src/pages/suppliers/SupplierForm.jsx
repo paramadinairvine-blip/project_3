@@ -5,7 +5,7 @@ import { HiArrowLeft } from 'react-icons/hi';
 import toast from 'react-hot-toast';
 import { supplierAPI } from '../../api/endpoints';
 import { getErrorMessage, getFieldErrors } from '../../utils/handleError';
-import { Card, Button, Input, Breadcrumb } from '../../components/common';
+import { Card, Button, Input } from '../../components/common';
 import useUnsavedChanges from '../../hooks/useUnsavedChanges';
 
 export default function SupplierForm() {
@@ -92,8 +92,6 @@ export default function SupplierForm() {
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">
-      <Breadcrumb items={[{ label: 'Supplier', to: '/supplier' }, { label: isEdit ? 'Edit Supplier' : 'Tambah Supplier' }]} className="mb-4" />
-
       {/* Header */}
       <div className="flex items-center gap-3">
         <button

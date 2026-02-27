@@ -6,7 +6,7 @@ import {
   HiPrinter, HiDocumentDownload, HiTable,
 } from 'react-icons/hi';
 import { reportAPI } from '../../api/endpoints';
-import { Card, Badge, Button, Input, Select, Loading, Table, Breadcrumb, Skeleton } from '../../components/common';
+import { Card, Badge, Button, Input, Select, Loading, Table, Skeleton } from '../../components/common';
 import { formatRupiah } from '../../utils/formatCurrency';
 import { formatTanggal } from '../../utils/formatDate';
 import { TRANSACTION_TYPE_LABELS, TRANSACTION_TYPE_COLORS } from '../../utils/constants';
@@ -111,8 +111,6 @@ export default function FinancialReport() {
 
   return (
     <div className="space-y-6">
-      <Breadcrumb items={[{ label: 'Laporan' }, { label: 'Keuangan' }]} className="mb-4" />
-
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
