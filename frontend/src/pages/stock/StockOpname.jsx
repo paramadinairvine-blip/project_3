@@ -17,9 +17,10 @@ function ActiveOpnameDetail({ opnameId, onBack }) {
 
   const [showScanner, setShowScanner] = useState(false);
   const [showComplete, setShowComplete] = useState(false);
-  const [highlightId, setHighlightId] = useState(null);
   const [barcodeSearch, setBarcodeSearch] = useState('');
   const [nameSearch, setNameSearch] = useState('');
+  const [searchResults, setSearchResults] = useState([]);
+  const [cartItemIds, setCartItemIds] = useState(new Set());
 
   const { data: opname, isLoading } = useQuery({
     queryKey: ['opname', opnameId],
@@ -62,48 +63,51 @@ function ActiveOpnameDetail({ opnameId, onBack }) {
   const handleBarcodeScan = (barcodeValue) => {
     setShowScanner(false);
     const items = opname?.items || [];
-    const found = items.find(
-      (item) => item.product?.barcode === barcodeValue || item.product?.sku === barcodeValue
+    const found = items.filter(
+      (item) => (item.product?.barcode || '').toLowerCase() === barcodeValue.toLowerCase() ||
+                (item.product?.sku || '').toLowerCase() === barcodeValue.toLowerCase()
     );
-    if (found) {
-      setHighlightId(found.id);
+    if (found.length > 0) {
       setBarcodeSearch(barcodeValue);
-      setTimeout(() => setHighlightId(null), 3000);
-      toast.success(`Ditemukan: ${found.product?.name}`);
+      setSearchResults(found);
+      toast.success(`Ditemukan ${found.length} produk`);
     } else {
       toast.error(`Produk dengan barcode "${barcodeValue}" tidak ditemukan`);
     }
   };
 
   const handleBarcodeSearchSubmit = () => {
-    if (!barcodeSearch.trim()) return;
+    if (!barcodeSearch.trim()) { setSearchResults([]); return; }
     const items = opname?.items || [];
-    const found = items.find(
-      (item) => (item.product?.barcode || '').toLowerCase() === barcodeSearch.toLowerCase() ||
-                (item.product?.sku || '').toLowerCase() === barcodeSearch.toLowerCase()
+    const results = items.filter(
+      (item) => (item.product?.barcode || '').toLowerCase().includes(barcodeSearch.toLowerCase()) ||
+                (item.product?.sku || '').toLowerCase().includes(barcodeSearch.toLowerCase())
     );
-    if (found) {
-      setHighlightId(found.id);
-      setTimeout(() => setHighlightId(null), 3000);
-      toast.success(`Ditemukan: ${found.product?.name}`);
-    } else {
-      toast.error('Produk tidak ditemukan');
-    }
+    setSearchResults(results);
+    if (results.length === 0) toast.error('Produk tidak ditemukan');
   };
 
   const handleNameSearchSubmit = () => {
-    if (!nameSearch.trim()) return;
+    if (!nameSearch.trim()) { setSearchResults([]); return; }
     const items = opname?.items || [];
-    const found = items.find(
+    const results = items.filter(
       (item) => (item.product?.name || '').toLowerCase().includes(nameSearch.toLowerCase())
     );
-    if (found) {
-      setHighlightId(found.id);
-      setTimeout(() => setHighlightId(null), 3000);
-      toast.success(`Ditemukan: ${found.product?.name}`);
-    } else {
-      toast.error('Produk tidak ditemukan');
-    }
+    setSearchResults(results);
+    if (results.length === 0) toast.error('Produk tidak ditemukan');
+  };
+
+  const addToCart = (item) => {
+    setCartItemIds((prev) => new Set([...prev, item.id]));
+    toast.success(`${item.product?.name} ditambahkan ke keranjang`);
+  };
+
+  const removeFromCart = (itemId) => {
+    setCartItemIds((prev) => {
+      const next = new Set(prev);
+      next.delete(itemId);
+      return next;
+    });
   };
 
   if (isLoading) return <Loading text="Memuat data opname..." />;
@@ -111,18 +115,7 @@ function ActiveOpnameDetail({ opnameId, onBack }) {
 
   const items = opname.items || [];
   const isActive = opname.status === 'IN_PROGRESS' || opname.status === 'DRAFT';
-
-  // Filter items based on search
-  const filterText = nameSearch || barcodeSearch;
-  const filteredItems = filterText
-    ? items.filter((item) =>
-        (item.product?.name || '').toLowerCase().includes(filterText.toLowerCase()) ||
-        (item.product?.sku || '').toLowerCase().includes(filterText.toLowerCase()) ||
-        (item.product?.barcode || '').toLowerCase().includes(filterText.toLowerCase())
-      )
-    : items;
-
-  const totalChecked = items.filter((i) => i.actualStock !== null && i.actualStock !== undefined).length;
+  const cartItems = items.filter((item) => cartItemIds.has(item.id));
 
   return (
     <div className="space-y-4">
@@ -159,18 +152,10 @@ function ActiveOpnameDetail({ opnameId, onBack }) {
                 placeholder="Cari Barcode (F2)"
                 className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-500"
               />
-              <button
-                type="button"
-                onClick={handleBarcodeSearchSubmit}
-                className="p-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
-              >
+              <button type="button" onClick={handleBarcodeSearchSubmit} className="p-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
                 <HiSearch className="w-4 h-4 text-gray-500" />
               </button>
-              <button
-                type="button"
-                onClick={() => setShowScanner(true)}
-                className="p-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
-              >
+              <button type="button" onClick={() => setShowScanner(true)} className="p-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
                 <HiCamera className="w-4 h-4 text-gray-500" />
               </button>
             </div>
@@ -188,25 +173,53 @@ function ActiveOpnameDetail({ opnameId, onBack }) {
                 placeholder="Cari nama produk (F3)"
                 className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-500"
               />
-              <button
-                type="button"
-                onClick={handleNameSearchSubmit}
-                className="p-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
-              >
+              <button type="button" onClick={handleNameSearchSubmit} className="p-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
                 <HiSearch className="w-4 h-4 text-gray-500" />
               </button>
             </div>
           </div>
 
-          {/* Summary */}
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-sm space-y-1">
-            <p className="text-blue-800">Item dicek: <span className="font-semibold">{totalChecked} / {items.length}</span></p>
-          </div>
+          {/* Search results */}
+          {searchResults.length > 0 && (
+            <div className="border border-gray-200 rounded-lg overflow-hidden">
+              <div className="bg-gray-50 px-3 py-2 text-xs font-semibold text-gray-600 border-b">
+                Hasil Pencarian ({searchResults.length})
+              </div>
+              <div className="max-h-[250px] overflow-y-auto divide-y divide-gray-50">
+                {searchResults.map((item) => {
+                  const alreadyInCart = cartItemIds.has(item.id);
+                  return (
+                    <div key={item.id} className="flex items-center justify-between px-3 py-2 hover:bg-gray-50">
+                      <div>
+                        <p className="text-sm font-medium text-gray-900">{item.product?.name}</p>
+                        <p className="text-xs text-gray-500">Stok: {item.systemStock}</p>
+                      </div>
+                      {alreadyInCart ? (
+                        <span className="text-xs text-green-600 font-medium">Sudah ditambah</span>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => addToCart(item)}
+                          className="p-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                          title="Tambah ke keranjang"
+                        >
+                          <HiPlus className="w-4 h-4" />
+                        </button>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
         </div>
 
-        {/* Right: Data table */}
+        {/* Right: Cart table */}
         <div className="lg:col-span-3">
-          <h3 className="text-base font-semibold text-gray-800 mb-2">Keranjang Data SO</h3>
+          <h3 className="text-base font-semibold text-gray-800 mb-2">
+            Keranjang Data SO
+            {cartItems.length > 0 && <span className="ml-2 text-sm font-normal text-gray-500">({cartItems.length} item)</span>}
+          </h3>
           <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
             <div className="overflow-x-auto max-h-[500px] overflow-y-auto">
               <table className="w-full text-sm">
@@ -216,17 +229,17 @@ function ActiveOpnameDetail({ opnameId, onBack }) {
                     <th className="text-center px-4 py-2.5 text-xs font-semibold text-blue-700 w-24">STOK SISTEM</th>
                     <th className="text-center px-4 py-2.5 text-xs font-semibold text-blue-700 w-28">STOK AKTUAL</th>
                     <th className="text-center px-4 py-2.5 text-xs font-semibold text-blue-700 w-20">SELISIH</th>
+                    <th className="w-10"></th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-50">
-                  {filteredItems.map((item) => {
+                  {cartItems.map((item) => {
                     const diff = (item.actualStock !== null && item.actualStock !== undefined)
                       ? item.actualStock - item.systemStock
                       : null;
-                    const isHighlighted = highlightId === item.id;
 
                     return (
-                      <tr key={item.id} className={`transition-colors ${isHighlighted ? 'bg-yellow-50' : 'hover:bg-gray-50/50'}`}>
+                      <tr key={item.id} className="hover:bg-gray-50/50 transition-colors">
                         <td className="px-4 py-2.5">
                           <p className="font-medium text-gray-900 text-sm">{item.product?.name || '-'}</p>
                         </td>
@@ -254,13 +267,23 @@ function ActiveOpnameDetail({ opnameId, onBack }) {
                             <span className="text-gray-300">—</span>
                           )}
                         </td>
+                        <td className="text-center px-4 py-2.5">
+                          <button
+                            type="button"
+                            onClick={() => removeFromCart(item.id)}
+                            className="text-red-400 hover:text-red-600 transition-colors"
+                            title="Hapus dari keranjang"
+                          >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                          </button>
+                        </td>
                       </tr>
                     );
                   })}
-                  {filteredItems.length === 0 && (
+                  {cartItems.length === 0 && (
                     <tr>
-                      <td colSpan={4} className="px-4 py-8 text-center text-gray-400 text-sm">
-                        {filterText ? 'Produk tidak ditemukan' : 'Tidak ada item'}
+                      <td colSpan={5} className="px-4 py-8 text-center text-gray-400 text-sm">
+                        Cari produk lalu klik + untuk menambahkan ke keranjang
                       </td>
                     </tr>
                   )}
