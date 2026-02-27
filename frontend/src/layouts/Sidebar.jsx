@@ -183,17 +183,16 @@ export default function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const handleLogout = async () => {
+  const handleLogout = () => {
     setProfileOpen(false);
     onMobileClose?.();
-    try {
-      await logout();
-    } catch {
-      // Force clear even if API call fails
-      localStorage.removeItem('accessToken');
-      localStorage.removeItem('refreshToken');
-      localStorage.removeItem('user');
-    }
+    // Clear local state immediately, don't wait for API
+    localStorage.removeItem('accessToken');
+    localStorage.removeItem('refreshToken');
+    localStorage.removeItem('user');
+    // Fire-and-forget API call to revoke token on server
+    logout().catch(() => {});
+    // Redirect immediately
     window.location.href = '/login';
   };
 
