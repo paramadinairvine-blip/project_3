@@ -31,21 +31,10 @@ export default function Login() {
         {/* Logo / Title */}
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-blue-600 mb-4">
-            <svg
-              className="w-8 h-8 text-white"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"
-              />
-            </svg>
+            <img src="/logo-white.svg" alt="Logo" className="w-10 h-10" />
           </div>
           <h1 className="text-2xl font-bold text-gray-900">Toko Material Pesantren</h1>
+          <h2 className="text-lg font-semibold text-gray-700">Darunnajah 2</h2>
           <p className="text-gray-500 mt-1">Sistem Inventori & Manajemen Stok</p>
         </div>
 
@@ -127,7 +116,7 @@ export default function Login() {
         </div>
 
         <p className="text-center text-xs text-gray-400 mt-6">
-          Toko Material Pesantren &copy; {new Date().getFullYear()}
+          Pesantren Darunnajah 2 &copy; {new Date().getFullYear()}
         </p>
       </div>
     </div>
