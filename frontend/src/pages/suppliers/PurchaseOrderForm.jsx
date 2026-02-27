@@ -235,7 +235,7 @@ export default function PurchaseOrderForm() {
         variantId: item.variantId || null,
         unitId: item.unitId || null,
         quantity: parseFloat(item.quantity),
-        unitPrice: parseFloat(item.unitPrice),
+        price: parseFloat(item.unitPrice),
       })),
   });
 
