@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { HiPlus, HiEye, HiCheck, HiQrcode, HiFilter } from 'react-icons/hi';
+import { HiPlus, HiEye, HiCheck, HiQrcode, HiFilter, HiSearch, HiCamera } from 'react-icons/hi';
 import toast from 'react-hot-toast';
 import { stockAPI } from '../../api/endpoints';
 import { getErrorMessage } from '../../utils/handleError';
@@ -10,7 +10,7 @@ import { formatTanggalWaktu } from '../../utils/formatDate';
 import { OPNAME_STATUS_LABELS, OPNAME_STATUS_COLORS } from '../../utils/constants';
 import useAuth from '../../hooks/useAuth';
 
-// ─── Active Opname Detail ────────────────────────────
+// ─── Active Opname Detail (Form Stock Opname) ────────
 function ActiveOpnameDetail({ opnameId, onBack }) {
   const queryClient = useQueryClient();
   const { isAdmin } = useAuth();
@@ -18,7 +18,8 @@ function ActiveOpnameDetail({ opnameId, onBack }) {
   const [showScanner, setShowScanner] = useState(false);
   const [showComplete, setShowComplete] = useState(false);
   const [highlightId, setHighlightId] = useState(null);
-  const [filterText, setFilterText] = useState('');
+  const [barcodeSearch, setBarcodeSearch] = useState('');
+  const [nameSearch, setNameSearch] = useState('');
 
   const { data: opname, isLoading } = useQuery({
     queryKey: ['opname', opnameId],
@@ -58,13 +59,6 @@ function ActiveOpnameDetail({ opnameId, onBack }) {
     });
   };
 
-  const handleNotesChange = (item, value) => {
-    updateItemMutation.mutate({
-      itemId: item.id,
-      data: { actualStock: item.actualStock, notes: value || null },
-    });
-  };
-
   const handleBarcodeScan = (barcodeValue) => {
     setShowScanner(false);
     const items = opname?.items || [];
@@ -73,11 +67,42 @@ function ActiveOpnameDetail({ opnameId, onBack }) {
     );
     if (found) {
       setHighlightId(found.id);
-      setFilterText(found.product?.name || barcodeValue);
+      setBarcodeSearch(barcodeValue);
       setTimeout(() => setHighlightId(null), 3000);
       toast.success(`Ditemukan: ${found.product?.name}`);
     } else {
-      toast.error(`Produk dengan barcode "${barcodeValue}" tidak ditemukan di daftar opname`);
+      toast.error(`Produk dengan barcode "${barcodeValue}" tidak ditemukan`);
+    }
+  };
+
+  const handleBarcodeSearchSubmit = () => {
+    if (!barcodeSearch.trim()) return;
+    const items = opname?.items || [];
+    const found = items.find(
+      (item) => (item.product?.barcode || '').toLowerCase() === barcodeSearch.toLowerCase() ||
+                (item.product?.sku || '').toLowerCase() === barcodeSearch.toLowerCase()
+    );
+    if (found) {
+      setHighlightId(found.id);
+      setTimeout(() => setHighlightId(null), 3000);
+      toast.success(`Ditemukan: ${found.product?.name}`);
+    } else {
+      toast.error('Produk tidak ditemukan');
+    }
+  };
+
+  const handleNameSearchSubmit = () => {
+    if (!nameSearch.trim()) return;
+    const items = opname?.items || [];
+    const found = items.find(
+      (item) => (item.product?.name || '').toLowerCase().includes(nameSearch.toLowerCase())
+    );
+    if (found) {
+      setHighlightId(found.id);
+      setTimeout(() => setHighlightId(null), 3000);
+      toast.success(`Ditemukan: ${found.product?.name}`);
+    } else {
+      toast.error('Produk tidak ditemukan');
     }
   };
 
@@ -87,6 +112,8 @@ function ActiveOpnameDetail({ opnameId, onBack }) {
   const items = opname.items || [];
   const isActive = opname.status === 'IN_PROGRESS' || opname.status === 'DRAFT';
 
+  // Filter items based on search
+  const filterText = nameSearch || barcodeSearch;
   const filteredItems = filterText
     ? items.filter((item) =>
         (item.product?.name || '').toLowerCase().includes(filterText.toLowerCase()) ||
@@ -96,151 +123,165 @@ function ActiveOpnameDetail({ opnameId, onBack }) {
     : items;
 
   const totalChecked = items.filter((i) => i.actualStock !== null && i.actualStock !== undefined).length;
-  const totalPositiveDiff = items.reduce((sum, i) => {
-    if (i.actualStock === null || i.actualStock === undefined) return sum;
-    const diff = i.actualStock - i.systemStock;
-    return diff > 0 ? sum + diff : sum;
-  }, 0);
-  const totalNegativeDiff = items.reduce((sum, i) => {
-    if (i.actualStock === null || i.actualStock === undefined) return sum;
-    const diff = i.actualStock - i.systemStock;
-    return diff < 0 ? sum + diff : sum;
-  }, 0);
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-        <div>
-          <div className="flex items-center gap-3">
-            <button onClick={onBack} className="text-sm text-blue-600 hover:text-blue-800 font-medium">
-              &larr; Kembali
-            </button>
-            <Badge colorClass={OPNAME_STATUS_COLORS[opname.status]} size="sm">
-              {OPNAME_STATUS_LABELS[opname.status]}
-            </Badge>
-          </div>
-          <p className="text-sm text-gray-500 mt-1">
-            {opname.opnameNumber || 'Opname'} — Mulai {formatTanggalWaktu(opname.createdAt)}
-          </p>
+      {/* Header bar */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <button onClick={onBack} className="text-sm text-blue-600 hover:text-blue-800 font-medium">
+            &larr; Kembali
+          </button>
+          <span className="text-gray-300">|</span>
+          <h2 className="text-lg font-semibold text-gray-800">Form Stock Opname</h2>
+          <Badge colorClass={OPNAME_STATUS_COLORS[opname.status]} size="sm">
+            {OPNAME_STATUS_LABELS[opname.status]}
+          </Badge>
         </div>
-        {isActive && (
-          <div className="flex gap-2">
-            <Button variant="outline" size="sm" icon={HiQrcode} onClick={() => setShowScanner(true)}>
-              Scan Barcode
-            </Button>
-            {isAdmin && (
-              <Button size="sm" icon={HiCheck} onClick={() => setShowComplete(true)}>
-                Selesaikan Opname
-              </Button>
-            )}
+        <p className="text-sm text-gray-500">{opname.opnameNumber}</p>
+      </div>
+
+      {/* Two-column layout */}
+      <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
+        {/* Left: Search panel */}
+        <div className="lg:col-span-2 space-y-4">
+          <h3 className="text-base font-semibold text-gray-800">Pilih Produk SO</h3>
+
+          {/* Barcode search */}
+          <div>
+            <label className="block text-sm font-medium text-gray-600 mb-1">Cari barcode</label>
+            <div className="flex gap-1">
+              <input
+                type="text"
+                value={barcodeSearch}
+                onChange={(e) => setBarcodeSearch(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && handleBarcodeSearchSubmit()}
+                placeholder="Cari Barcode (F2)"
+                className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-500"
+              />
+              <button
+                type="button"
+                onClick={handleBarcodeSearchSubmit}
+                className="p-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+              >
+                <HiSearch className="w-4 h-4 text-gray-500" />
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowScanner(true)}
+                className="p-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+              >
+                <HiCamera className="w-4 h-4 text-gray-500" />
+              </button>
+            </div>
           </div>
+
+          {/* Name search */}
+          <div>
+            <label className="block text-sm font-medium text-gray-600 mb-1">Cari nama</label>
+            <div className="flex gap-1">
+              <input
+                type="text"
+                value={nameSearch}
+                onChange={(e) => setNameSearch(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && handleNameSearchSubmit()}
+                placeholder="Cari nama produk (F3)"
+                className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-500"
+              />
+              <button
+                type="button"
+                onClick={handleNameSearchSubmit}
+                className="p-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+              >
+                <HiSearch className="w-4 h-4 text-gray-500" />
+              </button>
+            </div>
+          </div>
+
+          {/* Summary */}
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-sm space-y-1">
+            <p className="text-blue-800">Item dicek: <span className="font-semibold">{totalChecked} / {items.length}</span></p>
+          </div>
+        </div>
+
+        {/* Right: Data table */}
+        <div className="lg:col-span-3">
+          <h3 className="text-base font-semibold text-gray-800 mb-2">Keranjang Data SO</h3>
+          <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
+            <div className="overflow-x-auto max-h-[500px] overflow-y-auto">
+              <table className="w-full text-sm">
+                <thead className="sticky top-0 z-10">
+                  <tr className="bg-blue-50 border-b border-blue-100">
+                    <th className="text-left px-4 py-2.5 text-xs font-semibold text-blue-700 min-w-[200px]">PRODUK</th>
+                    <th className="text-center px-4 py-2.5 text-xs font-semibold text-blue-700 w-24">STOK SISTEM</th>
+                    <th className="text-center px-4 py-2.5 text-xs font-semibold text-blue-700 w-28">STOK AKTUAL</th>
+                    <th className="text-center px-4 py-2.5 text-xs font-semibold text-blue-700 w-20">SELISIH</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-50">
+                  {filteredItems.map((item) => {
+                    const diff = (item.actualStock !== null && item.actualStock !== undefined)
+                      ? item.actualStock - item.systemStock
+                      : null;
+                    const isHighlighted = highlightId === item.id;
+
+                    return (
+                      <tr key={item.id} className={`transition-colors ${isHighlighted ? 'bg-yellow-50' : 'hover:bg-gray-50/50'}`}>
+                        <td className="px-4 py-2.5">
+                          <p className="font-medium text-gray-900 text-sm">{item.product?.name || '-'}</p>
+                        </td>
+                        <td className="text-center px-4 py-2.5 font-medium text-gray-600">{item.systemStock}</td>
+                        <td className="text-center px-4 py-2.5">
+                          {isActive ? (
+                            <input
+                              type="number"
+                              min="0"
+                              value={item.actualStock ?? ''}
+                              onChange={(e) => handleActualStockChange(item, e.target.value)}
+                              className="w-20 px-2 py-1 border border-gray-300 rounded text-sm text-center outline-none focus:ring-2 focus:ring-blue-500"
+                              placeholder="—"
+                            />
+                          ) : (
+                            <span className="font-medium">{item.actualStock ?? '-'}</span>
+                          )}
+                        </td>
+                        <td className="text-center px-4 py-2.5">
+                          {diff !== null ? (
+                            <span className={`font-semibold text-sm ${diff > 0 ? 'text-green-600' : diff < 0 ? 'text-red-600' : 'text-gray-400'}`}>
+                              {diff > 0 ? '+' : ''}{diff}
+                            </span>
+                          ) : (
+                            <span className="text-gray-300">—</span>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                  {filteredItems.length === 0 && (
+                    <tr>
+                      <td colSpan={4} className="px-4 py-8 text-center text-gray-400 text-sm">
+                        {filterText ? 'Produk tidak ditemukan' : 'Tidak ada item'}
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Footer buttons */}
+      <div className="flex items-center justify-end gap-3 pt-2 border-t border-gray-200">
+        <Button variant="outline" onClick={onBack}>Tutup</Button>
+        {isActive && isAdmin && (
+          <Button onClick={() => setShowComplete(true)} icon={HiCheck}>
+            Simpan
+          </Button>
         )}
       </div>
 
-      <Input
-        value={filterText}
-        onChange={(e) => setFilterText(e.target.value)}
-        placeholder="Cari produk dalam daftar opname..."
-      />
-
-      <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="bg-gray-50 border-b border-gray-100">
-                <th className="text-left px-4 py-3 text-xs font-semibold text-gray-600 w-8">#</th>
-                <th className="text-left px-4 py-3 text-xs font-semibold text-gray-600 min-w-[200px]">Produk</th>
-                <th className="text-center px-4 py-3 text-xs font-semibold text-gray-600 w-24">Stok Sistem</th>
-                <th className="text-center px-4 py-3 text-xs font-semibold text-gray-600 w-28">Stok Aktual</th>
-                <th className="text-center px-4 py-3 text-xs font-semibold text-gray-600 w-24">Selisih</th>
-                <th className="text-left px-4 py-3 text-xs font-semibold text-gray-600 min-w-[150px]">Catatan</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-50">
-              {filteredItems.map((item, idx) => {
-                const diff = (item.actualStock !== null && item.actualStock !== undefined)
-                  ? item.actualStock - item.systemStock
-                  : null;
-                const isHighlighted = highlightId === item.id;
-
-                return (
-                  <tr key={item.id} className={`transition-colors ${isHighlighted ? 'bg-yellow-50' : 'hover:bg-gray-50/50'}`}>
-                    <td className="px-4 py-3 text-gray-500">{idx + 1}</td>
-                    <td className="px-4 py-3">
-                      <p className="font-medium text-gray-900">{item.product?.name || '-'}</p>
-                    </td>
-                    <td className="text-center px-4 py-3 font-medium text-gray-700">{item.systemStock}</td>
-                    <td className="text-center px-4 py-3">
-                      {isActive ? (
-                        <input
-                          type="number"
-                          min="0"
-                          value={item.actualStock ?? ''}
-                          onChange={(e) => handleActualStockChange(item, e.target.value)}
-                          className="w-20 px-2 py-1.5 border border-gray-300 rounded-lg text-sm text-center outline-none focus:ring-2 focus:ring-blue-500"
-                          placeholder="—"
-                        />
-                      ) : (
-                        <span className="font-medium">{item.actualStock ?? '-'}</span>
-                      )}
-                    </td>
-                    <td className="text-center px-4 py-3">
-                      {diff !== null ? (
-                        <span className={`font-semibold ${diff > 0 ? 'text-green-600' : diff < 0 ? 'text-red-600' : 'text-gray-400'}`}>
-                          {diff > 0 ? '+' : ''}{diff}
-                        </span>
-                      ) : (
-                        <span className="text-gray-300">—</span>
-                      )}
-                    </td>
-                    <td className="px-4 py-3">
-                      {isActive ? (
-                        <input
-                          type="text"
-                          value={item.notes || ''}
-                          onBlur={(e) => handleNotesChange(item, e.target.value)}
-                          onChange={(e) => {
-                            const items = [...(opname?.items || [])];
-                            const i = items.findIndex((x) => x.id === item.id);
-                            if (i >= 0) items[i] = { ...items[i], notes: e.target.value };
-                          }}
-                          className="w-full px-2 py-1.5 border border-gray-300 rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-500"
-                          placeholder="Catatan..."
-                        />
-                      ) : (
-                        <span className="text-xs text-gray-500">{item.notes || '-'}</span>
-                      )}
-                    </td>
-                  </tr>
-                );
-              })}
-              {filteredItems.length === 0 && (
-                <tr>
-                  <td colSpan={6} className="px-4 py-8 text-center text-gray-400 text-sm">
-                    {filterText ? 'Produk tidak ditemukan' : 'Tidak ada item'}
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <Card padding="sm">
-          <p className="text-xs text-gray-500">Item Dicek</p>
-          <p className="text-xl font-bold text-gray-900">{totalChecked} / {items.length}</p>
-        </Card>
-        <Card padding="sm">
-          <p className="text-xs text-gray-500">Total Selisih Positif</p>
-          <p className="text-xl font-bold text-green-600">+{totalPositiveDiff}</p>
-        </Card>
-        <Card padding="sm">
-          <p className="text-xs text-gray-500">Total Selisih Negatif</p>
-          <p className="text-xl font-bold text-red-600">{totalNegativeDiff}</p>
-        </Card>
-      </div>
-
+      {/* Complete Confirmation */}
       <Modal
         isOpen={showComplete}
         onClose={() => setShowComplete(false)}
@@ -259,8 +300,6 @@ function ActiveOpnameDetail({ opnameId, onBack }) {
           <p>Apakah Anda yakin ingin menyelesaikan stock opname ini?</p>
           <div className="bg-gray-50 rounded-lg p-3 space-y-1">
             <p>Item dicek: <span className="font-semibold">{totalChecked}/{items.length}</span></p>
-            <p>Selisih positif: <span className="font-semibold text-green-600">+{totalPositiveDiff}</span></p>
-            <p>Selisih negatif: <span className="font-semibold text-red-600">{totalNegativeDiff}</span></p>
           </div>
           <p className="text-yellow-700 bg-yellow-50 rounded-lg p-3">
             Stok produk akan otomatis disesuaikan berdasarkan hasil penghitungan. Tindakan ini tidak dapat dibatalkan.
