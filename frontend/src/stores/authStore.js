@@ -1,11 +1,19 @@
 import { create } from 'zustand';
 import { authAPI } from '../api/endpoints';
 
+const safeGetItem = (key) => {
+  try {
+    return localStorage.getItem(key);
+  } catch {
+    return null;
+  }
+};
+
 const useAuthStore = create((set, get) => ({
-  user: JSON.parse(localStorage.getItem('user') || 'null'),
-  token: localStorage.getItem('accessToken') || null,
-  refreshToken: localStorage.getItem('refreshToken') || null,
-  isAuthenticated: !!localStorage.getItem('accessToken'),
+  user: JSON.parse(safeGetItem('user') || 'null'),
+  token: safeGetItem('accessToken') || null,
+  refreshToken: safeGetItem('refreshToken') || null,
+  isAuthenticated: !!safeGetItem('accessToken'),
   isLoading: false,
 
   login: async (email, password) => {

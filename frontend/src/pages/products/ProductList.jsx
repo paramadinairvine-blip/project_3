@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { HiPlus, HiPencil, HiTrash, HiEye } from 'react-icons/hi';
 import toast from 'react-hot-toast';
 import { productAPI } from '../../api/endpoints';
-import { Table, Badge, Button, SearchBar, Pagination, Modal, Breadcrumb, Skeleton } from '../../components/common';
+import { Table, Button, SearchBar, Pagination, Modal, Breadcrumb, Skeleton } from '../../components/common';
 import { formatRupiah } from '../../utils/formatCurrency';
 import { getErrorMessage } from '../../utils/handleError';
 import useAuth from '../../hooks/useAuth';
@@ -40,12 +40,6 @@ export default function ProductList() {
   const products = data?.data || [];
   const pagination = data?.pagination || {};
 
-  const getStatusBadge = (product) => {
-    if (!product.isActive) return <Badge variant="danger">Non-Aktif</Badge>;
-    if (product.stock < product.minStock) return <Badge variant="warning">Stok Rendah</Badge>;
-    return <Badge variant="success">Aktif</Badge>;
-  };
-
   const columns = [
     {
       key: 'image',
@@ -68,10 +62,7 @@ export default function ProductList() {
       header: 'Nama Produk',
       sortable: true,
       render: (_, row) => (
-        <div>
-          <p className="font-medium text-gray-900">{row.name}</p>
-          <p className="text-xs text-gray-500">{row.sku}</p>
-        </div>
+        <p className="font-medium text-gray-900">{row.name}</p>
       ),
     },
     {
@@ -82,20 +73,10 @@ export default function ProductList() {
       ),
     },
     {
-      key: 'brand',
-      header: 'Merek',
+      key: 'barcode',
+      header: 'Barcode',
       render: (_, row) => (
-        <span className="text-gray-600">{row.brand?.name || '-'}</span>
-      ),
-    },
-    {
-      key: 'stock',
-      header: 'Stok',
-      sortable: true,
-      render: (_, row) => (
-        <span className={`font-medium ${row.stock < row.minStock ? 'text-red-600' : 'text-gray-900'}`}>
-          {row.stock} {row.unitOfMeasure?.abbreviation || row.unit}
-        </span>
+        <span className="font-mono text-sm text-gray-700">{row.barcode || '-'}</span>
       ),
     },
     {
@@ -105,11 +86,6 @@ export default function ProductList() {
       render: (_, row) => (
         <span className="text-gray-900">{formatRupiah(row.sellPrice)}</span>
       ),
-    },
-    {
-      key: 'status',
-      header: 'Status',
-      render: (_, row) => getStatusBadge(row),
     },
     {
       key: 'actions',
@@ -156,7 +132,6 @@ export default function ProductList() {
     <div className="space-y-6">
       <Breadcrumb items={[{ label: 'Produk' }]} className="mb-4" />
 
-      {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Daftar Produk</h1>
@@ -169,14 +144,12 @@ export default function ProductList() {
         )}
       </div>
 
-      {/* Search */}
       <SearchBar
-        placeholder="Cari nama, SKU, atau barcode produk..."
+        placeholder="Cari nama atau barcode produk..."
         onSearch={(v) => { setSearch(v); setPage(1); }}
         className="max-w-md"
       />
 
-      {/* Table */}
       <Table
         columns={columns}
         data={products}
@@ -186,7 +159,6 @@ export default function ProductList() {
         emptyMessage="Tidak ada produk ditemukan"
       />
 
-      {/* Pagination */}
       {pagination.totalPages > 1 && (
         <Pagination
           currentPage={pagination.page || page}
@@ -195,7 +167,6 @@ export default function ProductList() {
         />
       )}
 
-      {/* Delete confirmation modal */}
       <Modal
         isOpen={!!deleteTarget}
         onClose={() => setDeleteTarget(null)}

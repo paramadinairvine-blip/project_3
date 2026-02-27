@@ -76,7 +76,6 @@ export default function ProductDetail() {
           </button>
           <div>
             <h1 className="text-2xl font-bold text-gray-900">{product.name}</h1>
-            <p className="text-sm text-gray-500 font-mono">{product.sku}</p>
           </div>
         </div>
         <div className="flex items-center gap-2">
