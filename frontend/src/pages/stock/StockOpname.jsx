@@ -119,7 +119,6 @@ function ActiveOpnameDetail({ opnameId, onBack }) {
   const items = opname.items || [];
   const isActive = opname.status === 'IN_PROGRESS' || opname.status === 'DRAFT';
   const cartItems = items.filter((item) => cartItemIds.has(item.id));
-  const totalChecked = items.filter((i) => i.actualStock !== null && i.actualStock !== undefined).length;
 
   return (
     <div className="space-y-4">
@@ -331,9 +330,6 @@ function ActiveOpnameDetail({ opnameId, onBack }) {
       >
         <div className="text-sm text-gray-600 space-y-3">
           <p>Apakah Anda yakin ingin menyelesaikan stock opname ini?</p>
-          <div className="bg-gray-50 rounded-lg p-3 space-y-1">
-            <p>Item dicek: <span className="font-semibold">{totalChecked}/{items.length}</span></p>
-          </div>
           <p className="text-yellow-700 bg-yellow-50 rounded-lg p-3">
             Stok produk akan otomatis disesuaikan berdasarkan hasil penghitungan. Tindakan ini tidak dapat dibatalkan.
           </p>
@@ -347,6 +343,70 @@ function ActiveOpnameDetail({ opnameId, onBack }) {
   );
 }
 
+// ─── View Detail Modal (Completed Opname) ────────────
+function OpnameViewModal({ opnameId, onClose }) {
+  const { data: opname, isLoading } = useQuery({
+    queryKey: ['opname', opnameId],
+    queryFn: async () => {
+      const { data } = await stockAPI.getOpnameById(opnameId);
+      return data.data;
+    },
+    enabled: !!opnameId,
+  });
+
+  if (!opnameId) return null;
+
+  const items = opname?.items || [];
+  // Only show items that have a difference (jumlah SO)
+  const itemsWithDiff = items.filter((i) => i.difference !== 0);
+
+  return (
+    <Modal
+      isOpen={!!opnameId}
+      onClose={onClose}
+      title={`Detail Stock Opname ${opname?.opnameNumber || ''}`}
+      size="lg"
+      footer={
+        <Button variant="outline" onClick={onClose}>Tutup</Button>
+      }
+    >
+      {isLoading ? (
+        <Loading text="Memuat data..." />
+      ) : (
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="bg-gray-100 border-b border-gray-200">
+                <th className="text-left px-4 py-2.5 text-xs font-semibold text-blue-700">KATEGORI</th>
+                <th className="text-left px-4 py-2.5 text-xs font-semibold text-blue-700">PRODUK</th>
+                <th className="text-center px-4 py-2.5 text-xs font-semibold text-blue-700">JUMLAH SO</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-100">
+              {(itemsWithDiff.length > 0 ? itemsWithDiff : items).map((item) => (
+                <tr key={item.id} className="hover:bg-gray-50/50">
+                  <td className="px-4 py-2.5 text-gray-700">{item.product?.category?.name || '-'}</td>
+                  <td className="px-4 py-2.5 text-gray-900 font-medium">{item.product?.name || '-'}</td>
+                  <td className="text-center px-4 py-2.5">
+                    <span className={`font-semibold ${item.difference > 0 ? 'text-green-600' : item.difference < 0 ? 'text-red-600' : 'text-gray-400'}`}>
+                      {item.difference > 0 ? '+' : ''}{item.difference}
+                    </span>
+                  </td>
+                </tr>
+              ))}
+              {items.length === 0 && (
+                <tr>
+                  <td colSpan={3} className="px-4 py-8 text-center text-gray-400">Tidak ada data</td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </Modal>
+  );
+}
+
 // ─── Main Component ───────────────────────────────────
 export default function StockOpname() {
   const queryClient = useQueryClient();
@@ -355,6 +415,7 @@ export default function StockOpname() {
 
   const [selectedOpnameId, setSelectedOpnameId] = useState(null);
   const [showCreate, setShowCreate] = useState(false);
+  const [viewOpnameId, setViewOpnameId] = useState(null);
 
   // Filters
   const [dateFrom, setDateFrom] = useState('');
@@ -422,7 +483,21 @@ export default function StockOpname() {
     {
       key: 'opnameNumber',
       header: 'Nomor',
-      render: (v) => <span className="font-medium font-mono text-gray-900">{v || '-'}</span>,
+      render: (v, row) => (
+        <button
+          type="button"
+          onClick={() => {
+            if (row.status === 'IN_PROGRESS' || row.status === 'DRAFT') {
+              setSelectedOpnameId(row.id);
+            } else {
+              setViewOpnameId(row.id);
+            }
+          }}
+          className="font-medium font-mono text-cyan-600 hover:text-cyan-800 hover:underline transition-colors"
+        >
+          {v || '-'}
+        </button>
+      ),
     },
     {
       key: 'createdAt',
@@ -449,7 +524,13 @@ export default function StockOpname() {
       width: '80px',
       render: (_, row) => (
         <button
-          onClick={() => setSelectedOpnameId(row.id)}
+          onClick={() => {
+            if (row.status === 'IN_PROGRESS' || row.status === 'DRAFT') {
+              setSelectedOpnameId(row.id);
+            } else {
+              setViewOpnameId(row.id);
+            }
+          }}
           className="p-1.5 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
           title="Lihat Detail"
           aria-label="Lihat detail"
@@ -567,6 +648,9 @@ export default function StockOpname() {
           penghitungan. Pastikan Anda siap untuk memulai penghitungan fisik.
         </p>
       </Modal>
+
+      {/* View Detail Modal */}
+      <OpnameViewModal opnameId={viewOpnameId} onClose={() => setViewOpnameId(null)} />
     </div>
   );
 }

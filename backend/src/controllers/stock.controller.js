@@ -121,7 +121,7 @@ const getOpnameById = async (req, res) => {
         updater: { select: { id: true, fullName: true } },
         items: {
           include: {
-            product: { select: { id: true, name: true, sku: true, unit: true } },
+            product: { select: { id: true, name: true, sku: true, unit: true, barcode: true, category: { select: { id: true, name: true } } } },
           },
           orderBy: { product: { name: 'asc' } },
         },
