@@ -153,6 +153,19 @@ const validatePurchaseOrder = [
       }
       return true;
     }),
+  // Accept both 'price' and 'unitPrice' from frontend
+  (req, _res, next) => {
+    if (Array.isArray(req.body?.items)) {
+      req.body.items = req.body.items.map((item) => {
+        if (item.unitPrice !== undefined && item.price === undefined) {
+          item.price = item.unitPrice;
+          delete item.unitPrice;
+        }
+        return item;
+      });
+    }
+    next();
+  },
   body('items.*.price')
     .custom((value) => {
       if (value === undefined || value === null || value === '') {
