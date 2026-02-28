@@ -22,9 +22,11 @@ app.use(helmet({
 // CORS — batasi origin
 const defaultOrigins = [
   'http://localhost:5173',
+  'http://localhost:5174',
   'http://localhost:5000',
   'https://material-pesantren.vercel.app',
   'https://frontend-one-bice-78.vercel.app',
+  'https://pos-one-ruddy.vercel.app',
 ];
 const allowedOrigins = process.env.CORS_ORIGINS
   ? process.env.CORS_ORIGINS.split(',').map(o => o.trim())
