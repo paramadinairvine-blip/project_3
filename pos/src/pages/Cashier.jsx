@@ -53,13 +53,13 @@ export default function Cashier() {
     <div className="h-[calc(100vh-3.5rem)] flex">
       {/* Left: Product Search & Grid */}
       <div className="flex-1 flex flex-col overflow-hidden">
-        <div className="p-4 pb-3">
+        <div className="p-3 pb-2">
           <ProductSearch
             onSearch={setSearchQuery}
             onScanClick={() => setShowScanner(true)}
           />
         </div>
-        <div className="flex-1 overflow-y-auto px-4 pb-4">
+        <div className="flex-1 overflow-y-auto px-3 pb-3">
           <ProductGrid
             products={products}
             isLoading={isLoading}
@@ -69,7 +69,7 @@ export default function Cashier() {
       </div>
 
       {/* Right: Cart (desktop) */}
-      <div className="hidden lg:flex w-[380px] border-l border-gray-200 bg-gray-50 flex-col">
+      <div className="hidden lg:flex w-[480px] border-l border-gray-200 bg-gray-50 flex-col">
         <Cart />
       </div>
 
@@ -92,7 +92,7 @@ export default function Cashier() {
           <div className="absolute inset-0 bg-black/50" onClick={() => setShowMobileCart(false)} />
           <div className="absolute right-0 top-0 bottom-0 w-full max-w-sm bg-white shadow-xl flex flex-col">
             <div className="flex items-center justify-between px-4 py-3 border-b">
-              <h3 className="font-semibold">Keranjang</h3>
+              <h3 className="font-semibold">Daftar Pembelian</h3>
               <button onClick={() => setShowMobileCart(false)} className="text-gray-500 hover:text-gray-700 text-lg">&times;</button>
             </div>
             <div className="flex-1 overflow-hidden">

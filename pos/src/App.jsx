@@ -11,6 +11,7 @@ const Checkout = lazy(() => import('./pages/Checkout'));
 const History = lazy(() => import('./pages/History'));
 const StockCheck = lazy(() => import('./pages/StockCheck'));
 const Dashboard = lazy(() => import('./pages/Dashboard'));
+const HoldList = lazy(() => import('./pages/HoldList'));
 
 const allowedRoles = [ROLES.ADMIN, ROLES.OPERATOR];
 
@@ -29,6 +30,7 @@ export default function App() {
         >
           <Route path="/kasir" element={<Cashier />} />
           <Route path="/checkout" element={<Checkout />} />
+          <Route path="/holds" element={<HoldList />} />
           <Route path="/riwayat" element={<History />} />
           <Route path="/cek-stok" element={<StockCheck />} />
           <Route path="/dashboard" element={<Dashboard />} />
