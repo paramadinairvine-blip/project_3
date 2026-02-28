@@ -1,23 +1,25 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { HiSearch, HiRefresh, HiPrinter, HiChevronDown, HiChevronUp } from 'react-icons/hi';
+import { HiSearch, HiPrinter, HiChevronLeft, HiChevronRight } from 'react-icons/hi';
 import { transactionAPI } from '../api/endpoints';
 import { formatRupiah } from '../utils/formatCurrency';
-import { formatWaktu, formatTanggal } from '../utils/formatDate';
-import { TRANSACTION_TYPE_LABELS, TRANSACTION_TYPE_COLORS, TRANSACTION_STATUS_LABELS, TRANSACTION_STATUS_COLORS } from '../utils/constants';
-import { Badge, Loading, EmptyState } from '../components/common';
+import { formatTanggal } from '../utils/formatDate';
+import { TRANSACTION_TYPE_LABELS } from '../utils/constants';
+import { Loading, EmptyState } from '../components/common';
 import ReceiptPrint from '../components/receipt/ReceiptPrint';
 
 export default function History() {
   const [search, setSearch] = useState('');
-  const [expandedId, setExpandedId] = useState(null);
+  const [showSearch, setShowSearch] = useState(false);
   const [receiptData, setReceiptData] = useState(null);
+  const [page, setPage] = useState(1);
+  const [rowsPerPage, setRowsPerPage] = useState(50);
 
   const today = new Date();
   const startDate = new Date(today.getFullYear(), today.getMonth(), today.getDate()).toISOString();
   const endDate = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 23, 59, 59).toISOString();
 
-  const { data: transactions, isLoading, refetch } = useQuery({
+  const { data: transactions, isLoading } = useQuery({
     queryKey: ['transactions-today', startDate],
     queryFn: () => transactionAPI.getAll({ startDate, endDate, limit: 100 }),
     select: (res) => {
@@ -36,6 +38,13 @@ export default function History() {
     );
   });
 
+  // Pagination
+  const totalItems = filtered.length;
+  const totalPages = Math.max(1, Math.ceil(totalItems / rowsPerPage));
+  const startIdx = (page - 1) * rowsPerPage;
+  const endIdx = Math.min(startIdx + rowsPerPage, totalItems);
+  const paginated = filtered.slice(startIdx, endIdx);
+
   const handlePrint = async (trx) => {
     try {
       const { data: res } = await transactionAPI.getById(trx.id);
@@ -45,119 +54,171 @@ export default function History() {
     }
   };
 
-  const todayTotal = (transactions || [])
-    .filter((t) => t.status !== 'CANCELLED')
-    .reduce((sum, t) => sum + parseFloat(t.total || t.totalAmount || 0), 0);
+  const formatDateTime = (dateStr) => {
+    const d = new Date(dateStr);
+    const dd = String(d.getDate()).padStart(2, '0');
+    const mm = String(d.getMonth() + 1).padStart(2, '0');
+    const yyyy = d.getFullYear();
+    const hh = String(d.getHours()).padStart(2, '0');
+    const min = String(d.getMinutes()).padStart(2, '0');
+    const ss = String(d.getSeconds()).padStart(2, '0');
+    return `${dd}-${mm}-${yyyy} ${hh}:${min}:${ss}`;
+  };
 
   return (
-    <div className="h-[calc(100vh-3.5rem)] flex flex-col overflow-hidden">
-      {/* Header */}
-      <div className="bg-white border-b border-gray-200 px-4 py-3">
-        <div className="flex items-center justify-between mb-3">
-          <div>
-            <h2 className="text-lg font-bold text-gray-900">Riwayat Transaksi</h2>
-            <p className="text-sm text-gray-500">
-              {formatTanggal(today)} &middot; {(transactions || []).length} transaksi &middot; Total: <span className="font-semibold text-blue-600">{formatRupiah(todayTotal)}</span>
-            </p>
+    <div className="h-[calc(100vh-3.5rem)] flex flex-col overflow-hidden bg-gray-50">
+      {/* Table Container */}
+      <div className="flex-1 flex flex-col m-4 bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+        {/* Header */}
+        <div className="bg-gradient-to-r from-indigo-500 to-blue-500 px-5 py-4 flex items-center justify-between">
+          <h2 className="text-lg font-bold text-white">Transaksi</h2>
+          <div className="flex items-center gap-3">
+            {showSearch && (
+              <input
+                type="text"
+                value={search}
+                onChange={(e) => { setSearch(e.target.value); setPage(1); }}
+                placeholder="Cari..."
+                className="px-3 py-1.5 rounded-lg text-sm outline-none w-48"
+                autoFocus
+              />
+            )}
+            <span className="text-white text-sm">Rows</span>
+            <select
+              value={rowsPerPage}
+              onChange={(e) => { setRowsPerPage(Number(e.target.value)); setPage(1); }}
+              className="px-2 py-1 rounded text-sm border border-white/30 bg-white/20 text-white outline-none"
+            >
+              {[10, 25, 50, 100].map((n) => (
+                <option key={n} value={n} className="text-gray-900">{n}</option>
+              ))}
+            </select>
+            <span className="text-white text-sm">
+              {totalItems === 0 ? '0' : `${startIdx + 1} – ${endIdx}`} of {totalItems}
+            </span>
+            <button
+              onClick={() => setPage(Math.max(1, page - 1))}
+              disabled={page <= 1}
+              className="p-1.5 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              <HiChevronLeft className="w-4 h-4" />
+            </button>
+            <input
+              type="number"
+              value={page}
+              onChange={(e) => {
+                const v = parseInt(e.target.value);
+                if (v >= 1 && v <= totalPages) setPage(v);
+              }}
+              className="w-10 text-center rounded text-sm py-1 outline-none"
+              min={1}
+              max={totalPages}
+            />
+            <button
+              onClick={() => setPage(Math.min(totalPages, page + 1))}
+              disabled={page >= totalPages}
+              className="p-1.5 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              <HiChevronRight className="w-4 h-4" />
+            </button>
+            <button
+              onClick={() => setShowSearch(!showSearch)}
+              className="p-1.5 rounded-lg bg-white/20 text-white hover:bg-white/30"
+            >
+              <HiSearch className="w-4 h-4" />
+            </button>
           </div>
-          <button
-            onClick={() => refetch()}
-            className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
-            title="Refresh"
-          >
-            <HiRefresh className="w-5 h-5" />
-          </button>
         </div>
 
-        <div className="relative">
-          <HiSearch className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-          <input
-            type="text"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Cari no. transaksi atau pelanggan..."
-            className="w-full pl-9 pr-4 py-2 border border-gray-300 rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-500"
-          />
-        </div>
-      </div>
+        {/* Table */}
+        <div className="flex-1 overflow-auto">
+          {isLoading ? (
+            <Loading text="Memuat riwayat..." />
+          ) : filtered.length === 0 ? (
+            <EmptyState
+              title="Belum ada transaksi"
+              description="Transaksi hari ini akan muncul di sini"
+            />
+          ) : (
+            <table className="w-full text-sm">
+              <thead className="bg-gray-50 border-b border-gray-200 sticky top-0">
+                <tr>
+                  <th className="text-left px-4 py-3 font-semibold text-gray-600 w-12">No.</th>
+                  <th className="text-left px-4 py-3 font-semibold text-gray-600">ID / Tgl.</th>
+                  <th className="text-left px-4 py-3 font-semibold text-gray-600">Transaksi</th>
+                  <th className="text-left px-4 py-3 font-semibold text-gray-600">Konsumen</th>
+                  <th className="text-left px-4 py-3 font-semibold text-gray-600">Produk</th>
+                  <th className="text-right px-4 py-3 font-semibold text-gray-600">Total</th>
+                  <th className="text-center px-4 py-3 font-semibold text-gray-600 w-32"></th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100">
+                {paginated.map((trx, idx) => (
+                  <tr key={trx.id} className="hover:bg-gray-50 transition-colors">
+                    {/* No */}
+                    <td className="px-4 py-3 text-gray-500 align-top">{startIdx + idx + 1}</td>
 
-      {/* List */}
-      <div className="flex-1 overflow-y-auto">
-        {isLoading ? (
-          <Loading text="Memuat riwayat..." />
-        ) : filtered.length === 0 ? (
-          <EmptyState
-            title="Belum ada transaksi"
-            description="Transaksi hari ini akan muncul di sini"
-          />
-        ) : (
-          <div className="divide-y divide-gray-100">
-            {filtered.map((trx) => {
-              const isExpanded = expandedId === trx.id;
-              return (
-                <div key={trx.id} className="bg-white">
-                  <button
-                    onClick={() => setExpandedId(isExpanded ? null : trx.id)}
-                    className="w-full flex items-center justify-between px-4 py-3 hover:bg-gray-50 transition-colors text-left"
-                  >
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-0.5">
-                        <span className="text-sm font-medium text-gray-900">{trx.transactionNumber}</span>
-                        <Badge size="sm" colorClass={TRANSACTION_TYPE_COLORS[trx.type]}>
-                          {TRANSACTION_TYPE_LABELS[trx.type]}
-                        </Badge>
-                        <Badge size="sm" colorClass={TRANSACTION_STATUS_COLORS[trx.status]}>
-                          {TRANSACTION_STATUS_LABELS[trx.status]}
-                        </Badge>
-                      </div>
-                      <div className="flex items-center gap-3 text-xs text-gray-500">
-                        <span>{formatWaktu(trx.createdAt)}</span>
-                        {trx.customerName && <span>{trx.customerName}</span>}
-                        {trx.items && <span>{trx.items.length} item</span>}
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <span className="text-sm font-bold text-gray-900">
-                        {formatRupiah(trx.total || trx.totalAmount)}
-                      </span>
-                      {isExpanded ? (
-                        <HiChevronUp className="w-4 h-4 text-gray-400" />
-                      ) : (
-                        <HiChevronDown className="w-4 h-4 text-gray-400" />
-                      )}
-                    </div>
-                  </button>
+                    {/* ID / Tgl */}
+                    <td className="px-4 py-3 align-top">
+                      <div className="font-medium text-gray-900 whitespace-nowrap">{trx.transactionNumber}</div>
+                      <div className="text-xs text-blue-500">{formatDateTime(trx.createdAt)}</div>
+                    </td>
 
-                  {/* Expanded detail */}
-                  {isExpanded && (
-                    <div className="px-4 pb-3 bg-gray-50 border-t border-gray-100">
-                      <div className="py-2 space-y-1">
-                        {(trx.items || []).map((item, idx) => (
-                          <div key={idx} className="flex justify-between text-xs text-gray-600">
-                            <span>{item.product?.name || '-'} x{item.quantity}</span>
-                            <span>{formatRupiah(item.subtotal || item.quantity * (item.price || 0))}</span>
-                          </div>
-                        ))}
-                      </div>
-                      {trx.notes && (
-                        <p className="text-xs text-gray-500 mt-1">Catatan: {trx.notes}</p>
-                      )}
-                      <div className="flex justify-end mt-2">
+                    {/* Transaksi */}
+                    <td className="px-4 py-3 align-top">
+                      <span className="text-gray-700">{TRANSACTION_TYPE_LABELS[trx.type] || trx.type}</span>
+                    </td>
+
+                    {/* Konsumen */}
+                    <td className="px-4 py-3 align-top text-gray-700 uppercase">
+                      {trx.customerName || '-'}
+                    </td>
+
+                    {/* Produk */}
+                    <td className="px-4 py-3 align-top">
+                      <ul className="space-y-0.5">
+                        {(trx.items || []).map((item, i) => {
+                          const name = item.product?.name || '-';
+                          const qty = item.quantity;
+                          const price = parseFloat(item.price || 0);
+                          const sub = parseFloat(item.subtotal || qty * price);
+                          return (
+                            <li key={i} className="text-gray-600 text-xs">
+                              • {name} ({qty} PCS x {formatRupiah(price)} = {formatRupiah(sub)})
+                            </li>
+                          );
+                        })}
+                      </ul>
+                    </td>
+
+                    {/* Total */}
+                    <td className="px-4 py-3 align-top text-right font-medium text-gray-900 whitespace-nowrap">
+                      {formatRupiah(trx.total || trx.totalAmount)}
+                    </td>
+
+                    {/* Actions */}
+                    <td className="px-4 py-3 align-top">
+                      <div className="flex items-center justify-center gap-2">
                         <button
                           onClick={() => handlePrint(trx)}
-                          className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-gray-300 rounded-lg text-xs font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+                          className="p-2 bg-indigo-500 text-white rounded-lg hover:bg-indigo-600 transition-colors"
+                          title="Cetak Struk"
                         >
-                          <HiPrinter className="w-3.5 h-3.5" />
-                          Cetak Ulang
+                          <HiPrinter className="w-4 h-4" />
+                        </button>
+                        <button
+                          className="px-3 py-1.5 bg-green-500 text-white text-xs font-bold rounded-lg hover:bg-green-600 transition-colors"
+                        >
+                          RETUR
                         </button>
                       </div>
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </div>
       </div>
 
       {/* Receipt Modal */}
