@@ -104,9 +104,25 @@ if (fs.existsSync(indexHtml)) {
   console.log('Run "cd frontend && npm run build" to build the frontend.');
 }
 
-app.listen(PORT, () => {
+app.listen(PORT, async () => {
   console.log(`Server running on port ${PORT}`);
   console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
+
+  // One-time fix: mark all PENDING BON transactions as COMPLETED
+  try {
+    const { PrismaClient } = require('@prisma/client');
+    const prisma = new PrismaClient();
+    const result = await prisma.transaction.updateMany({
+      where: { type: 'BON', status: 'PENDING' },
+      data: { status: 'COMPLETED', paidAt: new Date() },
+    });
+    if (result.count > 0) {
+      console.log(`Fixed ${result.count} PENDING BON transactions to COMPLETED`);
+    }
+    await prisma.$disconnect();
+  } catch (err) {
+    console.log('DB fix skipped:', err.message);
+  }
 });
 
 module.exports = app;
