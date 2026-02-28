@@ -192,7 +192,7 @@ const getById = async (id) => {
  *   type: 'CASH' | 'BON' | 'ANGGARAN',
  *   customerName?, customerPhone?, notes?,
  *   discount?, tax?, paidAmount?,
- *   projectId?, unitLembagaId?,
+ *   projectId?, unitLembagaId?, kepanitiaan?,
  *   items: [{ productId, quantity, price, discount?, unitId? }]
  * }
  */
@@ -242,6 +242,7 @@ const create = async (data, userId) => {
         paidAt: status === 'COMPLETED' ? new Date() : null,
         projectId: header.projectId || null,
         unitLembagaId: header.unitLembagaId || null,
+        kepanitiaan: header.kepanitiaan || null,
         createdBy: userId,
       },
     });

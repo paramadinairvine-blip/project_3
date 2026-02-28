@@ -99,7 +99,7 @@ export default function Checkout() {
       notes: notes || undefined,
       customerName: customerName || undefined,
       customerPhone: customerPhone || undefined,
-      unitLembagaId: unitLembagaId || undefined,
+      kepanitiaan: unitLembagaId || undefined,
     };
 
     createMutation.mutate(payload);
