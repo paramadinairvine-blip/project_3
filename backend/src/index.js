@@ -76,6 +76,22 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
+// One-time fix endpoint: update PENDING BON to COMPLETED
+app.get('/api/fix-bon', async (req, res) => {
+  try {
+    const { PrismaClient } = require('@prisma/client');
+    const prisma = new PrismaClient();
+    const result = await prisma.transaction.updateMany({
+      where: { type: 'BON', status: 'PENDING' },
+      data: { status: 'COMPLETED', paidAt: new Date() },
+    });
+    await prisma.$disconnect();
+    res.json({ fixed: result.count });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // API Routes
 app.use('/api', routes);
 
