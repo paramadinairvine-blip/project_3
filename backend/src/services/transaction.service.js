@@ -217,11 +217,8 @@ const create = async (data, userId) => {
     const paidAmount = header.paidAmount || 0;
     const changeAmount = paidAmount > total ? paidAmount - total : 0;
 
-    // Determine initial status
-    let status = 'COMPLETED';
-    if (header.type === 'BON') {
-      status = 'PENDING'; // BON starts as pending until paid
-    }
+    // All transactions are completed immediately
+    const status = 'COMPLETED';
 
     // Create transaction header
     const created = await tx.transaction.create({
