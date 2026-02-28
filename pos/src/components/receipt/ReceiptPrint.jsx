@@ -37,9 +37,9 @@ export default function ReceiptPrint({ transaction, paidAmount, change, onClose 
           >
             {/* Store Header */}
             <div style={{ textAlign: 'center', marginBottom: '8px' }}>
-              <p style={{ fontWeight: 'bold', fontSize: '14px' }}>TOKO MATERIAL PESANTREN</p>
-              <p style={{ fontSize: '10px' }}>Jl. Pesantren No. 1</p>
-              <p style={{ fontSize: '10px' }}>Telp: (021) 1234567</p>
+              <p style={{ fontWeight: 'bold', fontSize: '14px' }}>TOKO MATERIAL PESANTREN DARUNNAJAH 2</p>
+              <p style={{ fontSize: '10px' }}>Jl. Argapura, Kp. Cipining, Desa Argapura, Kecamatan Cigudeg</p>
+              <p style={{ fontSize: '10px' }}>Telp: 085156526862</p>
               <div style={{ borderTop: '1px dashed #000', margin: '6px 0' }} />
             </div>
 
