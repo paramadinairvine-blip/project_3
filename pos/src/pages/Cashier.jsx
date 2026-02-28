@@ -51,8 +51,8 @@ export default function Cashier() {
 
   return (
     <div className="h-[calc(100vh-3.5rem)] flex">
-      {/* Left: Product Search & Grid */}
-      <div className="flex-1 flex flex-col overflow-hidden">
+      {/* Left: Product Search & List */}
+      <div className="w-[380px] flex flex-col overflow-hidden border-r border-gray-200">
         <div className="p-3 pb-2">
           <ProductSearch
             onSearch={setSearchQuery}
@@ -68,8 +68,8 @@ export default function Cashier() {
         </div>
       </div>
 
-      {/* Right: Cart (desktop) */}
-      <div className="hidden lg:flex w-[480px] border-l border-gray-200 bg-gray-50 flex-col">
+      {/* Right: Cart (desktop) - takes remaining space */}
+      <div className="hidden lg:flex flex-1 bg-gray-50 flex-col">
         <Cart />
       </div>
 
