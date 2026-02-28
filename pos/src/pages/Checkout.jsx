@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
-import { HiX, HiCash, HiCreditCard, HiOfficeBuilding, HiShoppingCart } from 'react-icons/hi';
+import { HiX, HiShoppingCart } from 'react-icons/hi';
 import { RiMoneyDollarCircleLine } from 'react-icons/ri';
 import useCartStore from '../stores/cartStore';
-import { transactionAPI, unitAPI } from '../api/endpoints';
+import { transactionAPI } from '../api/endpoints';
 import { formatRupiah } from '../utils/formatCurrency';
 import { TRANSACTION_TYPES, TRANSACTION_TYPE_LABELS } from '../utils/constants';
 import { getPrinterSettings } from '../utils/printerService';
@@ -13,8 +13,7 @@ import ReceiptPrint from '../components/receipt/ReceiptPrint';
 
 const paymentTypes = [
   { type: TRANSACTION_TYPES.CASH, label: 'TUNAI', color: 'bg-cyan-500 hover:bg-cyan-600 text-white' },
-  { type: TRANSACTION_TYPES.BON, label: 'BON', color: 'bg-orange-400 hover:bg-orange-500 text-white' },
-  { type: TRANSACTION_TYPES.ANGGARAN, label: 'ANGGARAN', color: 'bg-purple-400 hover:bg-purple-500 text-white' },
+  { type: TRANSACTION_TYPES.BON, label: 'OVERBOOKING TU', color: 'bg-orange-400 hover:bg-orange-500 text-white' },
 ];
 
 const quickAmounts = [500, 1000, 2000, 3000, 4000, 5000, 10000, 20000];
@@ -52,13 +51,6 @@ export default function Checkout() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   });
 
-  const { data: unitLembagaList } = useQuery({
-    queryKey: ['unit-lembaga'],
-    queryFn: () => unitAPI.getLembaga(),
-    select: (res) => res.data.data || [],
-    staleTime: 300000,
-  });
-
   const createMutation = useMutation({
     mutationFn: transactionAPI.create,
     onSuccess: (res) => {
@@ -86,6 +78,11 @@ export default function Checkout() {
 
     if (paymentType === 'CASH' && paidAmount < grandTotal) {
       toast.error('Jumlah pembayaran kurang');
+      return;
+    }
+
+    if (paymentType === 'BON' && (!unitLembagaId.trim() || !customerName.trim() || !customerPhone.trim())) {
+      toast.error('Lengkapi semua field yang wajib diisi');
       return;
     }
 
@@ -142,7 +139,7 @@ export default function Checkout() {
             <h3 className="font-semibold text-gray-900 mb-4">Metode Pembayaran</h3>
 
             {/* Payment Type Buttons */}
-            <div className="grid grid-cols-3 gap-3 mb-5">
+            <div className="grid grid-cols-2 gap-3 mb-5">
               {paymentTypes.map((pt) => (
                 <button
                   key={pt.type}
@@ -202,25 +199,22 @@ export default function Checkout() {
               </>
             )}
 
-            {/* BON / Anggaran fields */}
-            {(paymentType === 'BON' || paymentType === 'ANGGARAN') && (
+            {/* OVERBOOKING TU fields */}
+            {paymentType === 'BON' && (
               <div className="space-y-3">
                 <div>
-                  <label className="block text-sm text-gray-600 mb-1">Unit Lembaga</label>
-                  <select
+                  <label className="block text-sm text-gray-600 mb-1">Kepanitiaan/Kegiatan <span className="text-red-500">*</span></label>
+                  <input
+                    type="text"
                     value={unitLembagaId}
                     onChange={(e) => setUnitLembagaId(e.target.value)}
-                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-500 bg-white"
-                  >
-                    <option value="">-- Pilih Unit Lembaga --</option>
-                    {(unitLembagaList || []).map((u) => (
-                      <option key={u.id} value={u.id}>{u.name}</option>
-                    ))}
-                  </select>
+                    placeholder="Nama kepanitiaan atau kegiatan"
+                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-500"
+                  />
                 </div>
 
                 <div>
-                  <label className="block text-sm text-gray-600 mb-1">Nama Pengambil</label>
+                  <label className="block text-sm text-gray-600 mb-1">Nama Pengambil <span className="text-red-500">*</span></label>
                   <input
                     type="text"
                     value={customerName}
@@ -231,7 +225,7 @@ export default function Checkout() {
                 </div>
 
                 <div>
-                  <label className="block text-sm text-gray-600 mb-1">No. Telepon</label>
+                  <label className="block text-sm text-gray-600 mb-1">No. Telepon <span className="text-red-500">*</span></label>
                   <input
                     type="text"
                     value={customerPhone}
@@ -251,7 +245,7 @@ export default function Checkout() {
             <div className="flex items-center justify-between mb-6">
               <h3 className="font-semibold text-gray-900 text-lg">Tagihan</h3>
               <span className={`text-sm font-bold ${
-                paymentType === 'CASH' ? 'text-cyan-600' : paymentType === 'BON' ? 'text-orange-500' : 'text-purple-500'
+                paymentType === 'CASH' ? 'text-cyan-600' : 'text-orange-500'
               }`}>
                 {paymentLabel}
               </span>
@@ -330,7 +324,7 @@ export default function Checkout() {
         </button>
         <button
           onClick={handleSubmit}
-          disabled={createMutation.isPending || (paymentType === 'CASH' && paidAmount < grandTotal)}
+          disabled={createMutation.isPending || (paymentType === 'CASH' && paidAmount < grandTotal) || (paymentType === 'BON' && (!unitLembagaId.trim() || !customerName.trim() || !customerPhone.trim()))}
           className="px-6 py-2.5 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex flex-col items-center leading-tight"
         >
           <span>Proses Pembayaran</span>
