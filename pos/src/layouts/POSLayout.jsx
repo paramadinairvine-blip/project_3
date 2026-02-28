@@ -1,8 +1,9 @@
 import { useState, useRef, useEffect } from 'react';
-import { NavLink, Outlet, useNavigate } from 'react-router-dom';
+import { NavLink, Outlet } from 'react-router-dom';
 import { HiCash, HiClipboardList, HiCube, HiChartBar, HiPrinter, HiLogout, HiChevronRight } from 'react-icons/hi';
 import useAuth from '../hooks/useAuth';
 import { ROLE_LABELS } from '../utils/constants';
+import PrinterSettingModal from '../components/PrinterSettingModal';
 
 const navItems = [
   { to: '/kasir', label: 'Kasir', icon: HiCash },
@@ -13,8 +14,8 @@ const navItems = [
 
 export default function POSLayout() {
   const { user, logout } = useAuth();
-  const navigate = useNavigate();
   const [showProfileMenu, setShowProfileMenu] = useState(false);
+  const [showPrinterModal, setShowPrinterModal] = useState(false);
   const menuRef = useRef(null);
 
   const handleLogout = async () => {
@@ -107,7 +108,7 @@ export default function POSLayout() {
                   <button
                     onClick={() => {
                       setShowProfileMenu(false);
-                      navigate('/printer-setting');
+                      setShowPrinterModal(true);
                     }}
                     className="w-full flex items-center justify-between px-5 py-3 hover:bg-gray-50 transition-colors"
                   >
@@ -138,6 +139,12 @@ export default function POSLayout() {
       <main className="flex-1 overflow-hidden">
         <Outlet />
       </main>
+
+      {/* Printer Setting Modal */}
+      <PrinterSettingModal
+        isOpen={showPrinterModal}
+        onClose={() => setShowPrinterModal(false)}
+      />
     </div>
   );
 }

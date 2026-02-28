@@ -12,7 +12,6 @@ const History = lazy(() => import('./pages/History'));
 const StockCheck = lazy(() => import('./pages/StockCheck'));
 const Dashboard = lazy(() => import('./pages/Dashboard'));
 const HoldList = lazy(() => import('./pages/HoldList'));
-const PrinterSetting = lazy(() => import('./pages/PrinterSetting'));
 
 const allowedRoles = [ROLES.ADMIN, ROLES.OPERATOR];
 
@@ -35,7 +34,6 @@ export default function App() {
           <Route path="/riwayat" element={<History />} />
           <Route path="/cek-stok" element={<StockCheck />} />
           <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/printer-setting" element={<PrinterSetting />} />
         </Route>
 
         <Route path="/" element={<Navigate to="/kasir" replace />} />
