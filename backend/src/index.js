@@ -76,17 +76,25 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
-// One-time fix endpoint: update PENDING BON to COMPLETED
+// One-time fix endpoint: run pending migrations and fixes
 app.get('/api/fix-bon', async (req, res) => {
   try {
     const { PrismaClient } = require('@prisma/client');
     const prisma = new PrismaClient();
+
+    // Add kepanitiaan column if not exists
+    try {
+      await prisma.$executeRawUnsafe(`ALTER TABLE "transactions" ADD COLUMN IF NOT EXISTS "kepanitiaan" TEXT`);
+    } catch (e) {
+      // Column might already exist
+    }
+
     const result = await prisma.transaction.updateMany({
       where: { type: 'BON', status: 'PENDING' },
       data: { status: 'COMPLETED', paidAt: new Date() },
     });
     await prisma.$disconnect();
-    res.json({ fixed: result.count });
+    res.json({ fixed: result.count, migrated: true });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -124,10 +132,18 @@ app.listen(PORT, async () => {
   console.log(`Server running on port ${PORT}`);
   console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
 
-  // One-time fix: mark all PENDING BON transactions as COMPLETED
+  // One-time DB fixes on startup
   try {
     const { PrismaClient } = require('@prisma/client');
     const prisma = new PrismaClient();
+
+    // Ensure kepanitiaan column exists
+    try {
+      await prisma.$executeRawUnsafe(`ALTER TABLE "transactions" ADD COLUMN IF NOT EXISTS "kepanitiaan" TEXT`);
+      console.log('Ensured kepanitiaan column exists');
+    } catch (e) { /* column already exists */ }
+
+    // Fix PENDING BON transactions
     const result = await prisma.transaction.updateMany({
       where: { type: 'BON', status: 'PENDING' },
       data: { status: 'COMPLETED', paidAt: new Date() },
