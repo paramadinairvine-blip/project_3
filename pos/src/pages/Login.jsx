@@ -103,7 +103,7 @@ export default function Login() {
 
         <div className="text-center mt-6 space-y-1">
           <p className="text-xs text-gray-500">
-            POS Kasir - Toko Material Pesantren &copy; {new Date().getFullYear()}
+            Pesantren Darunnajah 2 &copy; {new Date().getFullYear()}
           </p>
           <a
             href="https://wa.me/6285156526862"
