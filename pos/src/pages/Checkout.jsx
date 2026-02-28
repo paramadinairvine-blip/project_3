@@ -1,27 +1,29 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
-import { HiArrowLeft, HiCash, HiCreditCard, HiOfficeBuilding, HiCheck } from 'react-icons/hi';
+import { HiX, HiCash, HiCreditCard, HiOfficeBuilding, HiShoppingCart } from 'react-icons/hi';
+import { RiMoneyDollarCircleLine } from 'react-icons/ri';
 import useCartStore from '../stores/cartStore';
 import { transactionAPI, unitAPI } from '../api/endpoints';
 import { formatRupiah } from '../utils/formatCurrency';
 import { TRANSACTION_TYPES, TRANSACTION_TYPE_LABELS } from '../utils/constants';
-import { Button } from '../components/common';
+import { getPrinterSettings } from '../utils/printerService';
 import ReceiptPrint from '../components/receipt/ReceiptPrint';
 
 const paymentTypes = [
-  { type: TRANSACTION_TYPES.CASH, label: 'Tunai', icon: HiCash, color: 'bg-blue-600 hover:bg-blue-700', activeColor: 'ring-blue-500' },
-  { type: TRANSACTION_TYPES.BON, label: 'Bon', icon: HiCreditCard, color: 'bg-orange-500 hover:bg-orange-600', activeColor: 'ring-orange-500' },
-  { type: TRANSACTION_TYPES.ANGGARAN, label: 'Anggaran', icon: HiOfficeBuilding, color: 'bg-purple-600 hover:bg-purple-700', activeColor: 'ring-purple-500' },
+  { type: TRANSACTION_TYPES.CASH, label: 'TUNAI', color: 'bg-cyan-500 hover:bg-cyan-600 text-white' },
+  { type: TRANSACTION_TYPES.BON, label: 'BON', color: 'bg-orange-400 hover:bg-orange-500 text-white' },
+  { type: TRANSACTION_TYPES.ANGGARAN, label: 'ANGGARAN', color: 'bg-purple-400 hover:bg-purple-500 text-white' },
 ];
 
-const quickAmounts = [10000, 20000, 50000, 100000, 200000, 500000];
+const quickAmounts = [500, 1000, 2000, 3000, 4000, 5000, 10000, 20000];
 
 export default function Checkout() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [receiptData, setReceiptData] = useState(null);
+  const [cetakStruk, setCetakStruk] = useState(true);
 
   const {
     items, discount, notes, customerName, customerPhone, unitLembagaId, paymentType, paidAmount,
@@ -31,7 +33,24 @@ export default function Checkout() {
 
   const grandTotal = getGrandTotal();
   const change = getChange();
-  const subtotal = getSubtotal();
+
+  // Load printer settings for cetak struk default
+  useEffect(() => {
+    const ps = getPrinterSettings();
+    setCetakStruk(ps.cetakStruk !== false);
+  }, []);
+
+  // Keyboard shortcut: CTRL+Enter to submit
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.ctrlKey && e.key === 'Enter') {
+        e.preventDefault();
+        handleSubmit();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  });
 
   const { data: unitLembagaList } = useQuery({
     queryKey: ['unit-lembaga'],
@@ -47,7 +66,12 @@ export default function Checkout() {
       queryClient.invalidateQueries({ queryKey: ['transactions'] });
       queryClient.invalidateQueries({ queryKey: ['products'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard'] });
-      setReceiptData(res.data.data);
+      if (cetakStruk) {
+        setReceiptData(res.data.data);
+      } else {
+        clearCart();
+        navigate('/kasir');
+      }
     },
     onError: (error) => {
       toast.error(error.response?.data?.message || 'Gagal membuat transaksi');
@@ -95,202 +119,223 @@ export default function Checkout() {
     return null;
   }
 
+  const paymentLabel = paymentTypes.find((p) => p.type === paymentType)?.label || 'TUNAI';
+
   return (
-    <div className="h-[calc(100vh-3.5rem)] overflow-y-auto bg-gray-50">
-      <div className="max-w-3xl mx-auto p-4 space-y-4">
-        {/* Back button */}
+    <div className="h-[calc(100vh-3.5rem)] flex flex-col bg-gray-50">
+      {/* Header */}
+      <div className="bg-white border-b border-gray-200 px-6 py-3 flex items-center justify-between flex-shrink-0">
+        <h1 className="text-lg font-semibold text-gray-900">Pembayaran</h1>
         <button
           onClick={() => navigate('/kasir')}
-          className="flex items-center gap-2 text-sm text-gray-600 hover:text-gray-900 transition-colors"
+          className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
         >
-          <HiArrowLeft className="w-4 h-4" />
-          Kembali ke Kasir
+          <HiX className="w-5 h-5" />
         </button>
+      </div>
 
-        {/* Order Summary */}
-        <div className="bg-white rounded-xl border border-gray-200 p-4">
-          <h3 className="font-semibold text-gray-900 mb-3">Ringkasan Pesanan</h3>
-          <div className="space-y-2">
-            {items.map((item) => (
-              <div key={item.productId} className="flex justify-between text-sm">
-                <span className="text-gray-700">
-                  {item.product?.name} x{item.quantity}
-                </span>
-                <span className="font-medium">{formatRupiah(item.quantity * item.unitPrice)}</span>
-              </div>
-            ))}
-            <div className="border-t border-gray-100 pt-2 flex justify-between text-sm text-gray-600">
-              <span>Subtotal</span>
-              <span>{formatRupiah(subtotal)}</span>
-            </div>
-            {discount > 0 && (
-              <div className="flex justify-between text-sm text-red-600">
-                <span>Diskon</span>
-                <span>-{formatRupiah(discount)}</span>
-              </div>
-            )}
-            <div className="border-t border-gray-200 pt-2 flex justify-between text-lg font-bold">
-              <span>Total</span>
-              <span className="text-blue-600">{formatRupiah(grandTotal)}</span>
-            </div>
-          </div>
-        </div>
+      {/* Main Content - 2 columns */}
+      <div className="flex-1 flex overflow-hidden">
+        {/* Left Column: Metode Pembayaran */}
+        <div className="flex-1 overflow-y-auto p-6">
+          <div className="bg-white rounded-xl border border-gray-200 p-5">
+            <h3 className="font-semibold text-gray-900 mb-4">Metode Pembayaran</h3>
 
-        {/* Payment Type */}
-        <div className="bg-white rounded-xl border border-gray-200 p-4">
-          <h3 className="font-semibold text-gray-900 mb-3">Tipe Pembayaran</h3>
-          <div className="grid grid-cols-3 gap-3">
-            {paymentTypes.map((pt) => (
-              <button
-                key={pt.type}
-                onClick={() => setPaymentType(pt.type)}
-                className={`flex flex-col items-center gap-2 p-4 rounded-xl text-white transition-all ${pt.color} ${
-                  paymentType === pt.type ? `ring-4 ${pt.activeColor} ring-offset-2 scale-105` : 'opacity-70'
-                }`}
-              >
-                <pt.icon className="w-6 h-6" />
-                <span className="text-sm font-medium">{pt.label}</span>
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Cash Payment */}
-        {paymentType === 'CASH' && (
-          <div className="bg-white rounded-xl border border-gray-200 p-4">
-            <h3 className="font-semibold text-gray-900 mb-3">Pembayaran Tunai</h3>
-
-            {/* Quick amounts */}
-            <div className="grid grid-cols-3 gap-2 mb-3">
-              {quickAmounts.map((amount) => (
+            {/* Payment Type Buttons */}
+            <div className="grid grid-cols-3 gap-3 mb-5">
+              {paymentTypes.map((pt) => (
                 <button
-                  key={amount}
-                  onClick={() => setPaidAmount(amount)}
-                  className={`py-2 px-3 rounded-lg text-sm font-medium border transition-colors ${
-                    paidAmount === amount
-                      ? 'bg-blue-50 border-blue-500 text-blue-700'
-                      : 'bg-gray-50 border-gray-200 text-gray-700 hover:bg-gray-100'
+                  key={pt.type}
+                  onClick={() => setPaymentType(pt.type)}
+                  className={`py-3 px-4 rounded-xl text-sm font-bold transition-all ${
+                    paymentType === pt.type
+                      ? `${pt.color} ring-2 ring-offset-2 ring-blue-400`
+                      : 'bg-white border-2 border-gray-200 text-gray-600 hover:border-gray-300'
                   }`}
                 >
-                  {formatRupiah(amount)}
+                  {pt.label}
                 </button>
               ))}
             </div>
 
-            {/* Exact amount button */}
-            <button
-              onClick={() => setPaidAmount(grandTotal)}
-              className="w-full mb-3 py-2 bg-green-50 border border-green-300 rounded-lg text-sm font-medium text-green-700 hover:bg-green-100 transition-colors"
-            >
-              Uang Pas ({formatRupiah(grandTotal)})
-            </button>
+            {/* CASH specific fields */}
+            {paymentType === 'CASH' && (
+              <>
+                {/* Nama Konsumen */}
+                <div className="mb-4">
+                  <input
+                    type="text"
+                    value={customerName}
+                    onChange={(e) => setCustomerName(e.target.value)}
+                    placeholder="Nama Konsumen"
+                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  />
+                </div>
 
-            {/* Customer name (optional) */}
-            <div className="mb-3">
-              <label className="block text-sm text-gray-600 mb-1">Nama</label>
-              <input
-                type="text"
-                value={customerName}
-                onChange={(e) => setCustomerName(e.target.value)}
-                placeholder="Opsional"
-                className="w-full px-4 py-2.5 border border-gray-300 rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              />
-            </div>
+                {/* Amount input */}
+                <div className="mb-4">
+                  <div className="flex items-center border-2 border-cyan-400 rounded-xl overflow-hidden focus-within:ring-2 focus-within:ring-cyan-300">
+                    <span className="px-4 py-3 text-gray-500 text-sm font-medium bg-gray-50 border-r border-gray-200">Rp.</span>
+                    <input
+                      type="number"
+                      value={paidAmount || ''}
+                      onChange={(e) => setPaidAmount(parseInt(e.target.value) || 0)}
+                      className="flex-1 px-4 py-3 text-lg font-bold text-right outline-none"
+                      placeholder="0"
+                      min="0"
+                    />
+                  </div>
+                </div>
 
-            {/* Custom amount */}
-            <div>
-              <label className="block text-sm text-gray-600 mb-1">Uang Diterima</label>
-              <input
-                type="number"
-                value={paidAmount || ''}
-                onChange={(e) => setPaidAmount(parseInt(e.target.value) || 0)}
-                className="w-full px-4 py-3 border border-gray-300 rounded-xl text-lg font-bold text-right outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                placeholder="0"
-                min="0"
-              />
-            </div>
+                {/* Quick amounts */}
+                <div className="flex flex-wrap gap-2">
+                  {quickAmounts.map((amount) => (
+                    <button
+                      key={amount}
+                      onClick={() => setPaidAmount(paidAmount + amount)}
+                      className="px-4 py-2 rounded-full text-sm font-semibold bg-green-500 text-white hover:bg-green-600 transition-colors"
+                    >
+                      {amount.toLocaleString('id-ID')}
+                    </button>
+                  ))}
+                </div>
+              </>
+            )}
 
-            {/* Change display */}
-            <div className={`mt-3 p-4 rounded-xl text-center ${
-              change >= 0 ? 'bg-green-50 border border-green-200' : 'bg-red-50 border border-red-200'
-            }`}>
-              <p className="text-sm text-gray-600 mb-1">Kembalian</p>
-              <p className={`text-3xl font-bold ${change >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                {formatRupiah(Math.abs(change))}
-              </p>
-              {change < 0 && <p className="text-xs text-red-500 mt-1">Pembayaran kurang</p>}
-            </div>
+            {/* BON / Anggaran fields */}
+            {(paymentType === 'BON' || paymentType === 'ANGGARAN') && (
+              <div className="space-y-3">
+                <div>
+                  <label className="block text-sm text-gray-600 mb-1">Unit Lembaga</label>
+                  <select
+                    value={unitLembagaId}
+                    onChange={(e) => setUnitLembagaId(e.target.value)}
+                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                  >
+                    <option value="">-- Pilih Unit Lembaga --</option>
+                    {(unitLembagaList || []).map((u) => (
+                      <option key={u.id} value={u.id}>{u.name}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm text-gray-600 mb-1">Nama Pengambil</label>
+                  <input
+                    type="text"
+                    value={customerName}
+                    onChange={(e) => setCustomerName(e.target.value)}
+                    placeholder="Nama pengambil barang"
+                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm text-gray-600 mb-1">No. Telepon</label>
+                  <input
+                    type="text"
+                    value={customerPhone}
+                    onChange={(e) => setCustomerPhone(e.target.value)}
+                    placeholder="08xxxxxxxxxx"
+                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+              </div>
+            )}
           </div>
-        )}
-
-        {/* BON / Anggaran - Unit Lembaga */}
-        {(paymentType === 'BON' || paymentType === 'ANGGARAN') && (
-          <div className="bg-white rounded-xl border border-gray-200 p-4 space-y-3">
-            <h3 className="font-semibold text-gray-900">Info {TRANSACTION_TYPE_LABELS[paymentType]}</h3>
-
-            <div>
-              <label className="block text-sm text-gray-600 mb-1">Unit Lembaga</label>
-              <select
-                value={unitLembagaId}
-                onChange={(e) => setUnitLembagaId(e.target.value)}
-                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="">-- Pilih Unit Lembaga --</option>
-                {(unitLembagaList || []).map((u) => (
-                  <option key={u.id} value={u.id}>{u.name}</option>
-                ))}
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-sm text-gray-600 mb-1">Nama Pengambil</label>
-              <input
-                type="text"
-                value={customerName}
-                onChange={(e) => setCustomerName(e.target.value)}
-                placeholder="Nama pengambil barang"
-                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm text-gray-600 mb-1">No. Telepon</label>
-              <input
-                type="text"
-                value={customerPhone}
-                onChange={(e) => setCustomerPhone(e.target.value)}
-                placeholder="08xxxxxxxxxx"
-                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-          </div>
-        )}
-
-        {/* Notes */}
-        <div className="bg-white rounded-xl border border-gray-200 p-4">
-          <label className="block text-sm font-medium text-gray-700 mb-1">Catatan (opsional)</label>
-          <textarea
-            value={notes}
-            onChange={(e) => setNotes(e.target.value)}
-            placeholder="Tambahkan catatan..."
-            rows={2}
-            className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-500 resize-none"
-          />
         </div>
 
-        {/* Submit button */}
-        <Button
-          size="lg"
-          className="w-full"
-          icon={HiCheck}
-          loading={createMutation.isPending}
-          disabled={paymentType === 'CASH' && paidAmount < grandTotal}
-          onClick={handleSubmit}
-        >
-          Konfirmasi & Cetak Struk
-        </Button>
+        {/* Right Column: Tagihan */}
+        <div className="w-[380px] border-l border-gray-200 bg-white flex flex-col overflow-y-auto">
+          <div className="p-5 flex-1">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="font-semibold text-gray-900 text-lg">Tagihan</h3>
+              <span className={`text-sm font-bold ${
+                paymentType === 'CASH' ? 'text-cyan-600' : paymentType === 'BON' ? 'text-orange-500' : 'text-purple-500'
+              }`}>
+                {paymentLabel}
+              </span>
+            </div>
 
-        <div className="h-4" />
+            {/* Total Tagihan */}
+            <div className="flex items-center justify-between py-3">
+              <div className="flex items-center gap-3">
+                <HiShoppingCart className="w-5 h-5 text-orange-500" />
+                <span className="text-sm font-semibold text-gray-700">Total Tagihan</span>
+              </div>
+              <span className="text-lg font-bold text-red-500">{formatRupiah(grandTotal)}</span>
+            </div>
+
+            {/* Pembayaran */}
+            <div className="flex items-center justify-between py-3">
+              <div className="flex items-center gap-3">
+                <RiMoneyDollarCircleLine className="w-5 h-5 text-cyan-500" />
+                <span className="text-sm font-semibold text-gray-700">Pembayaran</span>
+              </div>
+              <span className="text-lg font-bold text-green-600">
+                {formatRupiah(paymentType === 'CASH' ? paidAmount : grandTotal)}
+              </span>
+            </div>
+
+            {/* Kembalian (CASH only) */}
+            {paymentType === 'CASH' && paidAmount > 0 && (
+              <div className={`mt-3 p-3 rounded-xl text-center ${
+                change >= 0 ? 'bg-green-50 border border-green-200' : 'bg-red-50 border border-red-200'
+              }`}>
+                <p className="text-xs text-gray-500 mb-1">Kembalian</p>
+                <p className={`text-2xl font-bold ${change >= 0 ? 'text-green-600' : 'text-red-500'}`}>
+                  {formatRupiah(Math.abs(change))}
+                </p>
+                {change < 0 && <p className="text-xs text-red-500 mt-0.5">Pembayaran kurang</p>}
+              </div>
+            )}
+
+            {/* Cetak Struk */}
+            <div className="mt-5 pt-4 border-t border-gray-100">
+              <p className="text-sm text-gray-600 mb-2">Cetak Struk</p>
+              <div className="flex items-center gap-6">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="radio"
+                    name="cetakStruk"
+                    checked={cetakStruk === true}
+                    onChange={() => setCetakStruk(true)}
+                    className="w-4 h-4 text-blue-600"
+                  />
+                  <span className="text-sm text-gray-700">Ya</span>
+                </label>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="radio"
+                    name="cetakStruk"
+                    checked={cetakStruk === false}
+                    onChange={() => setCetakStruk(false)}
+                    className="w-4 h-4 text-blue-600"
+                  />
+                  <span className="text-sm text-gray-700">Tidak</span>
+                </label>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Footer */}
+      <div className="bg-white border-t border-gray-200 px-6 py-3 flex items-center justify-end gap-3 flex-shrink-0">
+        <button
+          onClick={() => navigate('/kasir')}
+          className="px-5 py-2.5 text-sm font-medium text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-100 transition-colors"
+        >
+          Close
+        </button>
+        <button
+          onClick={handleSubmit}
+          disabled={createMutation.isPending || (paymentType === 'CASH' && paidAmount < grandTotal)}
+          className="px-6 py-2.5 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex flex-col items-center leading-tight"
+        >
+          <span>Proses Pembayaran</span>
+          <span className="text-[10px] font-normal opacity-80">(CTRL + Enter)</span>
+        </button>
       </div>
 
       {/* Receipt Modal */}
