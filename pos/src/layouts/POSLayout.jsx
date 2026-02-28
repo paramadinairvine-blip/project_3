@@ -1,5 +1,6 @@
-import { NavLink, Outlet } from 'react-router-dom';
-import { HiCash, HiClipboardList, HiCube, HiChartBar, HiLogout } from 'react-icons/hi';
+import { useState, useRef, useEffect } from 'react';
+import { NavLink, Outlet, useNavigate } from 'react-router-dom';
+import { HiCash, HiClipboardList, HiCube, HiChartBar, HiPrinter, HiLogout, HiChevronRight } from 'react-icons/hi';
 import useAuth from '../hooks/useAuth';
 import { ROLE_LABELS } from '../utils/constants';
 
@@ -12,7 +13,12 @@ const navItems = [
 
 export default function POSLayout() {
   const { user, logout } = useAuth();
+  const navigate = useNavigate();
+  const [showProfileMenu, setShowProfileMenu] = useState(false);
+  const menuRef = useRef(null);
+
   const handleLogout = async () => {
+    setShowProfileMenu(false);
     try {
       await logout();
     } catch {
@@ -20,6 +26,19 @@ export default function POSLayout() {
     }
     window.location.href = '/login';
   };
+
+  // Close menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (menuRef.current && !menuRef.current.contains(e.target)) {
+        setShowProfileMenu(false);
+      }
+    };
+    if (showProfileMenu) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [showProfileMenu]);
 
   return (
     <div className="min-h-screen bg-gray-100 flex flex-col">
@@ -59,24 +78,58 @@ export default function POSLayout() {
             ))}
           </nav>
 
-          {/* Right: User info + Logout */}
-          <div className="flex items-center gap-3">
-            <div className="hidden sm:flex items-center gap-2">
-              <div className="w-7 h-7 bg-gray-700 rounded-full flex items-center justify-center text-xs font-bold">
-                {user?.fullName?.charAt(0) || 'U'}
-              </div>
-              <div className="text-right">
-                <p className="text-xs font-medium leading-tight">{user?.fullName || 'User'}</p>
-                <p className="text-[10px] text-gray-400">{ROLE_LABELS[user?.role] || user?.role}</p>
-              </div>
-            </div>
+          {/* Right: Profile menu */}
+          <div className="relative" ref={menuRef}>
             <button
-              onClick={handleLogout}
-              className="p-2 text-gray-400 hover:text-white hover:bg-gray-800 rounded-lg transition-colors"
-              title="Logout"
+              onClick={() => setShowProfileMenu(!showProfileMenu)}
+              className="flex items-center gap-2 hover:bg-gray-800 rounded-lg px-2 py-1.5 transition-colors"
             >
-              <HiLogout className="w-5 h-5" />
+              <span className="hidden sm:block text-right">
+                <span className="text-xs font-medium leading-tight block">{user?.fullName || 'User'}</span>
+                <span className="text-[10px] text-gray-400 block">{ROLE_LABELS[user?.role] || user?.role}</span>
+              </span>
+              <div className="w-9 h-9 bg-cyan-500 rounded-full flex items-center justify-center text-sm font-bold text-white">
+                {user?.fullName?.substring(0, 2)?.toUpperCase() || 'U'}
+              </div>
             </button>
+
+            {/* Dropdown Menu */}
+            {showProfileMenu && (
+              <div className="absolute right-0 top-full mt-2 w-72 bg-white rounded-xl shadow-2xl border border-gray-200 overflow-hidden z-50">
+                {/* Profile Header */}
+                <div className="bg-gradient-to-r from-indigo-600 to-blue-500 px-5 py-4">
+                  <p className="text-white font-semibold text-base">{user?.fullName || 'User'}</p>
+                  <p className="text-blue-200 text-xs mt-0.5">{ROLE_LABELS[user?.role] || user?.role}</p>
+                </div>
+
+                {/* Menu Items */}
+                <div className="py-2">
+                  <button
+                    onClick={() => {
+                      setShowProfileMenu(false);
+                      navigate('/printer-setting');
+                    }}
+                    className="w-full flex items-center justify-between px-5 py-3 hover:bg-gray-50 transition-colors"
+                  >
+                    <div className="flex items-center gap-3">
+                      <HiPrinter className="w-5 h-5 text-green-600" />
+                      <span className="text-sm text-gray-700">Printer Setting</span>
+                    </div>
+                    <HiChevronRight className="w-4 h-4 text-gray-400" />
+                  </button>
+                </div>
+
+                {/* Sign Out */}
+                <div className="border-t border-gray-100 px-5 py-3">
+                  <button
+                    onClick={handleLogout}
+                    className="px-4 py-1.5 border border-cyan-500 text-cyan-600 text-sm font-medium rounded-lg hover:bg-cyan-50 transition-colors"
+                  >
+                    SIGN OUT
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </header>
