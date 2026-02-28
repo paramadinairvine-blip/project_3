@@ -26,16 +26,14 @@ export default function POSLayout() {
       {/* Top Navigation Bar */}
       <header className="bg-gray-900 text-white shadow-lg flex-shrink-0">
         <div className="flex items-center justify-between px-4 h-14">
-          {/* Left: Logo + POS badge */}
+          {/* Left: Logo + Institution badge */}
           <div className="flex items-center gap-3">
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-                <HiCash className="w-5 h-5 text-white" />
-              </div>
-              <div className="hidden sm:block">
-                <span className="font-bold text-sm">TOKO MATERIAL</span>
-                <span className="ml-2 px-2 py-0.5 bg-blue-600 text-white text-xs font-semibold rounded">
-                  POS
+            <div className="flex items-center gap-2.5">
+              <img src="/logo-white.svg" alt="Logo" className="w-8 h-8" />
+              <div className="hidden sm:flex items-center gap-2">
+                <span className="font-bold text-sm tracking-wide">TOKO MATERIAL</span>
+                <span className="px-2.5 py-0.5 bg-blue-600 text-white text-[10px] font-semibold rounded tracking-wider">
+                  PESANTREN DARUNNAJAH 2
                 </span>
               </div>
             </div>
