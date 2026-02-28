@@ -53,15 +53,13 @@ export default function Cashier() {
     <div className="h-[calc(100vh-3.5rem)] flex">
       {/* Left: Product Search & Grid */}
       <div className="flex-1 flex flex-col overflow-hidden">
-        {/* Search bar area with colored background */}
-        <div className="bg-gradient-to-r from-indigo-600 to-purple-500 p-3">
+        <div className="p-3 pb-2">
           <ProductSearch
             onSearch={setSearchQuery}
             onScanClick={() => setShowScanner(true)}
           />
         </div>
-        {/* Product list */}
-        <div className="flex-1 overflow-y-auto p-3">
+        <div className="flex-1 overflow-y-auto px-3 pb-3">
           <ProductGrid
             products={products}
             isLoading={isLoading}

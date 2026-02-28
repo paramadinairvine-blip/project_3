@@ -1,17 +1,16 @@
-import ProductListItem from './ProductListItem';
+import ProductCard from './ProductCard';
 import { EmptyState } from '../common';
 
 export default function ProductGrid({ products, isLoading, onAddToCart }) {
   if (isLoading) {
     return (
-      <div className="space-y-0">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
         {Array.from({ length: 8 }).map((_, i) => (
-          <div key={i} className="flex items-center justify-between py-3 px-4 border-b border-gray-100 animate-pulse">
-            <div className="flex-1">
-              <div className="h-4 bg-gray-200 rounded w-48 mb-1.5" />
-              <div className="h-3 bg-gray-200 rounded w-32" />
-            </div>
-            <div className="w-16 h-8 bg-gray-200 rounded" />
+          <div key={i} className="bg-white rounded-xl border border-gray-200 p-3 animate-pulse">
+            <div className="w-full h-20 bg-gray-200 rounded-lg mb-2" />
+            <div className="h-3 bg-gray-200 rounded w-3/4 mb-1" />
+            <div className="h-3 bg-gray-200 rounded w-1/2 mb-2" />
+            <div className="h-4 bg-gray-200 rounded w-2/3" />
           </div>
         ))}
       </div>
@@ -28,27 +27,14 @@ export default function ProductGrid({ products, isLoading, onAddToCart }) {
   }
 
   return (
-    <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-      {/* Header */}
-      <div className="bg-gray-600 text-white px-4 py-2.5">
-        <h3 className="text-sm font-semibold">
-          Daftar Produk
-          <span className="ml-2 text-xs font-normal text-gray-300">
-            (CTRL + Down / Up)
-          </span>
-        </h3>
-      </div>
-
-      {/* Product List */}
-      <div className="divide-y divide-gray-100">
-        {products.map((product) => (
-          <ProductListItem
-            key={product.id}
-            product={product}
-            onAdd={onAddToCart}
-          />
-        ))}
-      </div>
+    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+      {products.map((product) => (
+        <ProductCard
+          key={product.id}
+          product={product}
+          onAdd={onAddToCart}
+        />
+      ))}
     </div>
   );
 }
