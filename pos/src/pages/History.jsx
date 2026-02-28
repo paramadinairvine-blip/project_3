@@ -198,18 +198,13 @@ export default function History() {
 
                     {/* Actions */}
                     <td className="px-4 py-3 align-top">
-                      <div className="flex items-center justify-center gap-2">
+                      <div className="flex items-center justify-center">
                         <button
                           onClick={() => handlePrint(trx)}
                           className="p-2 bg-indigo-500 text-white rounded-lg hover:bg-indigo-600 transition-colors"
                           title="Cetak Struk"
                         >
                           <HiPrinter className="w-4 h-4" />
-                        </button>
-                        <button
-                          className="px-3 py-1.5 bg-green-500 text-white text-xs font-bold rounded-lg hover:bg-green-600 transition-colors"
-                        >
-                          RETUR
                         </button>
                       </div>
                     </td>
