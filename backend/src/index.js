@@ -32,8 +32,6 @@ const allowedOrigins = process.env.CORS_ORIGINS
   ? process.env.CORS_ORIGINS.split(',').map(o => o.trim())
   : defaultOrigins;
 
-console.log('CORS allowed origins:', allowedOrigins);
-
 app.use(cors({
   origin: (origin, callback) => {
     // Allow requests with no origin (mobile apps, Postman, server-to-server)
@@ -41,7 +39,6 @@ app.use(cors({
     if (allowedOrigins.includes(origin)) {
       return callback(null, true);
     }
-    console.log('CORS rejected origin:', origin);
     return callback(new Error('Not allowed by CORS'));
   },
   credentials: true,
