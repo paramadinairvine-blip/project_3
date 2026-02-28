@@ -52,7 +52,7 @@ export default function Login() {
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="nama@pesantren.id"
+                placeholder="Masukan Email"
                 required
                 autoFocus
                 className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors"
@@ -104,9 +104,19 @@ export default function Login() {
           </form>
         </div>
 
-        <p className="text-center text-xs text-gray-500 mt-6">
-          POS Kasir - Toko Material Pesantren &copy; {new Date().getFullYear()}
-        </p>
+        <div className="text-center mt-6 space-y-1">
+          <p className="text-xs text-gray-500">
+            POS Kasir - Toko Material Pesantren &copy; {new Date().getFullYear()}
+          </p>
+          <a
+            href="https://wa.me/6285156526862"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-xs text-blue-400 hover:text-blue-300 hover:underline"
+          >
+            Technical Support
+          </a>
+        </div>
       </div>
     </div>
   );

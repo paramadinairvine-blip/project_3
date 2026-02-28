@@ -35,7 +35,6 @@ export default function Login() {
           </div>
           <h1 className="text-2xl font-bold text-gray-900">Toko Material Pesantren</h1>
           <h2 className="text-lg font-semibold text-gray-700">Darunnajah 2</h2>
-          <p className="text-gray-500 mt-1">Sistem Inventori & Manajemen Stok</p>
         </div>
 
         {/* Form card */}
@@ -52,7 +51,7 @@ export default function Login() {
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="nama@pesantren.id"
+                placeholder="Masukan Email"
                 required
                 className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors"
               />
@@ -115,9 +114,19 @@ export default function Login() {
           </form>
         </div>
 
-        <p className="text-center text-xs text-gray-400 mt-6">
-          Pesantren Darunnajah 2 &copy; {new Date().getFullYear()}
-        </p>
+        <div className="text-center mt-6 space-y-1">
+          <p className="text-xs text-gray-400">
+            Pesantren Darunnajah 2 &copy; {new Date().getFullYear()}
+          </p>
+          <a
+            href="https://wa.me/6285156526862"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-xs text-blue-500 hover:text-blue-600 hover:underline"
+          >
+            Technical Support
+          </a>
+        </div>
       </div>
     </div>
   );
