@@ -1,5 +1,5 @@
-import { NavLink, useLocation, useNavigate } from 'react-router-dom';
-import { useState, useRef, useEffect } from 'react';
+import { NavLink, useLocation } from 'react-router-dom';
+import { useState } from 'react';
 import {
   HiHome,
   HiCube,
@@ -10,7 +10,6 @@ import {
   HiChevronDown,
   HiX,
   HiLogout,
-  HiUser,
   HiSupport,
 } from 'react-icons/hi';
 import useAuth from '../hooks/useAuth';
@@ -167,33 +166,12 @@ function MenuItem({ item, collapsed, closeMobile }) {
 }
 
 export default function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose }) {
-  const { user, logout } = useAuth();
-  const navigate = useNavigate();
+  const { user } = useAuth();
   const [profileOpen, setProfileOpen] = useState(false);
-  const profileRef = useRef(null);
-
-  // Close dropdown when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (e) => {
-      if (profileRef.current && !profileRef.current.contains(e.target)) {
-        setProfileOpen(false);
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
 
   const handleLogout = () => {
-    setProfileOpen(false);
-    onMobileClose?.();
-    // Clear local state immediately, don't wait for API
-    localStorage.removeItem('accessToken');
-    localStorage.removeItem('refreshToken');
-    localStorage.removeItem('user');
-    // Fire-and-forget API call to revoke token on server
-    logout().catch(() => {});
-    // Redirect immediately
-    window.location.href = '/login';
+    localStorage.clear();
+    window.location.replace('/login');
   };
 
   const sidebarContent = (
@@ -229,9 +207,9 @@ export default function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose
         </button>
       </div>
 
-      {/* User Profile — Click to toggle dropdown */}
+      {/* User Profile + Submenu */}
       {user && (
-        <div className="border-b border-gray-700 relative" ref={profileRef}>
+        <div className="border-b border-gray-700">
           <button
             onClick={() => setProfileOpen(!profileOpen)}
             className="w-full px-4 py-4 hover:bg-gray-800 transition-colors cursor-pointer"
@@ -260,14 +238,14 @@ export default function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose
             )}
           </button>
 
-          {/* Profile Dropdown Menu */}
+          {/* Profile Submenu */}
           {profileOpen && !collapsed && (
-            <div className="bg-gray-950/60">
+            <div className="bg-gray-950/50">
               <button
                 onClick={handleLogout}
                 className="w-full flex items-center gap-3 pl-8 pr-4 py-2.5 text-sm text-gray-400 hover:bg-red-600/20 hover:text-red-400 transition-colors"
               >
-                <span className="w-7 h-7 rounded-md flex items-center justify-center text-[11px] font-bold bg-gray-700 text-gray-300">
+                <span className="w-7 h-7 rounded-md flex items-center justify-center bg-gray-700 text-gray-300">
                   <HiLogout className="w-3.5 h-3.5" />
                 </span>
                 <span>Logout</span>
