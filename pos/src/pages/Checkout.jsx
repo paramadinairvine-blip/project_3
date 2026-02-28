@@ -185,6 +185,18 @@ export default function Checkout() {
               Uang Pas ({formatRupiah(grandTotal)})
             </button>
 
+            {/* Customer name (optional) */}
+            <div className="mb-3">
+              <label className="block text-sm text-gray-600 mb-1">Nama</label>
+              <input
+                type="text"
+                value={customerName}
+                onChange={(e) => setCustomerName(e.target.value)}
+                placeholder="Opsional"
+                className="w-full px-4 py-2.5 border border-gray-300 rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              />
+            </div>
+
             {/* Custom amount */}
             <div>
               <label className="block text-sm text-gray-600 mb-1">Uang Diterima</label>
