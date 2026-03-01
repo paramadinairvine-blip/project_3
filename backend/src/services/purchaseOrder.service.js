@@ -1,9 +1,7 @@
-const { PrismaClient } = require('@prisma/client');
+const prisma = require('../lib/prisma');
 const { format } = require('date-fns');
 const { DEFAULT_PAGE_SIZE } = require('../utils/constants');
 const { createLog, ACTION_TYPES } = require('./auditLog.service');
-
-const prisma = new PrismaClient();
 
 // ─── helpers ────────────────────────────────────────────────────────
 
@@ -146,7 +144,7 @@ const create = async (data, userId) => {
       where: { id: created.id },
       include: poIncludes,
     });
-  });
+  }, { timeout: 15000 });
 
   await createLog({
     userId,
@@ -210,7 +208,7 @@ const update = async (id, data, userId) => {
       where: { id },
       include: poIncludes,
     });
-  });
+  }, { timeout: 15000 });
 
   await createLog({
     userId,
@@ -360,7 +358,7 @@ const receive = async (id, receivedItems, userId) => {
       },
       include: poIncludes,
     });
-  });
+  }, { timeout: 30000 });
 
   await createLog({
     userId,

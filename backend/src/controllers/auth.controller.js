@@ -1,9 +1,7 @@
 const authService = require('../services/auth.service');
 const { createLog, ACTION_TYPES } = require('../services/auditLog.service');
 const { successResponse, errorResponse } = require('../utils/responseHelper');
-const { PrismaClient } = require('@prisma/client');
-
-const prisma = new PrismaClient();
+const prisma = require('../lib/prisma');
 
 const login = async (req, res) => {
   try {

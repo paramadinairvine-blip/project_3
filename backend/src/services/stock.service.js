@@ -1,9 +1,7 @@
-const { PrismaClient } = require('@prisma/client');
+const prisma = require('../lib/prisma');
 const { DEFAULT_PAGE_SIZE } = require('../utils/constants');
 const { createLog, ACTION_TYPES } = require('./auditLog.service');
 const { format } = require('date-fns');
-
-const prisma = new PrismaClient();
 
 /**
  * Get the current stock of a product (or a specific variant).
@@ -60,19 +58,9 @@ const getAllStock = async ({ page = 1, limit = DEFAULT_PAGE_SIZE, categoryId, lo
   const skip = (page - 1) * limit;
 
   if (lowStock) {
-    // Use raw query for field comparison
-    const countResult = await prisma.$queryRaw`
-      SELECT COUNT(*)::int as count FROM products
-      WHERE "isActive" = true
-        AND stock < "minStock"
-        ${categoryId ? prisma.$queryRaw`AND "categoryId" = ${categoryId}` : prisma.$queryRaw``}
-    `;
-
+    // Fetch all active products and filter in-memory (Prisma lacks field-to-field comparison)
     const products = await prisma.product.findMany({
-      where: {
-        ...where,
-        // We'll do post-filter since Prisma lacks field comparison
-      },
+      where,
       include: {
         category: { select: { id: true, name: true } },
         brand: { select: { id: true, name: true } },
@@ -82,7 +70,6 @@ const getAllStock = async ({ page = 1, limit = DEFAULT_PAGE_SIZE, categoryId, lo
       orderBy: { stock: 'asc' },
     });
 
-    // Filter in-memory: stock < minStock
     const filtered = products.filter((p) => p.stock < p.minStock);
     const total = filtered.length;
     const data = filtered.slice(skip, skip + limit);
@@ -124,6 +111,7 @@ const addMovement = async ({ productId, variantId, unitId, quantity, movementTyp
     if (!product) {
       throw Object.assign(new Error('Produk tidak ditemukan'), { status: 404 });
     }
+
 
     // Convert quantity to base unit if unitId differs
     let convertedQty = quantity;
@@ -206,7 +194,7 @@ const addMovement = async ({ productId, variantId, unitId, quantity, movementTyp
     }
 
     return movement;
-  });
+  }, { timeout: 15000 });
 };
 
 /**
@@ -436,7 +424,7 @@ const completeOpname = async (opnameId, userId) => {
     });
 
     return { opname: completed, adjustments };
-  });
+  }, { timeout: 30000 });
 
   await createLog({
     userId,

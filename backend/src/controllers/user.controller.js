@@ -1,11 +1,9 @@
-const { PrismaClient } = require('@prisma/client');
+const prisma = require('../lib/prisma');
 const bcrypt = require('bcryptjs');
 const { successResponse, errorResponse, paginatedResponse } = require('../utils/responseHelper');
 const { createLog, ACTION_TYPES } = require('../services/auditLog.service');
 const { hashPassword } = require('../services/auth.service');
 const { DEFAULT_PAGE_SIZE, ROLES } = require('../utils/constants');
-
-const prisma = new PrismaClient();
 
 const userSelect = {
   id: true,

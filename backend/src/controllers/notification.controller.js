@@ -1,10 +1,8 @@
-const { PrismaClient } = require('@prisma/client');
+const prisma = require('../lib/prisma');
 const whatsappService = require('../services/whatsapp.service');
 const stockService = require('../services/stock.service');
 const { successResponse, errorResponse, paginatedResponse } = require('../utils/responseHelper');
 const { DEFAULT_PAGE_SIZE } = require('../utils/constants');
-
-const prisma = new PrismaClient();
 
 const getAll = async (req, res) => {
   try {

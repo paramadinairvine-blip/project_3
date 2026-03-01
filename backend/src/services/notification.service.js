@@ -1,9 +1,7 @@
-const { PrismaClient } = require('@prisma/client');
+const prisma = require('../lib/prisma');
 const stockService = require('./stock.service');
 const whatsappService = require('./whatsapp.service');
 const { DEFAULT_PAGE_SIZE } = require('../utils/constants');
-
-const prisma = new PrismaClient();
 
 const getAll = async ({ page = 1, limit = DEFAULT_PAGE_SIZE, type } = {}) => {
   const skip = (page - 1) * limit;

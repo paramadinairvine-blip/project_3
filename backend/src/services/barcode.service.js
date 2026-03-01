@@ -1,7 +1,5 @@
-const { PrismaClient } = require('@prisma/client');
+const prisma = require('../lib/prisma');
 const { generateBarcode } = require('../utils/generateBarcode');
-
-const prisma = new PrismaClient();
 
 /**
  * Regex for valid barcode formats.

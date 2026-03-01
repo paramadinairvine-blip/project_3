@@ -1,7 +1,5 @@
-const { PrismaClient } = require('@prisma/client');
+const prisma = require('../lib/prisma');
 const { format, subMonths, startOfMonth, endOfMonth } = require('date-fns');
-
-const prisma = new PrismaClient();
 
 // ─── 1. Stock Report ────────────────────────────────────────────────
 

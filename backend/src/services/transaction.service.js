@@ -1,9 +1,7 @@
-const { PrismaClient } = require('@prisma/client');
+const prisma = require('../lib/prisma');
 const { format } = require('date-fns');
 const { DEFAULT_PAGE_SIZE } = require('../utils/constants');
 const { createLog, ACTION_TYPES } = require('./auditLog.service');
-
-const prisma = new PrismaClient();
 
 // ─── helpers ────────────────────────────────────────────────────────
 
@@ -327,6 +325,7 @@ const cancel = async (id, userId) => {
         quantity: item.quantity,
         referenceId: id,
         userId,
+        unitId: item.unitId || undefined,
       });
     }
 

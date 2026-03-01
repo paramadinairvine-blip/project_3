@@ -1,8 +1,6 @@
-const { PrismaClient } = require('@prisma/client');
+const prisma = require('../lib/prisma');
 const { DEFAULT_PAGE_SIZE } = require('../utils/constants');
 const { createLog, ACTION_TYPES } = require('./auditLog.service');
-
-const prisma = new PrismaClient();
 
 // ─── shared includes ────────────────────────────────────────────────
 
@@ -167,7 +165,7 @@ const create = async (data, userId) => {
       where: { id: created.id },
       include: projectIncludes,
     });
-  });
+  }, { timeout: 15000 });
 
   await createLog({
     userId,

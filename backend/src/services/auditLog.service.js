@@ -1,7 +1,5 @@
-const { PrismaClient } = require('@prisma/client');
+const prisma = require('../lib/prisma');
 const { DEFAULT_PAGE_SIZE } = require('../utils/constants');
-
-const prisma = new PrismaClient();
 
 /**
  * Valid action types for audit logging.

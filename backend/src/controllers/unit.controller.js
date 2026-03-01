@@ -1,8 +1,6 @@
-const { PrismaClient } = require('@prisma/client');
+const prisma = require('../lib/prisma');
 const { successResponse, errorResponse } = require('../utils/responseHelper');
 const { createLog, ACTION_TYPES } = require('../services/auditLog.service');
-
-const prisma = new PrismaClient();
 
 // ==================== UnitOfMeasure ====================
 

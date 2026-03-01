@@ -1,7 +1,5 @@
-const { PrismaClient } = require('@prisma/client');
+const prisma = require('../lib/prisma');
 const { DEFAULT_PAGE_SIZE } = require('../utils/constants');
-
-const prisma = new PrismaClient();
 
 const getAll = async ({ page = 1, limit = DEFAULT_PAGE_SIZE, search } = {}) => {
   const where = { isActive: true };

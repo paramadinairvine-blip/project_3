@@ -73,8 +73,7 @@ const adjustStock = async (req, res) => {
 
 const getAllOpname = async (req, res) => {
   try {
-    const { PrismaClient } = require('@prisma/client');
-    const prisma = new PrismaClient();
+    const prisma = require('../lib/prisma');
 
     const { page, limit } = req.query;
     const pageNum = parseInt(page) || 1;
@@ -111,8 +110,7 @@ const createOpname = async (req, res) => {
 
 const getOpnameById = async (req, res) => {
   try {
-    const { PrismaClient } = require('@prisma/client');
-    const prisma = new PrismaClient();
+    const prisma = require('../lib/prisma');
 
     const opname = await prisma.stockOpname.findUnique({
       where: { id: req.params.id },

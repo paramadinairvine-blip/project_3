@@ -1,9 +1,7 @@
-const { PrismaClient } = require('@prisma/client');
+const prisma = require('../lib/prisma');
 const { successResponse, errorResponse, paginatedResponse } = require('../utils/responseHelper');
 const { createLog, ACTION_TYPES } = require('../services/auditLog.service');
 const { DEFAULT_PAGE_SIZE } = require('../utils/constants');
-
-const prisma = new PrismaClient();
 
 const getAll = async (req, res) => {
   try {

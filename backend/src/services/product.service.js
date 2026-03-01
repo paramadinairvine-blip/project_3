@@ -1,9 +1,7 @@
-const { PrismaClient } = require('@prisma/client');
+const prisma = require('../lib/prisma');
 const { DEFAULT_PAGE_SIZE } = require('../utils/constants');
 const { generateBarcode } = require('../utils/generateBarcode');
 const { createLog, ACTION_TYPES } = require('./auditLog.service');
-
-const prisma = new PrismaClient();
 
 // Shared include for product queries
 const productIncludes = {
@@ -179,7 +177,7 @@ const create = async (data, userId) => {
       where: { id: created.id },
       include: productIncludes,
     });
-  });
+  }, { timeout: 15000 });
 
   // Audit log (outside transaction for non-critical logging)
   await createLog({
@@ -287,7 +285,7 @@ const update = async (id, data, userId) => {
       where: { id },
       include: productIncludes,
     });
-  });
+  }, { timeout: 15000 });
 
   // Audit log
   await createLog({

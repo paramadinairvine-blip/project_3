@@ -1,9 +1,7 @@
-const { PrismaClient } = require('@prisma/client');
+const prisma = require('../lib/prisma');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
-
-const prisma = new PrismaClient();
 
 const SALT_ROUNDS = 12;
 const ACCESS_TOKEN_EXPIRES = process.env.JWT_EXPIRES_IN || '7d';
