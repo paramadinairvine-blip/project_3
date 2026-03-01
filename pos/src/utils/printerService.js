@@ -249,10 +249,12 @@ export async function printReceipt(transaction, paidAmount, change) {
       .feed(2)
       .cut();
 
-    // Send to Recta Host (send Uint8Array directly, matching recta package behavior)
+    // Send to Recta Host as ArrayBuffer
+    // Socket.IO v2 hasBinary only detects Buffer/ArrayBuffer/Blob/File, NOT Uint8Array
+    // So we must convert to ArrayBuffer for proper binary transmission
     const buffer = r.toBuffer();
     console.log('[Recta] Sending', buffer.length, 'bytes to printer');
-    socket.send(buffer);
+    socket.send(buffer.buffer);
 
     // Disconnect after brief delay
     setTimeout(() => {
@@ -291,7 +293,7 @@ export async function testPrinterConnection(settings) {
       .feed(3)
       .cut();
 
-    socket.send(r.toBuffer());
+    socket.send(r.toBuffer().buffer);
 
     setTimeout(() => {
       try { socket.close(); } catch { /* ok */ }
