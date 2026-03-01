@@ -279,7 +279,7 @@ const create = async (data, userId) => {
       where: { id: created.id },
       include: transactionIncludes,
     });
-  });
+  }, { timeout: 30000 });
 
   // Audit log
   await createLog({
@@ -343,7 +343,7 @@ const cancel = async (id, userId) => {
       data: { status: 'CANCELLED', updatedBy: userId },
       include: transactionIncludes,
     });
-  });
+  }, { timeout: 30000 });
 
   await createLog({
     userId,
