@@ -1,11 +1,18 @@
 /**
  * Printer Service - Direct thermal printing via Recta Host
+ * Recta loaded via CDN script tag in index.html (window.Recta)
  * https://github.com/adenvt/recta
  */
-import Recta from 'recta/dist/recta.js';
 import { formatRupiah } from './formatCurrency';
 import { formatTanggalWaktu } from './formatDate';
 import { TRANSACTION_TYPE_LABELS } from './constants';
+
+function getRecta() {
+  if (typeof window !== 'undefined' && window.Recta) {
+    return window.Recta;
+  }
+  throw new Error('Recta library belum dimuat. Refresh halaman.');
+}
 
 const STORAGE_KEY = 'pos-printer-settings';
 const RECEIPT_WIDTH = 32; // characters for 58mm, use 48 for 80mm
@@ -68,7 +75,7 @@ export async function printReceipt(transaction, paidAmount, change) {
   }
 
   try {
-    const printer = new Recta(settings.appKey, String(settings.socketPort));
+    const printer = new (getRecta())(settings.appKey, String(settings.socketPort));
     await printer.open();
 
     const trx = transaction;
@@ -197,7 +204,7 @@ export async function testPrinterConnection(settings) {
   }
 
   try {
-    const printer = new Recta(settings.appKey, String(settings.socketPort));
+    const printer = new (getRecta())(settings.appKey, String(settings.socketPort));
     await printer.open();
 
     // Print test page
