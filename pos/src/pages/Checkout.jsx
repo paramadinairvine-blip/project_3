@@ -8,7 +8,7 @@ import useCartStore from '../stores/cartStore';
 import { transactionAPI } from '../api/endpoints';
 import { formatRupiah } from '../utils/formatCurrency';
 import { TRANSACTION_TYPES, TRANSACTION_TYPE_LABELS } from '../utils/constants';
-import { getPrinterSettings } from '../utils/printerService';
+import { getPrinterSettings, printReceiptRecta } from '../utils/printerService';
 import ReceiptPrint from '../components/receipt/ReceiptPrint';
 
 const paymentTypes = [
@@ -53,13 +53,27 @@ export default function Checkout() {
 
   const createMutation = useMutation({
     mutationFn: transactionAPI.create,
-    onSuccess: (res) => {
+    onSuccess: async (res) => {
       toast.success('Transaksi berhasil!');
       queryClient.invalidateQueries({ queryKey: ['transactions'] });
       queryClient.invalidateQueries({ queryKey: ['products'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+
       if (cetakStruk) {
-        setReceiptData(res.data.data);
+        const trxData = res.data.data;
+        // Auto-print via Recta Host
+        const paid = paymentType === 'CASH' ? paidAmount : getGrandTotal();
+        const chg = paymentType === 'CASH' ? getChange() : 0;
+        const result = await printReceiptRecta(trxData, paid, chg);
+
+        if (result.success) {
+          toast.success(result.message, { duration: 2000 });
+        } else {
+          toast.error(result.message + ' - Gunakan preview struk', { duration: 3000 });
+        }
+
+        // Always show receipt preview as fallback
+        setReceiptData(trxData);
       } else {
         clearCart();
         navigate('/kasir');
