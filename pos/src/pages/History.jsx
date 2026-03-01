@@ -4,7 +4,6 @@ import { HiSearch, HiPrinter, HiChevronLeft, HiChevronRight } from 'react-icons/
 import toast from 'react-hot-toast';
 import { transactionAPI } from '../api/endpoints';
 import { formatRupiah } from '../utils/formatCurrency';
-import { formatTanggal } from '../utils/formatDate';
 import { TRANSACTION_TYPE_LABELS } from '../utils/constants';
 import { Loading, EmptyState } from '../components/common';
 import ReceiptPrint from '../components/receipt/ReceiptPrint';
