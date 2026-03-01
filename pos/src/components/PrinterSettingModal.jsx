@@ -7,7 +7,7 @@ export default function PrinterSettingModal({ isOpen, onClose }) {
   const [settings, setSettings] = useState({
     cetakStruk: true,
     appKey: '',
-    socketPort: 0,
+    socketPort: 1811,
   });
   const [testing, setTesting] = useState(false);
 
@@ -57,6 +57,14 @@ export default function PrinterSettingModal({ isOpen, onClose }) {
 
         {/* Content */}
         <div className="px-6 py-5 space-y-5">
+          {/* Info */}
+          <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+            <p className="text-xs text-blue-700">
+              Gunakan <strong>Recta Host</strong> untuk mencetak langsung ke printer thermal tanpa dialog print browser.
+              Download di <strong>recta.nostratech.com</strong>
+            </p>
+          </div>
+
           {/* Cetak Struk */}
           <div>
             <label className="block text-sm font-medium text-indigo-600 mb-2">Cetak Struk</label>
@@ -84,35 +92,36 @@ export default function PrinterSettingModal({ isOpen, onClose }) {
             </div>
           </div>
 
-          {/* Printer APP Key */}
+          {/* Recta APP Key */}
           <div>
-            <label className="block text-sm font-medium text-indigo-600 mb-2">Printer APP Key</label>
+            <label className="block text-sm font-medium text-indigo-600 mb-2">Recta APP Key</label>
             <input
               type="text"
               value={settings.appKey}
               onChange={(e) => setSettings({ ...settings, appKey: e.target.value })}
-              placeholder="Masukan APP Key"
+              placeholder="Masukan APP Key dari Recta Host"
               className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none placeholder-gray-400"
             />
           </div>
 
-          {/* Printer Socket Port */}
+          {/* Recta Port */}
           <div>
-            <label className="block text-sm font-medium text-indigo-600 mb-2">Printer Socket Port</label>
+            <label className="block text-sm font-medium text-indigo-600 mb-2">Recta Port</label>
             <input
               type="number"
               value={settings.socketPort}
               onChange={(e) => setSettings({ ...settings, socketPort: parseInt(e.target.value) || 0 })}
-              placeholder="0"
+              placeholder="1811"
               min="0"
               className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
             />
+            <p className="text-xs text-gray-400 mt-1">Default: 1811</p>
           </div>
         </div>
 
         {/* Footer */}
         <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-gray-200 bg-gray-50 rounded-b-xl">
-          {settings.socketPort > 0 && (
+          {settings.socketPort > 0 && settings.appKey && (
             <button
               onClick={handleTest}
               disabled={testing}

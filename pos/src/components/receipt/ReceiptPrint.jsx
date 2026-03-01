@@ -1,18 +1,40 @@
-import { useRef } from 'react';
+import { useRef, useState } from 'react';
 import { useReactToPrint } from 'react-to-print';
 import { HiPrinter, HiX } from 'react-icons/hi';
+import toast from 'react-hot-toast';
 import { Button } from '../common';
 import { formatRupiah } from '../../utils/formatCurrency';
 import { formatTanggalWaktu } from '../../utils/formatDate';
 import { TRANSACTION_TYPE_LABELS } from '../../utils/constants';
+import { printReceipt, isRectaConfigured } from '../../utils/printerService';
 
 export default function ReceiptPrint({ transaction, paidAmount, change, onClose }) {
   const printRef = useRef();
+  const [printing, setPrinting] = useState(false);
 
-  const handlePrint = useReactToPrint({
+  const handleBrowserPrint = useReactToPrint({
     contentRef: printRef,
     documentTitle: `Nota-${transaction.transactionNumber}`,
   });
+
+  const handlePrint = async () => {
+    if (isRectaConfigured()) {
+      setPrinting(true);
+      const result = await printReceipt(transaction, paidAmount, change);
+      setPrinting(false);
+
+      if (result.success) {
+        toast.success(result.message);
+      } else if (result.fallback) {
+        toast.error(result.message + ' — menggunakan browser print...');
+        handleBrowserPrint();
+      } else {
+        toast.error(result.message);
+      }
+    } else {
+      handleBrowserPrint();
+    }
+  };
 
   const trx = transaction;
   const items = trx.items || [];
@@ -120,7 +142,9 @@ export default function ReceiptPrint({ transaction, paidAmount, change, onClose 
         {/* Footer */}
         <div className="flex items-center justify-end gap-2 px-5 py-4 border-t border-gray-200">
           <Button variant="outline" onClick={onClose}>Selesai</Button>
-          <Button icon={HiPrinter} onClick={handlePrint}>Cetak Struk</Button>
+          <Button icon={HiPrinter} onClick={handlePrint} disabled={printing}>
+            {printing ? 'Mencetak...' : 'Cetak Struk'}
+          </Button>
         </div>
       </div>
     </div>

@@ -20,6 +20,7 @@
     "react-icons": "^5.5.0",
     "react-router-dom": "^7.13.0",
     "react-to-print": "^3.2.0",
+    "recta": "^1.0.0",
     "zustand": "^5.0.11"
   },
   "devDependencies": {

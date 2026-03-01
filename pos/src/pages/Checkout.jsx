@@ -8,7 +8,7 @@ import useCartStore from '../stores/cartStore';
 import { transactionAPI } from '../api/endpoints';
 import { formatRupiah } from '../utils/formatCurrency';
 import { TRANSACTION_TYPES, TRANSACTION_TYPE_LABELS } from '../utils/constants';
-import { getPrinterSettings } from '../utils/printerService';
+import { getPrinterSettings, printReceipt, isRectaConfigured } from '../utils/printerService';
 import ReceiptPrint from '../components/receipt/ReceiptPrint';
 
 const paymentTypes = [
@@ -53,13 +53,23 @@ export default function Checkout() {
 
   const createMutation = useMutation({
     mutationFn: transactionAPI.create,
-    onSuccess: (res) => {
+    onSuccess: async (res) => {
       toast.success('Transaksi berhasil!');
       queryClient.invalidateQueries({ queryKey: ['transactions'] });
       queryClient.invalidateQueries({ queryKey: ['products'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard'] });
       if (cetakStruk) {
-        setReceiptData(res.data.data);
+        const txData = res.data.data;
+        // Auto-print via Recta if configured
+        if (isRectaConfigured()) {
+          const result = await printReceipt(txData, paymentType === 'CASH' ? paidAmount : txData.total || txData.totalAmount, paymentType === 'CASH' ? getChange() : 0);
+          if (result.success) {
+            toast.success(result.message);
+          } else {
+            toast.error(result.message);
+          }
+        }
+        setReceiptData(txData);
       } else {
         clearCart();
         navigate('/kasir');

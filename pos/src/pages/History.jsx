@@ -1,12 +1,14 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { HiSearch, HiPrinter, HiChevronLeft, HiChevronRight } from 'react-icons/hi';
+import toast from 'react-hot-toast';
 import { transactionAPI } from '../api/endpoints';
 import { formatRupiah } from '../utils/formatCurrency';
 import { formatTanggal } from '../utils/formatDate';
 import { TRANSACTION_TYPE_LABELS } from '../utils/constants';
 import { Loading, EmptyState } from '../components/common';
 import ReceiptPrint from '../components/receipt/ReceiptPrint';
+import { printReceipt, isRectaConfigured } from '../utils/printerService';
 
 export default function History() {
   const [search, setSearch] = useState('');
@@ -48,7 +50,21 @@ export default function History() {
   const handlePrint = async (trx) => {
     try {
       const { data: res } = await transactionAPI.getById(trx.id);
-      setReceiptData(res.data);
+      const txData = res.data;
+
+      // Auto-print via Recta if configured
+      if (isRectaConfigured()) {
+        const result = await printReceipt(txData);
+        if (result.success) {
+          toast.success(result.message);
+        } else {
+          toast.error(result.message);
+          // Show preview modal as fallback
+          setReceiptData(txData);
+        }
+      } else {
+        setReceiptData(txData);
+      }
     } catch {
       setReceiptData(trx);
     }
