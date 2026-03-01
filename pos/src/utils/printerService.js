@@ -1,21 +1,15 @@
 /**
  * Printer Service - Direct thermal printing via Recta Host
- * Recta loaded via CDN script tag in index.html (window.Recta)
- * https://github.com/adenvt/recta
+ * Uses socket.io-client v2 to match Recta Host's protocol
+ * https://github.com/adenvt/recta-host
  */
+import io from 'socket.io-client';
 import { formatRupiah } from './formatCurrency';
 import { formatTanggalWaktu } from './formatDate';
 import { TRANSACTION_TYPE_LABELS } from './constants';
 
-function getRecta() {
-  if (typeof window !== 'undefined' && window.Recta) {
-    return window.Recta;
-  }
-  throw new Error('Recta library belum dimuat. Refresh halaman.');
-}
-
 const STORAGE_KEY = 'pos-printer-settings';
-const RECEIPT_WIDTH = 32; // characters for 58mm, use 48 for 80mm
+const CHAR_WIDTH = 32; // 58mm thermal printer
 
 const defaultSettings = {
   cetakStruk: true,
@@ -36,33 +30,133 @@ export function savePrinterSettings(settings) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
 }
 
-/**
- * Check if Recta is configured (has appKey and port)
- */
 export function isRectaConfigured() {
   const settings = getPrinterSettings();
-  return settings.socketPort > 0 && settings.appKey;
+  return settings.socketPort > 0 && !!settings.appKey;
 }
 
-/**
- * Format a line with left and right aligned text
- */
-function lineLeftRight(left, right, width = RECEIPT_WIDTH) {
-  const space = width - left.length - right.length;
-  if (space <= 0) return left + ' ' + right;
-  return left + ' '.repeat(space) + right;
+// ============ ESC/POS Buffer Builder ============
+
+const ESC = 0x1b;
+const GS = 0x1d;
+
+class ReceiptBuilder {
+  constructor() {
+    this.parts = [];
+  }
+
+  _raw(bytes) {
+    this.parts.push(new Uint8Array(bytes));
+    return this;
+  }
+
+  _str(text) {
+    const enc = new TextEncoder();
+    this.parts.push(enc.encode(text));
+    return this;
+  }
+
+  init() {
+    return this._raw([ESC, 0x40]); // ESC @
+  }
+
+  align(type) {
+    const map = { left: 0, center: 1, right: 2 };
+    return this._raw([ESC, 0x61, map[type] || 0]);
+  }
+
+  bold(on) {
+    return this._raw([ESC, 0x45, on ? 1 : 0]);
+  }
+
+  text(str) {
+    return this._str(str + '\n');
+  }
+
+  feed(n = 1) {
+    for (let i = 0; i < n; i++) this._raw([0x0a]);
+    return this;
+  }
+
+  cut() {
+    return this._raw([GS, 0x56, 0x00]).feed(4);
+  }
+
+  toBuffer() {
+    let len = 0;
+    for (const p of this.parts) len += p.length;
+    const buf = new Uint8Array(len);
+    let off = 0;
+    for (const p of this.parts) {
+      buf.set(p, off);
+      off += p.length;
+    }
+    return buf;
+  }
 }
 
-/**
- * Separator line
- */
-function separator(char = '-', width = RECEIPT_WIDTH) {
-  return char.repeat(width);
+// ============ Formatting ============
+
+function lr(left, right, w = CHAR_WIDTH) {
+  const r = String(right);
+  const l = String(left).substring(0, w - r.length - 1);
+  const sp = w - l.length - r.length;
+  return l + ' '.repeat(Math.max(sp, 1)) + r;
 }
 
-/**
- * Print receipt directly to thermal printer via Recta Host
- */
+function dashes(w = CHAR_WIDTH) {
+  return '-'.repeat(w);
+}
+
+function equals(w = CHAR_WIDTH) {
+  return '='.repeat(w);
+}
+
+// ============ Socket Connection ============
+
+function connectRecta(appKey, port) {
+  return new Promise((resolve, reject) => {
+    const socket = io(`ws://localhost:${port}`, {
+      transports: ['websocket'],
+      query: `token=${appKey}`,
+      autoConnect: false,
+      reconnection: false,
+    });
+
+    const timeout = setTimeout(() => {
+      socket.close();
+      reject(new Error('Timeout - Recta Host tidak merespon'));
+    }, 5000);
+
+    socket.open();
+
+    socket.once('connect', () => {
+      clearTimeout(timeout);
+      resolve(socket);
+    });
+
+    socket.once('connect_error', (err) => {
+      clearTimeout(timeout);
+      socket.close();
+      reject(new Error('Gagal koneksi: ' + (err.message || err)));
+    });
+
+    socket.once('connect_timeout', () => {
+      clearTimeout(timeout);
+      socket.close();
+      reject(new Error('Timeout koneksi'));
+    });
+
+    socket.once('error', (err) => {
+      clearTimeout(timeout);
+      socket.close();
+      reject(new Error('Error: ' + (err.message || err)));
+    });
+  });
+}
+
+// ============ Public API ============
+
 export async function printReceipt(transaction, paidAmount, change) {
   const settings = getPrinterSettings();
 
@@ -71,19 +165,19 @@ export async function printReceipt(transaction, paidAmount, change) {
   }
 
   if (!settings.socketPort || !settings.appKey) {
-    return { success: false, message: 'Recta Host belum dikonfigurasi. Atur APP Key dan Port di Setting Printer.', fallback: true };
+    return { success: false, message: 'Recta belum dikonfigurasi', fallback: true };
   }
 
   try {
-    const printer = new (getRecta())(settings.appKey, String(settings.socketPort));
-    await printer.open();
-
+    const socket = await connectRecta(settings.appKey, settings.socketPort);
     const trx = transaction;
     const items = trx.items || [];
 
+    const r = new ReceiptBuilder();
+    r.init();
+
     // Header
-    printer
-      .align('center')
+    r.align('center')
       .bold(true)
       .text('TOKO MATERIAL')
       .text('PESANTREN DARUNNAJAH 2')
@@ -91,124 +185,94 @@ export async function printReceipt(transaction, paidAmount, change) {
       .text('Jl. Argapura, Kp. Cipining')
       .text('Desa Argapura, Kec. Cigudeg')
       .text('Telp: 085156526862')
-      .text(separator('='));
+      .text(equals());
 
     // Transaction info
-    printer
-      .align('left')
+    r.align('left')
       .text('No : ' + (trx.transactionNumber || '-'))
       .text('Tgl: ' + formatTanggalWaktu(trx.createdAt))
-      .text('Tipe: ' + (TRANSACTION_TYPE_LABELS[trx.type] || trx.type));
+      .text('Tipe: ' + (TRANSACTION_TYPE_LABELS[trx.type] || trx.type))
+      .text('Petugas: ' + (trx.creator?.fullName || trx.createdBy?.fullName || '-'));
 
-    const staffName = trx.creator?.fullName || trx.createdBy?.fullName || '-';
-    printer.text('Petugas: ' + staffName);
+    if (trx.customerName) r.text('Pelanggan: ' + trx.customerName);
+    if (trx.kepanitiaan) r.text('Kepanitiaan: ' + trx.kepanitiaan);
+    if (trx.customerPhone) r.text('Telp: ' + trx.customerPhone);
 
-    if (trx.unitLembaga?.name) {
-      printer.text('Unit: ' + trx.unitLembaga.name);
-    }
-    if (trx.kepanitiaan) {
-      printer.text('Kepanitiaan: ' + trx.kepanitiaan);
-    }
-    if (trx.customerName) {
-      printer.text('Pelanggan: ' + trx.customerName);
-    }
-    if (trx.customerPhone) {
-      printer.text('Telp: ' + trx.customerPhone);
-    }
-
-    printer.text(separator('-'));
+    r.text(dashes());
 
     // Items
     for (const item of items) {
       const name = item.product?.name || '-';
-      const qty = item.quantity;
-      const unitPrice = item.price || item.unitPrice || 0;
-      const unit = item.product?.unit || item.product?.unitOfMeasure?.abbreviation || 'pcs';
-      const subtotal = item.subtotal || (qty * unitPrice);
+      const qty = item.quantity || 0;
+      const unit = item.product?.unit || 'pcs';
+      const price = item.price || item.unitPrice || 0;
+      const subtotal = item.subtotal || (qty * price);
 
-      printer
-        .bold(true)
-        .text(name)
-        .bold(false)
-        .text(lineLeftRight(
-          `  ${qty} ${unit} x ${formatRupiah(unitPrice)}`,
-          formatRupiah(subtotal)
-        ));
+      r.bold(true).text(name).bold(false);
+      r.text(lr(`  ${qty} ${unit} x ${formatRupiah(price)}`, formatRupiah(subtotal)));
     }
 
-    printer.text(separator('-'));
+    r.text(dashes());
 
     // Totals
-    const total = trx.total || trx.totalAmount || 0;
-
     if (trx.discount > 0) {
-      printer
-        .text(lineLeftRight('Subtotal', formatRupiah(trx.subtotal)))
-        .text(lineLeftRight('Diskon', '-' + formatRupiah(trx.discount)));
+      r.text(lr('Subtotal', formatRupiah(trx.subtotal)));
+      r.text(lr('Diskon', '-' + formatRupiah(trx.discount)));
     }
 
-    printer
-      .bold(true)
-      .text(lineLeftRight('TOTAL', formatRupiah(total)))
-      .bold(false);
+    const total = trx.total || trx.totalAmount || 0;
+    r.bold(true).text(lr('TOTAL', formatRupiah(total))).bold(false);
 
-    // Payment info (CASH)
     if (trx.type === 'CASH') {
       const paid = paidAmount !== undefined ? paidAmount : trx.paidAmount || 0;
       const chg = change !== undefined ? change : trx.changeAmount || 0;
-
-      printer
-        .text(lineLeftRight('Bayar', formatRupiah(paid)))
-        .bold(true)
-        .text(lineLeftRight('Kembalian', formatRupiah(chg)))
-        .bold(false);
+      r.text(lr('Bayar', formatRupiah(paid)));
+      r.bold(true).text(lr('Kembalian', formatRupiah(chg))).bold(false);
     }
 
-    printer.text(separator('='));
+    r.text(equals());
 
     // Footer
-    printer
-      .align('center')
+    r.align('center')
       .text('Terima kasih atas')
       .text('kunjungan Anda')
       .text('')
       .text('Barang yang sudah dibeli')
       .text('tidak dapat dikembalikan')
-      .text('')
-      .text('')
+      .feed(2)
       .cut();
 
-    await printer.print();
+    // Send to Recta Host
+    const buffer = r.toBuffer();
+    socket.send(buffer.buffer);
+
+    // Disconnect after brief delay
+    setTimeout(() => {
+      try { socket.close(); } catch { /* ok */ }
+    }, 1000);
 
     return { success: true, message: 'Struk berhasil dicetak' };
   } catch (err) {
     console.error('Recta print error:', err);
     return {
       success: false,
-      message: 'Gagal mencetak: ' + (err.message || 'Pastikan Recta Host berjalan'),
+      message: err.message || 'Gagal mencetak - pastikan Recta Host berjalan',
       fallback: true,
     };
   }
 }
 
-/**
- * Test Recta Host connection with test print
- */
 export async function testPrinterConnection(settings) {
-  if (!settings.socketPort || settings.socketPort <= 0) {
-    return { connected: false, message: 'Port belum dikonfigurasi' };
-  }
-
-  if (!settings.appKey) {
-    return { connected: false, message: 'APP Key belum diisi' };
+  if (!settings.socketPort || !settings.appKey) {
+    return { connected: false, message: 'APP Key dan Port harus diisi' };
   }
 
   try {
-    const printer = new (getRecta())(settings.appKey, String(settings.socketPort));
-    await printer.open();
+    const socket = await connectRecta(settings.appKey, settings.socketPort);
 
-    // Print test page
-    printer
+    // Print test receipt
+    const r = new ReceiptBuilder();
+    r.init()
       .align('center')
       .bold(true)
       .text('=== TEST PRINTER ===')
@@ -216,17 +280,20 @@ export async function testPrinterConnection(settings) {
       .text('Koneksi berhasil!')
       .text('Recta Host terhubung')
       .text('Port: ' + settings.socketPort)
-      .text('')
-      .text('')
+      .feed(3)
       .cut();
 
-    await printer.print();
+    socket.send(r.toBuffer().buffer);
+
+    setTimeout(() => {
+      try { socket.close(); } catch { /* ok */ }
+    }, 500);
 
     return { connected: true, message: `Terhubung ke Recta Host (port ${settings.socketPort})` };
   } catch (err) {
     return {
       connected: false,
-      message: 'Gagal terhubung - pastikan Recta Host berjalan. ' + (err.message || ''),
+      message: err.message || 'Gagal terhubung ke Recta Host',
     };
   }
 }
