@@ -185,7 +185,7 @@ export async function printReceipt(transaction, paidAmount, change) {
 }
 
 /**
- * Test Recta Host connection
+ * Test Recta Host connection with test print
  */
 export async function testPrinterConnection(settings) {
   if (!settings.socketPort || settings.socketPort <= 0) {
@@ -199,7 +199,22 @@ export async function testPrinterConnection(settings) {
   try {
     const printer = new Recta(settings.appKey, String(settings.socketPort));
     await printer.open();
-    await printer.close();
+
+    // Print test page
+    printer
+      .align('center')
+      .bold(true)
+      .text('=== TEST PRINTER ===')
+      .bold(false)
+      .text('Koneksi berhasil!')
+      .text('Recta Host terhubung')
+      .text('Port: ' + settings.socketPort)
+      .text('')
+      .text('')
+      .cut();
+
+    await printer.print();
+
     return { connected: true, message: `Terhubung ke Recta Host (port ${settings.socketPort})` };
   } catch (err) {
     return {
