@@ -116,6 +116,8 @@ function equals(w = CHAR_WIDTH) {
 
 function connectRecta(appKey, port) {
   return new Promise((resolve, reject) => {
+    console.log(`[Recta] Connecting to ws://localhost:${port} with token=${appKey.substring(0, 4)}...`);
+
     const socket = io(`ws://localhost:${port}`, {
       transports: ['websocket'],
       query: `token=${appKey}`,
@@ -124,30 +126,35 @@ function connectRecta(appKey, port) {
     });
 
     const timeout = setTimeout(() => {
+      console.error('[Recta] Connection timeout after 5s');
       socket.close();
-      reject(new Error('Timeout - Recta Host tidak merespon'));
+      reject(new Error('Timeout - Recta Host tidak merespon. Pastikan Recta Host sudah berjalan.'));
     }, 5000);
 
     socket.open();
 
     socket.once('connect', () => {
+      console.log('[Recta] Connected successfully');
       clearTimeout(timeout);
       resolve(socket);
     });
 
     socket.once('connect_error', (err) => {
+      console.error('[Recta] connect_error:', err);
       clearTimeout(timeout);
       socket.close();
       reject(new Error('Gagal koneksi: ' + (err.message || err)));
     });
 
     socket.once('connect_timeout', () => {
+      console.error('[Recta] connect_timeout');
       clearTimeout(timeout);
       socket.close();
       reject(new Error('Timeout koneksi'));
     });
 
     socket.once('error', (err) => {
+      console.error('[Recta] error:', err);
       clearTimeout(timeout);
       socket.close();
       reject(new Error('Error: ' + (err.message || err)));
@@ -242,9 +249,10 @@ export async function printReceipt(transaction, paidAmount, change) {
       .feed(2)
       .cut();
 
-    // Send to Recta Host
+    // Send to Recta Host (send Uint8Array directly, matching recta package behavior)
     const buffer = r.toBuffer();
-    socket.send(buffer.buffer);
+    console.log('[Recta] Sending', buffer.length, 'bytes to printer');
+    socket.send(buffer);
 
     // Disconnect after brief delay
     setTimeout(() => {
@@ -283,7 +291,7 @@ export async function testPrinterConnection(settings) {
       .feed(3)
       .cut();
 
-    socket.send(r.toBuffer().buffer);
+    socket.send(r.toBuffer());
 
     setTimeout(() => {
       try { socket.close(); } catch { /* ok */ }
