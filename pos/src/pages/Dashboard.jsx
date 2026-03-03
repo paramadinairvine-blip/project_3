@@ -15,11 +15,8 @@ const toDateString = (date) => {
   return `${y}-${m}-${d}`;
 };
 
-// Default dates: first day of current month → today
-const getDefaultStartDate = () => {
-  const now = new Date();
-  return toDateString(new Date(now.getFullYear(), now.getMonth(), 1));
-};
+// Default dates: today → today
+const getDefaultStartDate = () => toDateString(new Date());
 const getDefaultEndDate = () => toDateString(new Date());
 
 export default function Dashboard() {
