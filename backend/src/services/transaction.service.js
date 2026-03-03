@@ -197,7 +197,7 @@ const getById = async (id) => {
 const create = async (data, userId) => {
   const { items, ...header } = data;
 
-  const transaction = await prisma.$transaction(async (tx) => {
+  const createdTx = await prisma.$transaction(async (tx) => {
     const transactionNumber = await generateTransactionNumber(tx);
 
     // Calculate totals
@@ -273,14 +273,19 @@ const create = async (data, userId) => {
       });
     }
 
-    return tx.transaction.findUnique({
-      where: { id: created.id },
-      include: transactionIncludes,
-    });
+    // Return only the id — fetch full data OUTSIDE the transaction
+    return created;
   }, {
     timeout: 60000,       // 60s timeout for many-item transactions
     maxWait: 10000,       // max 10s waiting for available connection
     isolationLevel: 'ReadCommitted',
+  });
+
+  // Fetch full transaction with relations OUTSIDE the interactive transaction
+  // This avoids PgBouncer/Railway connection pool issues
+  const transaction = await prisma.transaction.findUnique({
+    where: { id: createdTx.id },
+    include: transactionIncludes,
   });
 
   // Audit log
