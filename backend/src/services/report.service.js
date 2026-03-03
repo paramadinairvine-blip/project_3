@@ -295,7 +295,14 @@ const getTrendReport = async ({ startDate, endDate, groupBy = 'month' } = {}) =>
 const getDashboardSummary = async ({ startDate, endDate } = {}) => {
   const now = new Date();
   const monthStart = startDate ? new Date(startDate) : startOfMonth(now);
-  const monthEnd = endDate ? new Date(endDate) : endOfMonth(now);
+  // Ensure endDate covers the full day (23:59:59.999)
+  let monthEnd;
+  if (endDate) {
+    monthEnd = new Date(endDate);
+    monthEnd.setHours(23, 59, 59, 999);
+  } else {
+    monthEnd = endOfMonth(now);
+  }
 
   // Run all queries in parallel
   const [
