@@ -197,33 +197,66 @@ const getById = async (id) => {
 const create = async (data, userId) => {
   const { items, ...header } = data;
 
-  const createdTx = await prisma.$transaction(async (tx) => {
-    const transactionNumber = await generateTransactionNumber(tx);
+  // ── 1. Pre-validate: fetch all products & check stock BEFORE writing ──
+  const productIds = [...new Set(items.map((i) => i.productId))];
+  const products = await prisma.product.findMany({
+    where: { id: { in: productIds } },
+    include: { productUnits: true },
+  });
 
-    // Calculate totals
-    let subtotal = 0;
-    const processedItems = items.map((item) => {
-      const itemDiscount = item.discount || 0;
-      const itemSubtotal = item.quantity * item.price - itemDiscount;
-      subtotal += itemSubtotal;
-      return { ...item, discount: itemDiscount, subtotal: itemSubtotal };
-    });
+  const productMap = {};
+  for (const p of products) productMap[p.id] = p;
 
-    const discount = header.discount || 0;
-    const tax = header.tax || 0;
-    const total = subtotal - discount + tax;
-    const paidAmount = header.paidAmount || 0;
-    const changeAmount = paidAmount > total ? paidAmount - total : 0;
+  // Calculate totals & validate
+  let subtotal = 0;
+  const processedItems = [];
 
-    // All transactions are completed immediately
-    const status = 'COMPLETED';
+  for (const item of items) {
+    const product = productMap[item.productId];
+    if (!product) {
+      throw Object.assign(new Error(`Produk tidak ditemukan: ${item.productId}`), { status: 404 });
+    }
 
+    // Convert quantity to base unit
+    let qty = item.quantity;
+    if (item.unitId && product.unitId && product.unitId !== item.unitId) {
+      const pu = product.productUnits.find(
+        (u) => u.productId === item.productId && u.unitId === item.unitId
+      );
+      if (pu) qty = Math.round(item.quantity * Number(pu.conversionFactor));
+    }
+
+    if (product.stock - qty < 0) {
+      throw Object.assign(
+        new Error(`Stok ${product.name} tidak mencukupi (tersisa ${product.stock})`),
+        { status: 400 }
+      );
+    }
+
+    const itemDiscount = item.discount || 0;
+    const itemSubtotal = item.quantity * item.price - itemDiscount;
+    subtotal += itemSubtotal;
+    processedItems.push({ ...item, discount: itemDiscount, subtotal: itemSubtotal, baseQty: qty });
+  }
+
+  const discount = header.discount || 0;
+  const tax = header.tax || 0;
+  const total = subtotal - discount + tax;
+  const paidAmount = header.paidAmount || 0;
+  const changeAmount = paidAmount > total ? paidAmount - total : 0;
+
+  // ── 2. Generate transaction number (single read query) ──
+  const transactionNumber = await generateTransactionNumber(prisma);
+
+  // ── 3. Write everything using sequential queries (no interactive $transaction) ──
+  let created;
+  try {
     // Create transaction header
-    const created = await tx.transaction.create({
+    created = await prisma.transaction.create({
       data: {
         transactionNumber,
         type: header.type,
-        status,
+        status: 'COMPLETED',
         customerName: header.customerName || null,
         customerPhone: header.customerPhone || null,
         notes: header.notes || null,
@@ -234,7 +267,7 @@ const create = async (data, userId) => {
         paidAmount,
         changeAmount,
         dueDate: header.dueDate ? new Date(header.dueDate) : null,
-        paidAt: status === 'COMPLETED' ? new Date() : null,
+        paidAt: new Date(),
         projectId: header.projectId || null,
         unitLembagaId: header.unitLembagaId || null,
         kepanitiaan: header.kepanitiaan || null,
@@ -242,8 +275,8 @@ const create = async (data, userId) => {
       },
     });
 
-    // Batch create all transaction items at once (single query)
-    await tx.transactionItem.createMany({
+    // Batch create all transaction items (single query)
+    await prisma.transactionItem.createMany({
       data: processedItems.map((item) => ({
         transactionId: created.id,
         productId: item.productId,
@@ -254,37 +287,52 @@ const create = async (data, userId) => {
       })),
     });
 
-    // Deduct stock for each item
+    // Deduct stock & create stock movements for each item
     for (const item of processedItems) {
-      await deductStock(tx, {
-        productId: item.productId,
-        quantity: item.quantity,
-        referenceId: created.id,
-        userId,
-        unitId: item.unitId,
+      const product = productMap[item.productId];
+      const newStock = product.stock - item.baseQty;
+
+      await prisma.stockMovement.create({
+        data: {
+          productId: item.productId,
+          type: 'OUT',
+          quantity: item.baseQty,
+          previousStock: product.stock,
+          newStock,
+          referenceType: 'TRANSACTION',
+          referenceId: created.id,
+          notes: 'Penjualan transaksi',
+          createdBy: userId,
+        },
       });
+
+      await prisma.product.update({
+        where: { id: item.productId },
+        data: { stock: newStock },
+      });
+
+      // Update local map for duplicate products in same transaction
+      product.stock = newStock;
     }
 
     // Update project spent if linked
     if (header.projectId) {
-      await tx.project.update({
+      await prisma.project.update({
         where: { id: header.projectId },
         data: { spent: { increment: total } },
       });
     }
+  } catch (err) {
+    // Cleanup on failure: delete the transaction (cascade deletes items)
+    if (created?.id) {
+      await prisma.transaction.delete({ where: { id: created.id } }).catch(() => {});
+    }
+    throw err;
+  }
 
-    // Return only the id — fetch full data OUTSIDE the transaction
-    return created;
-  }, {
-    timeout: 60000,       // 60s timeout for many-item transactions
-    maxWait: 10000,       // max 10s waiting for available connection
-    isolationLevel: 'ReadCommitted',
-  });
-
-  // Fetch full transaction with relations OUTSIDE the interactive transaction
-  // This avoids PgBouncer/Railway connection pool issues
+  // ── 4. Fetch full transaction with relations ──
   const transaction = await prisma.transaction.findUnique({
-    where: { id: createdTx.id },
+    where: { id: created.id },
     include: transactionIncludes,
   });
 
