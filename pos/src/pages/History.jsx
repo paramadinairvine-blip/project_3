@@ -16,13 +16,9 @@ export default function History() {
   const [page, setPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(50);
 
-  const today = new Date();
-  const startDate = new Date(today.getFullYear(), today.getMonth(), today.getDate()).toISOString();
-  const endDate = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 23, 59, 59).toISOString();
-
   const { data: transactions, isLoading } = useQuery({
-    queryKey: ['transactions-today', startDate],
-    queryFn: () => transactionAPI.getAll({ startDate, endDate, limit: 100 }),
+    queryKey: ['transactions-all'],
+    queryFn: () => transactionAPI.getAll({ limit: 500, sortBy: 'createdAt', sortOrder: 'desc' }),
     select: (res) => {
       const d = res.data.data;
       return Array.isArray(d) ? d : d?.transactions || [];
@@ -152,7 +148,7 @@ export default function History() {
           ) : filtered.length === 0 ? (
             <EmptyState
               title="Belum ada transaksi"
-              description="Transaksi hari ini akan muncul di sini"
+              description="Semua transaksi akan muncul di sini"
             />
           ) : (
             <table className="w-full text-sm">
