@@ -2,14 +2,14 @@ import { useState, useRef } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useReactToPrint } from 'react-to-print';
 import {
-  HiCurrencyDollar, HiCash, HiCreditCard, HiOfficeBuilding,
+  HiCurrencyDollar, HiCash, HiOfficeBuilding,
   HiPrinter, HiDocumentDownload, HiTable,
 } from 'react-icons/hi';
 import { reportAPI } from '../../api/endpoints';
-import { Card, Badge, Button, Input, Select, Loading, Table, Skeleton } from '../../components/common';
+import { Card, Badge, Button, Input, Select, Loading, Table, Skeleton, DateRangePicker } from '../../components/common';
 import { formatRupiah } from '../../utils/formatCurrency';
 import { formatTanggal } from '../../utils/formatDate';
-import { TRANSACTION_TYPE_LABELS, TRANSACTION_TYPE_COLORS } from '../../utils/constants';
+import { TRANSACTION_TYPE_LABELS, TRANSACTION_TYPE_COLORS, TRANSACTION_TYPES } from '../../utils/constants';
 import { exportTableToPDF } from '../../utils/exportPDF';
 import { exportToExcel } from '../../utils/exportExcel';
 
@@ -52,11 +52,40 @@ export default function FinancialReport() {
     queryKey: ['report-financial', { startDate, endDate, type: typeFilter }],
     queryFn: async () => {
       const params = {};
-      if (startDate) params.startDate = startDate;
-      if (endDate) params.endDate = endDate;
+      // Convert local WIB dates to UTC ISO for backend query
+      // WIB = UTC+7, so start of day WIB = previous day 17:00 UTC
+      if (startDate) {
+        const s = new Date(startDate + 'T00:00:00+07:00');
+        params.startDate = s.toISOString();
+      }
+      if (endDate) {
+        const e = new Date(endDate + 'T23:59:59.999+07:00');
+        params.endDate = e.toISOString();
+      }
       if (typeFilter) params.type = typeFilter;
       const { data: res } = await reportAPI.getFinancial(params);
-      return res.data;
+      const raw = res.data;
+
+      // Support both old backend format and new format
+      if (raw.summary) return raw;
+
+      // Map old format → new format
+      const byType = {};
+      (raw.expenditureByType || []).forEach((e) => { byType[e.type] = e.total; });
+
+      return {
+        summary: {
+          totalPurchase: raw.purchases?.totalAmount || 0,
+          cashTotal: byType.CASH || 0,
+          bonTotal: byType.BON || 0,
+        },
+        perUnit: (raw.expenditureByUnit || []).map((u) => ({
+          name: u.unitLembagaName || '-',
+          cashTotal: u.cashTotal || 0,
+          bonTotal: u.bonTotal || 0,
+          grandTotal: u.total || 0,
+        })),
+      };
     },
   });
 
@@ -67,45 +96,37 @@ export default function FinancialReport() {
 
   const typeOptions = [
     { value: '', label: 'Semua Tipe' },
-    ...Object.entries(TRANSACTION_TYPE_LABELS).map(([v, l]) => ({ value: v, label: l })),
+    ...Object.entries(TRANSACTION_TYPE_LABELS)
+      .filter(([v]) => v !== TRANSACTION_TYPES.ANGGARAN)
+      .map(([v, l]) => ({ value: v, label: l })),
   ];
 
   const summary = data?.summary || {};
   const perUnit = data?.perUnit || [];
-  const unpaidBon = data?.unpaidBon || [];
 
   // ─── Unit table columns ─────────────────────────────
   const unitColumns = [
-    { key: 'name', header: 'Unit Lembaga', render: (_, row) => <span className="font-medium text-gray-900">{row.name || '-'}</span> },
+    { key: 'name', header: 'Akun', render: (_, row) => <span className="font-medium text-gray-900">{row.name || '-'}</span> },
     { key: 'cashTotal', header: 'Tunai', render: (v) => formatRupiah(v) },
-    { key: 'bonTotal', header: 'Bon', render: (v) => formatRupiah(v) },
-    { key: 'anggaranTotal', header: 'Anggaran', render: (v) => formatRupiah(v) },
+    { key: 'bonTotal', header: 'Overbooking TU', render: (v) => formatRupiah(v) },
     { key: 'grandTotal', header: 'Total', render: (v) => <span className="font-bold">{formatRupiah(v)}</span> },
-  ];
-
-  // ─── Bon columns ────────────────────────────────────
-  const bonColumns = [
-    { key: 'transactionNumber', header: 'No. Transaksi', render: (v) => <span className="font-mono text-sm">{v}</span> },
-    { key: 'unitLembaga', header: 'Unit', render: (_, row) => row.unitLembaga?.name || '-' },
-    { key: 'createdAt', header: 'Tanggal', render: (v) => formatTanggal(v) },
-    { key: 'totalAmount', header: 'Jumlah', render: (v) => <span className="font-medium">{formatRupiah(v)}</span> },
   ];
 
   // ─── Exports ────────────────────────────────────────
   const periodLabel = `${formatTanggal(startDate)} — ${formatTanggal(endDate)}`;
 
   const handleExportPDF = () => {
-    const headers = ['Unit Lembaga', 'Tunai (Rp)', 'Bon (Rp)', 'Anggaran (Rp)', 'Total (Rp)'];
-    const rows = perUnit.map((r) => [r.name || '-', r.cashTotal || 0, r.bonTotal || 0, r.anggaranTotal || 0, r.grandTotal || 0]);
+    const headers = ['Akun', 'Tunai (Rp)', 'Overbooking TU (Rp)', 'Total (Rp)'];
+    const rows = perUnit.map((r) => [r.name || '-', r.cashTotal || 0, r.bonTotal || 0, r.grandTotal || 0]);
     exportTableToPDF('Laporan Keuangan', headers, rows, 'laporan-keuangan.pdf', {
       subtitle: `Periode: ${periodLabel}`,
-      columnStyles: ['left', 'right', 'right', 'right', 'right'],
+      columnStyles: ['left', 'right', 'right', 'right'],
     });
   };
 
   const handleExportExcel = () => {
-    const headers = ['Unit Lembaga', 'Tunai (Rp)', 'Bon (Rp)', 'Anggaran (Rp)', 'Total (Rp)'];
-    const rows = perUnit.map((r) => [r.name || '-', r.cashTotal || 0, r.bonTotal || 0, r.anggaranTotal || 0, r.grandTotal || 0]);
+    const headers = ['Akun', 'Tunai (Rp)', 'Overbooking TU (Rp)', 'Total (Rp)'];
+    const rows = perUnit.map((r) => [r.name || '-', r.cashTotal || 0, r.bonTotal || 0, r.grandTotal || 0]);
     exportToExcel('Laporan Keuangan', headers, rows, 'laporan-keuangan.xlsx');
   };
 
@@ -115,7 +136,7 @@ export default function FinancialReport() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Laporan Keuangan</h1>
-          <p className="text-sm text-gray-500 mt-1">Ringkasan pengeluaran per periode</p>
+          <p className="text-sm text-gray-500 mt-1">Ringkasan pendapatan per periode</p>
         </div>
         <div className="flex gap-2 flex-wrap">
           <Button variant="outline" size="sm" icon={HiPrinter} onClick={handlePrint}>Cetak</Button>
@@ -126,20 +147,14 @@ export default function FinancialReport() {
 
       {/* Filters */}
       <div className="flex flex-wrap items-end gap-4">
-        <Input
-          label="Tanggal Mulai"
-          type="date"
-          value={startDate}
-          onChange={(e) => setStartDate(e.target.value)}
-          className="w-44"
-        />
-        <Input
-          label="Tanggal Selesai"
-          type="date"
-          value={endDate}
-          onChange={(e) => setEndDate(e.target.value)}
-          className="w-44"
-        />
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Tanggal</label>
+          <DateRangePicker
+            dateFrom={startDate}
+            dateTo={endDate}
+            onChange={(from, to) => { setStartDate(from); setEndDate(to); }}
+          />
+        </div>
         <div className="w-48">
           <Select
             label="Tipe Transaksi"
@@ -152,29 +167,24 @@ export default function FinancialReport() {
 
       {isLoading ? (
         <>
-          <Skeleton.Card count={4} />
+          <Skeleton.Card count={3} />
           <Skeleton.Table rows={8} cols={5} />
-          <Skeleton.Table rows={5} cols={4} />
         </>
       ) : (
         <>
           {/* Summary Cards */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <StatCard title="Total Pembelian (PO)" value={formatRupiah(summary.totalPurchase)} icon={HiCurrencyDollar} color="blue" />
-            <StatCard title="Pengeluaran Tunai" value={formatRupiah(summary.cashTotal)} icon={HiCash} color="green" />
-            <StatCard title="Pengeluaran Bon" value={formatRupiah(summary.bonTotal)} icon={HiCreditCard} color="orange" />
-            <StatCard title="Pengeluaran Anggaran" value={formatRupiah(summary.anggaranTotal)} icon={HiOfficeBuilding} color="purple" />
+            <StatCard title="Pendapatan Tunai" value={formatRupiah(summary.cashTotal)} icon={HiCash} color="green" />
+            <StatCard title="Pendapatan Overbooking TU" value={formatRupiah(summary.bonTotal)} icon={HiOfficeBuilding} color="purple" />
+            <StatCard title="Total" value={formatRupiah((summary.cashTotal || 0) + (summary.bonTotal || 0))} icon={HiCurrencyDollar} color="blue" />
           </div>
 
           {/* Per-unit table */}
-          <Card title="Pengeluaran per Unit Lembaga" padding="none">
-            <Table columns={unitColumns} data={perUnit} emptyMessage="Tidak ada data pengeluaran" />
+          <Card title="Pendapatan Per-Akun" padding="none">
+            <Table columns={unitColumns} data={perUnit} emptyMessage="Tidak ada data pendapatan" />
           </Card>
 
-          {/* Unpaid Bon */}
-          <Card title="Bon Belum Lunas" padding="none">
-            <Table columns={bonColumns} data={unpaidBon} emptyMessage="Tidak ada bon tertunda" />
-          </Card>
         </>
       )}
 
@@ -191,16 +201,16 @@ export default function FinancialReport() {
           <table style={{ width: '100%', marginBottom: '16px', fontSize: '11px' }}>
             <tbody>
               <tr><td style={{ padding: '2px 0' }}><strong>Total Pembelian (PO):</strong> {formatRupiah(summary.totalPurchase)}</td></tr>
-              <tr><td style={{ padding: '2px 0' }}><strong>Tunai:</strong> {formatRupiah(summary.cashTotal)} | <strong>Bon:</strong> {formatRupiah(summary.bonTotal)} | <strong>Anggaran:</strong> {formatRupiah(summary.anggaranTotal)}</td></tr>
+              <tr><td style={{ padding: '2px 0' }}><strong>Tunai:</strong> {formatRupiah(summary.cashTotal)} | <strong>Overbooking TU:</strong> {formatRupiah(summary.bonTotal)}</td></tr>
             </tbody>
           </table>
 
-          <h4 style={{ marginBottom: '8px' }}>Pengeluaran per Unit</h4>
+          <h4 style={{ marginBottom: '8px' }}>Pendapatan Per-Akun</h4>
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '10px', marginBottom: '20px' }}>
             <thead>
               <tr style={{ backgroundColor: '#f3f4f6' }}>
-                {['Unit', 'Tunai', 'Bon', 'Anggaran', 'Total'].map((h) => (
-                  <th key={h} style={{ border: '1px solid #d1d5db', padding: '4px 6px', textAlign: h === 'Unit' ? 'left' : 'right' }}>{h}</th>
+                {['Akun', 'Tunai', 'Overbooking TU', 'Total'].map((h) => (
+                  <th key={h} style={{ border: '1px solid #d1d5db', padding: '4px 6px', textAlign: h === 'Akun' ? 'left' : 'right' }}>{h}</th>
                 ))}
               </tr>
             </thead>
@@ -210,37 +220,12 @@ export default function FinancialReport() {
                   <td style={{ border: '1px solid #d1d5db', padding: '3px 6px' }}>{r.name || '-'}</td>
                   <td style={{ border: '1px solid #d1d5db', padding: '3px 6px', textAlign: 'right' }}>{formatRupiah(r.cashTotal)}</td>
                   <td style={{ border: '1px solid #d1d5db', padding: '3px 6px', textAlign: 'right' }}>{formatRupiah(r.bonTotal)}</td>
-                  <td style={{ border: '1px solid #d1d5db', padding: '3px 6px', textAlign: 'right' }}>{formatRupiah(r.anggaranTotal)}</td>
                   <td style={{ border: '1px solid #d1d5db', padding: '3px 6px', textAlign: 'right', fontWeight: 'bold' }}>{formatRupiah(r.grandTotal)}</td>
                 </tr>
               ))}
             </tbody>
           </table>
 
-          {unpaidBon.length > 0 && (
-            <>
-              <h4 style={{ marginBottom: '8px' }}>Bon Belum Lunas</h4>
-              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '10px' }}>
-                <thead>
-                  <tr style={{ backgroundColor: '#f3f4f6' }}>
-                    {['No. Transaksi', 'Unit', 'Tanggal', 'Jumlah'].map((h) => (
-                      <th key={h} style={{ border: '1px solid #d1d5db', padding: '4px 6px', textAlign: 'left' }}>{h}</th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {unpaidBon.map((r, i) => (
-                    <tr key={i}>
-                      <td style={{ border: '1px solid #d1d5db', padding: '3px 6px' }}>{r.transactionNumber}</td>
-                      <td style={{ border: '1px solid #d1d5db', padding: '3px 6px' }}>{r.unitLembaga?.name || '-'}</td>
-                      <td style={{ border: '1px solid #d1d5db', padding: '3px 6px' }}>{formatTanggal(r.createdAt)}</td>
-                      <td style={{ border: '1px solid #d1d5db', padding: '3px 6px', textAlign: 'right' }}>{formatRupiah(r.totalAmount)}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </>
-          )}
         </div>
       </div>
     </div>

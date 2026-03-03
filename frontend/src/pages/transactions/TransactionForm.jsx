@@ -59,10 +59,12 @@ export default function TransactionForm() {
   });
 
   // ─── Options ────────────────────────────────────────
-  const typeOptions = Object.entries(TRANSACTION_TYPE_LABELS).map(([value, label]) => ({
-    value,
-    label,
-  }));
+  const typeOptions = Object.entries(TRANSACTION_TYPE_LABELS)
+    .filter(([value]) => value !== TRANSACTION_TYPES.ANGGARAN)
+    .map(([value, label]) => ({
+      value,
+      label,
+    }));
 
   const lembagaOptions = (unitLembagaList || []).map((u) => ({
     value: u.id,

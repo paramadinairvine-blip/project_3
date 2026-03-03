@@ -52,7 +52,7 @@ export default function SupplierList() {
       ),
     },
     {
-      key: 'contactPerson',
+      key: 'contactName',
       header: 'Kontak',
       render: (v) => <span className="text-gray-600">{v || '-'}</span>,
     },

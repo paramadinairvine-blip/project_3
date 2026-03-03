@@ -10,7 +10,8 @@ RUN npm ci --omit=dev
 COPY prisma ./prisma/
 RUN npx prisma generate
 
-# Copy source code
+# Copy source code (bust cache on code changes)
+ARG CACHEBUST=1
 COPY src ./src/
 
 # Create uploads directory

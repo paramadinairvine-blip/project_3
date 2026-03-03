@@ -284,7 +284,7 @@ export default function PurchaseOrderDetail() {
             </div>
             <div className="flex justify-between">
               <span className="text-sm text-gray-500">Kontak</span>
-              <span className="text-sm">{po.supplier?.contactPerson || '-'}</span>
+              <span className="text-sm">{po.supplier?.contactName || '-'}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-sm text-gray-500">Telepon</span>

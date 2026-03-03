@@ -70,7 +70,7 @@ export const ROLE_LABELS = {
 
 export const TRANSACTION_TYPE_LABELS = {
   [TRANSACTION_TYPES.CASH]: 'Tunai',
-  [TRANSACTION_TYPES.BON]: 'Bon',
+  [TRANSACTION_TYPES.BON]: 'Overbooking TU',
   [TRANSACTION_TYPES.ANGGARAN]: 'Anggaran',
 };
 

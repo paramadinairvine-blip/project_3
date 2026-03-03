@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { HiSearch, HiPrinter, HiChevronLeft, HiChevronRight } from 'react-icons/hi';
 import toast from 'react-hot-toast';
@@ -8,6 +8,7 @@ import { TRANSACTION_TYPE_LABELS } from '../utils/constants';
 import { Loading, EmptyState } from '../components/common';
 import ReceiptPrint from '../components/receipt/ReceiptPrint';
 import { printReceipt, isRectaConfigured } from '../utils/printerService';
+import DualCalendar from '../components/common/DualCalendar';
 
 export default function History() {
   const [search, setSearch] = useState('');
@@ -16,9 +17,25 @@ export default function History() {
   const [page, setPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(50);
 
+  // Date filter state
+  const [filterStart, setFilterStart] = useState(null);
+  const [filterEnd, setFilterEnd] = useState(null);
+
+  // Build query params with local timezone ISO dates
+  const queryParams = useMemo(() => {
+    const params = { limit: 500, sortBy: 'createdAt', sortOrder: 'desc' };
+    if (filterStart && filterEnd) {
+      const [sy, sm, sd] = filterStart.split('-').map(Number);
+      const [ey, em, ed] = filterEnd.split('-').map(Number);
+      params.startDate = new Date(sy, sm - 1, sd, 0, 0, 0, 0).toISOString();
+      params.endDate = new Date(ey, em - 1, ed, 23, 59, 59, 999).toISOString();
+    }
+    return params;
+  }, [filterStart, filterEnd]);
+
   const { data: transactions, isLoading } = useQuery({
-    queryKey: ['transactions-all'],
-    queryFn: () => transactionAPI.getAll({ limit: 500, sortBy: 'createdAt', sortOrder: 'desc' }),
+    queryKey: ['transactions-history', filterStart, filterEnd],
+    queryFn: () => transactionAPI.getAll(queryParams),
     select: (res) => {
       const d = res.data.data;
       return Array.isArray(d) ? d : d?.transactions || [];
@@ -41,6 +58,18 @@ export default function History() {
   const startIdx = (page - 1) * rowsPerPage;
   const endIdx = Math.min(startIdx + rowsPerPage, totalItems);
   const paginated = filtered.slice(startIdx, endIdx);
+
+  const handleDateApply = (start, end) => {
+    setFilterStart(start);
+    setFilterEnd(end);
+    setPage(1);
+  };
+
+  const handleDateReset = () => {
+    setFilterStart(null);
+    setFilterEnd(null);
+    setPage(1);
+  };
 
   const handlePrint = async (trx) => {
     try {
@@ -78,8 +107,19 @@ export default function History() {
 
   return (
     <div className="h-[calc(100vh-3.5rem)] flex flex-col overflow-hidden bg-gray-50">
+      {/* Date Filter Bar */}
+      <div className="px-4 pt-4 pb-2">
+        <DualCalendar
+          startDate={filterStart}
+          endDate={filterEnd}
+          onApply={handleDateApply}
+          onReset={handleDateReset}
+          isCustomFilter={!!(filterStart && filterEnd)}
+        />
+      </div>
+
       {/* Table Container */}
-      <div className="flex-1 flex flex-col m-4 bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+      <div className="flex-1 flex flex-col mx-4 mb-4 bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
         {/* Header */}
         <div className="bg-gradient-to-r from-indigo-500 to-blue-500 px-5 py-4 flex items-center justify-between">
           <h2 className="text-lg font-bold text-white">Transaksi</h2>
@@ -147,8 +187,8 @@ export default function History() {
             <Loading text="Memuat riwayat..." />
           ) : filtered.length === 0 ? (
             <EmptyState
-              title="Belum ada transaksi"
-              description="Semua transaksi akan muncul di sini"
+              title={filterStart && filterEnd ? 'Tidak ada transaksi pada rentang tanggal ini' : 'Belum ada transaksi'}
+              description={filterStart && filterEnd ? 'Coba pilih rentang tanggal yang berbeda' : 'Semua transaksi akan muncul di sini'}
             />
           ) : (
             <table className="w-full text-sm">
