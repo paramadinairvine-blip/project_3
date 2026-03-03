@@ -57,13 +57,6 @@ export default function PrinterSettingModal({ isOpen, onClose }) {
 
         {/* Content */}
         <div className="px-6 py-5 space-y-5">
-          {/* Info */}
-          <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
-            <p className="text-xs text-blue-700">
-              Gunakan <strong>Recta Host</strong> untuk mencetak langsung ke printer thermal tanpa dialog print browser.
-              Download di <strong>recta.nostratech.com</strong>
-            </p>
-          </div>
 
           {/* Cetak Struk */}
           <div>
