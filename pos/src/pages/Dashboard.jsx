@@ -58,9 +58,9 @@ export default function Dashboard() {
   const monthlyCount = dashboard?.monthlyTransaction?.count || 0;
   const monthlyTotal = dashboard?.monthlyTransaction?.total || 0;
 
-  const transLabel = isCustomFilter ? 'Transaksi Periode Ini' : 'Transaksi Bulan Ini';
-  const incomeLabel = isCustomFilter ? 'Pendapatan Periode Ini' : 'Pendapatan Bulan Ini';
-  const topProductLabel = isCustomFilter ? 'Produk Terlaris Periode Ini' : 'Produk Terlaris Bulan Ini';
+  const transLabel = isCustomFilter ? 'Transaksi Hari Ini' : 'Transaksi Bulan Ini';
+  const incomeLabel = isCustomFilter ? 'Pendapatan Hari Ini' : 'Pendapatan Bulan Ini';
+  const topProductLabel = isCustomFilter ? 'Produk Terlaris Hari Ini' : 'Produk Terlaris Bulan Ini';
 
   return (
     <div className="h-[calc(100vh-3.5rem)] overflow-y-auto bg-gray-50">
