@@ -86,7 +86,6 @@ export default function StockCheck() {
               </div>
               <div className="flex-1">
                 <h3 className="font-semibold text-gray-900">{selectedProduct.name}</h3>
-                <p className="text-sm text-gray-500">SKU: {selectedProduct.sku}</p>
                 {selectedProduct.barcode && (
                   <p className="text-sm text-gray-500">Barcode: {selectedProduct.barcode}</p>
                 )}
@@ -143,7 +142,6 @@ export default function StockCheck() {
                   >
                     <div>
                       <p className="text-sm font-medium text-gray-900">{product.name}</p>
-                      <p className="text-xs text-gray-500">{product.sku}</p>
                     </div>
                     <div className="text-right">
                       <p className="text-sm font-bold text-blue-600">{formatRupiah(product.sellPrice)}</p>
