@@ -242,20 +242,20 @@ const create = async (data, userId) => {
       },
     });
 
-    // Create items & deduct stock
-    for (const item of processedItems) {
-      await tx.transactionItem.create({
-        data: {
-          transactionId: created.id,
-          productId: item.productId,
-          quantity: item.quantity,
-          price: item.price,
-          discount: item.discount,
-          subtotal: item.subtotal,
-        },
-      });
+    // Batch create all transaction items at once (single query)
+    await tx.transactionItem.createMany({
+      data: processedItems.map((item) => ({
+        transactionId: created.id,
+        productId: item.productId,
+        quantity: item.quantity,
+        price: item.price,
+        discount: item.discount,
+        subtotal: item.subtotal,
+      })),
+    });
 
-      // Deduct stock
+    // Deduct stock for each item
+    for (const item of processedItems) {
       await deductStock(tx, {
         productId: item.productId,
         quantity: item.quantity,
@@ -277,7 +277,11 @@ const create = async (data, userId) => {
       where: { id: created.id },
       include: transactionIncludes,
     });
-  }, { timeout: 30000 });
+  }, {
+    timeout: 60000,       // 60s timeout for many-item transactions
+    maxWait: 10000,       // max 10s waiting for available connection
+    isolationLevel: 'ReadCommitted',
+  });
 
   // Audit log
   await createLog({
