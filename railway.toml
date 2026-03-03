@@ -1,5 +1,6 @@
 [build]
 builder = "nixpacks"
+nixpacksConfigPath = "backend/nixpacks.toml"
 buildCommand = "cd backend && npm install && npx prisma generate"
 
 [deploy]
