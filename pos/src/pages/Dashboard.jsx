@@ -1,10 +1,11 @@
 import { useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { HiCash, HiShoppingCart, HiCube, HiExclamation, HiRefresh, HiDatabase, HiClipboardList, HiCalendar } from 'react-icons/hi';
+import { HiCash, HiShoppingCart, HiCube, HiExclamation, HiRefresh, HiDatabase, HiClipboardList } from 'react-icons/hi';
 import { reportAPI } from '../api/endpoints';
 import { formatRupiah } from '../utils/formatCurrency';
 import { formatTanggalPanjang } from '../utils/formatDate';
 import { Loading } from '../components/common';
+import DualCalendar from '../components/common/DualCalendar';
 
 // Helper: format date to YYYY-MM-DD for input[type="date"]
 const toDateString = (date) => {
@@ -38,11 +39,11 @@ export default function Dashboard() {
     refetchInterval: 60000,
   });
 
-  const handleApply = () => {
-    if (startDate && endDate) {
-      setAppliedStart(startDate);
-      setAppliedEnd(endDate);
-    }
+  const handleApply = (start, end) => {
+    setStartDate(start);
+    setEndDate(end);
+    setAppliedStart(start);
+    setAppliedEnd(end);
   };
 
   const handleReset = () => {
@@ -79,55 +80,14 @@ export default function Dashboard() {
           </button>
         </div>
 
-        {/* Date Filter Bar */}
-        <div className="bg-white rounded-xl border border-gray-200 p-3">
-          <div className="flex items-center gap-2 mb-2">
-            <HiCalendar className="w-4 h-4 text-gray-500" />
-            <span className="text-sm font-medium text-gray-700">Filter Tanggal</span>
-            {isCustomFilter && (
-              <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full font-medium">
-                Filter aktif
-              </span>
-            )}
-          </div>
-          <div className="flex flex-wrap items-center gap-2">
-            <div className="flex items-center gap-1.5">
-              <label className="text-xs text-gray-500">Dari</label>
-              <input
-                type="date"
-                value={startDate}
-                onChange={(e) => setStartDate(e.target.value)}
-                max={endDate}
-                className="text-sm border border-gray-300 rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              />
-            </div>
-            <div className="flex items-center gap-1.5">
-              <label className="text-xs text-gray-500">Sampai</label>
-              <input
-                type="date"
-                value={endDate}
-                onChange={(e) => setEndDate(e.target.value)}
-                min={startDate}
-                max={toDateString(new Date())}
-                className="text-sm border border-gray-300 rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              />
-            </div>
-            <button
-              onClick={handleApply}
-              className="text-sm bg-blue-600 text-white px-4 py-1.5 rounded-lg hover:bg-blue-700 transition-colors font-medium"
-            >
-              Terapkan
-            </button>
-            {isCustomFilter && (
-              <button
-                onClick={handleReset}
-                className="text-sm text-gray-600 px-3 py-1.5 rounded-lg hover:bg-gray-100 transition-colors border border-gray-300"
-              >
-                Reset
-              </button>
-            )}
-          </div>
-        </div>
+        {/* Date Filter */}
+        <DualCalendar
+          startDate={appliedStart}
+          endDate={appliedEnd}
+          onApply={handleApply}
+          onReset={handleReset}
+          isCustomFilter={isCustomFilter}
+        />
 
         {isLoading ? (
           <Loading text="Memuat dashboard..." />
