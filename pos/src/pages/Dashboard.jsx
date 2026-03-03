@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { HiCash, HiShoppingCart, HiCube, HiExclamation, HiRefresh, HiDatabase, HiClipboardList } from 'react-icons/hi';
-import { reportAPI } from '../api/endpoints';
+import { reportAPI, transactionAPI } from '../api/endpoints';
 import { formatRupiah } from '../utils/formatCurrency';
 import { formatTanggalPanjang } from '../utils/formatDate';
 import { Loading } from '../components/common';
@@ -29,12 +29,41 @@ export default function Dashboard() {
     return appliedStart !== getDefaultStartDate() || appliedEnd !== getDefaultEndDate();
   }, [appliedStart, appliedEnd]);
 
-  const { data: dashboard, isLoading, refetch } = useQuery({
-    queryKey: ['dashboard', appliedStart, appliedEnd],
-    queryFn: () => reportAPI.getDashboard({ startDate: appliedStart, endDate: appliedEnd }),
+  // Fetch general dashboard data (products, stock, POs)
+  const { data: dashboard, isLoading: dashLoading, refetch: refetchDash } = useQuery({
+    queryKey: ['dashboard'],
+    queryFn: () => reportAPI.getDashboard(),
     select: (res) => res.data.data || {},
     refetchInterval: 60000,
   });
+
+  // Fetch transactions filtered by date — this is the source of truth for count & total
+  const startISO = useMemo(() => new Date(appliedStart).toISOString(), [appliedStart]);
+  const endISO = useMemo(() => {
+    const d = new Date(appliedEnd);
+    d.setHours(23, 59, 59, 999);
+    return d.toISOString();
+  }, [appliedEnd]);
+
+  const { data: filteredTx, isLoading: txLoading, refetch: refetchTx } = useQuery({
+    queryKey: ['dashboard-transactions', appliedStart, appliedEnd],
+    queryFn: () => transactionAPI.getAll({ startDate: startISO, endDate: endISO, limit: 500 }),
+    select: (res) => {
+      const d = res.data.data;
+      const list = Array.isArray(d) ? d : d?.transactions || [];
+      const count = list.length;
+      const total = list.reduce((sum, trx) => sum + (parseFloat(trx.total) || 0), 0);
+      return { count, total };
+    },
+    refetchInterval: 60000,
+  });
+
+  const isLoading = dashLoading || txLoading;
+
+  const refetch = () => {
+    refetchDash();
+    refetchTx();
+  };
 
   const handleApply = (start, end) => {
     setStartDate(start);
@@ -52,8 +81,9 @@ export default function Dashboard() {
     setAppliedEnd(defEnd);
   };
 
-  const monthlyCount = dashboard?.monthlyTransaction?.count || 0;
-  const monthlyTotal = dashboard?.monthlyTransaction?.total || 0;
+  // Transaction count & total from filtered transactions API
+  const txCount = filteredTx?.count || 0;
+  const txTotal = filteredTx?.total || 0;
 
   const transLabel = 'Transaksi';
   const incomeLabel = 'Pendapatan';
@@ -69,7 +99,7 @@ export default function Dashboard() {
             <p className="text-sm text-gray-500">{formatTanggalPanjang(new Date())}</p>
           </div>
           <button
-            onClick={() => refetch()}
+            onClick={refetch}
             className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
             title="Refresh"
           >
@@ -99,7 +129,7 @@ export default function Dashboard() {
                   </div>
                   <div>
                     <p className="text-xs text-gray-500">{transLabel}</p>
-                    <p className="text-lg font-bold text-gray-900">{monthlyCount}</p>
+                    <p className="text-lg font-bold text-gray-900">{txCount}</p>
                   </div>
                 </div>
               </div>
@@ -111,7 +141,7 @@ export default function Dashboard() {
                   </div>
                   <div>
                     <p className="text-xs text-gray-500">{incomeLabel}</p>
-                    <p className="text-lg font-bold text-gray-900">{formatRupiah(monthlyTotal)}</p>
+                    <p className="text-lg font-bold text-gray-900">{formatRupiah(txTotal)}</p>
                   </div>
                 </div>
               </div>
