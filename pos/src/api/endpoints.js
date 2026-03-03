@@ -29,7 +29,7 @@ export const stockAPI = {
 
 // ==================== Report ====================
 export const reportAPI = {
-  getDashboard: () => api.get('/reports/dashboard'),
+  getDashboard: (params) => api.get('/reports/dashboard', { params }),
 };
 
 // ==================== Unit ====================

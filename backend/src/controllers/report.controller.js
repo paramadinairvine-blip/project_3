@@ -3,7 +3,8 @@ const { successResponse, errorResponse } = require('../utils/responseHelper');
 
 const getDashboard = async (req, res) => {
   try {
-    const summary = await reportService.getDashboardSummary();
+    const { startDate, endDate } = req.query;
+    const summary = await reportService.getDashboardSummary({ startDate, endDate });
     return successResponse(res, summary, 'Data dashboard berhasil diambil');
   } catch (err) {
     return errorResponse(res, err.message, err.status || 500);

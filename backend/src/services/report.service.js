@@ -292,10 +292,10 @@ const getTrendReport = async ({ startDate, endDate, groupBy = 'month' } = {}) =>
 /**
  * Aggregated data for the main dashboard.
  */
-const getDashboardSummary = async () => {
+const getDashboardSummary = async ({ startDate, endDate } = {}) => {
   const now = new Date();
-  const monthStart = startOfMonth(now);
-  const monthEnd = endOfMonth(now);
+  const monthStart = startDate ? new Date(startDate) : startOfMonth(now);
+  const monthEnd = endDate ? new Date(endDate) : endOfMonth(now);
 
   // Run all queries in parallel
   const [

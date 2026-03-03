@@ -1,20 +1,65 @@
+import { useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { HiCash, HiShoppingCart, HiCube, HiExclamation, HiRefresh, HiDatabase, HiClipboardList } from 'react-icons/hi';
+import { HiCash, HiShoppingCart, HiCube, HiExclamation, HiRefresh, HiDatabase, HiClipboardList, HiCalendar } from 'react-icons/hi';
 import { reportAPI } from '../api/endpoints';
 import { formatRupiah } from '../utils/formatCurrency';
 import { formatTanggalPanjang } from '../utils/formatDate';
 import { Loading } from '../components/common';
 
+// Helper: format date to YYYY-MM-DD for input[type="date"]
+const toDateString = (date) => {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const d = String(date.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+};
+
+// Default dates: first day of current month → today
+const getDefaultStartDate = () => {
+  const now = new Date();
+  return toDateString(new Date(now.getFullYear(), now.getMonth(), 1));
+};
+const getDefaultEndDate = () => toDateString(new Date());
+
 export default function Dashboard() {
+  const [startDate, setStartDate] = useState(getDefaultStartDate());
+  const [endDate, setEndDate] = useState(getDefaultEndDate());
+  const [appliedStart, setAppliedStart] = useState(getDefaultStartDate());
+  const [appliedEnd, setAppliedEnd] = useState(getDefaultEndDate());
+
+  const isCustomFilter = useMemo(() => {
+    return appliedStart !== getDefaultStartDate() || appliedEnd !== getDefaultEndDate();
+  }, [appliedStart, appliedEnd]);
+
   const { data: dashboard, isLoading, refetch } = useQuery({
-    queryKey: ['dashboard'],
-    queryFn: () => reportAPI.getDashboard(),
+    queryKey: ['dashboard', appliedStart, appliedEnd],
+    queryFn: () => reportAPI.getDashboard({ startDate: appliedStart, endDate: appliedEnd }),
     select: (res) => res.data.data || {},
     refetchInterval: 60000,
   });
 
+  const handleApply = () => {
+    if (startDate && endDate) {
+      setAppliedStart(startDate);
+      setAppliedEnd(endDate);
+    }
+  };
+
+  const handleReset = () => {
+    const defStart = getDefaultStartDate();
+    const defEnd = getDefaultEndDate();
+    setStartDate(defStart);
+    setEndDate(defEnd);
+    setAppliedStart(defStart);
+    setAppliedEnd(defEnd);
+  };
+
   const monthlyCount = dashboard?.monthlyTransaction?.count || 0;
   const monthlyTotal = dashboard?.monthlyTransaction?.total || 0;
+
+  const transLabel = isCustomFilter ? 'Transaksi Periode Ini' : 'Transaksi Bulan Ini';
+  const incomeLabel = isCustomFilter ? 'Pendapatan Periode Ini' : 'Pendapatan Bulan Ini';
+  const topProductLabel = isCustomFilter ? 'Produk Terlaris Periode Ini' : 'Produk Terlaris Bulan Ini';
 
   return (
     <div className="h-[calc(100vh-3.5rem)] overflow-y-auto bg-gray-50">
@@ -34,6 +79,56 @@ export default function Dashboard() {
           </button>
         </div>
 
+        {/* Date Filter Bar */}
+        <div className="bg-white rounded-xl border border-gray-200 p-3">
+          <div className="flex items-center gap-2 mb-2">
+            <HiCalendar className="w-4 h-4 text-gray-500" />
+            <span className="text-sm font-medium text-gray-700">Filter Tanggal</span>
+            {isCustomFilter && (
+              <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full font-medium">
+                Filter aktif
+              </span>
+            )}
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="flex items-center gap-1.5">
+              <label className="text-xs text-gray-500">Dari</label>
+              <input
+                type="date"
+                value={startDate}
+                onChange={(e) => setStartDate(e.target.value)}
+                max={endDate}
+                className="text-sm border border-gray-300 rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
+            </div>
+            <div className="flex items-center gap-1.5">
+              <label className="text-xs text-gray-500">Sampai</label>
+              <input
+                type="date"
+                value={endDate}
+                onChange={(e) => setEndDate(e.target.value)}
+                min={startDate}
+                max={toDateString(new Date())}
+                className="text-sm border border-gray-300 rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
+            </div>
+            <button
+              onClick={handleApply}
+              className="text-sm bg-blue-600 text-white px-4 py-1.5 rounded-lg hover:bg-blue-700 transition-colors font-medium"
+            >
+              Terapkan
+            </button>
+            {isCustomFilter && (
+              <button
+                onClick={handleReset}
+                className="text-sm text-gray-600 px-3 py-1.5 rounded-lg hover:bg-gray-100 transition-colors border border-gray-300"
+              >
+                Reset
+              </button>
+            )}
+          </div>
+        </div>
+
         {isLoading ? (
           <Loading text="Memuat dashboard..." />
         ) : (
@@ -46,7 +141,7 @@ export default function Dashboard() {
                     <HiShoppingCart className="w-5 h-5 text-white" />
                   </div>
                   <div>
-                    <p className="text-xs text-gray-500">Transaksi Bulan Ini</p>
+                    <p className="text-xs text-gray-500">{transLabel}</p>
                     <p className="text-lg font-bold text-gray-900">{monthlyCount}</p>
                   </div>
                 </div>
@@ -58,7 +153,7 @@ export default function Dashboard() {
                     <HiCash className="w-5 h-5 text-white" />
                   </div>
                   <div>
-                    <p className="text-xs text-gray-500">Pendapatan Bulan Ini</p>
+                    <p className="text-xs text-gray-500">{incomeLabel}</p>
                     <p className="text-lg font-bold text-gray-900">{formatRupiah(monthlyTotal)}</p>
                   </div>
                 </div>
@@ -116,10 +211,10 @@ export default function Dashboard() {
               </div>
             </div>
 
-            {/* Top Products this month */}
+            {/* Top Products */}
             {dashboard?.charts?.topProducts && dashboard.charts.topProducts.length > 0 && (
               <div className="bg-white rounded-xl border border-gray-200 p-4">
-                <h3 className="font-semibold text-gray-900 mb-3">Produk Terlaris Bulan Ini</h3>
+                <h3 className="font-semibold text-gray-900 mb-3">{topProductLabel}</h3>
                 <div className="space-y-2">
                   {dashboard.charts.topProducts.map((item) => (
                     <div key={item.product?.id || item.rank} className="flex justify-between items-center py-2 border-b border-gray-50 last:border-0">
