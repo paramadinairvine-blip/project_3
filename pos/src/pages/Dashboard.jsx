@@ -38,11 +38,14 @@ export default function Dashboard() {
   });
 
   // Fetch transactions filtered by date — this is the source of truth for count & total
-  const startISO = useMemo(() => new Date(appliedStart).toISOString(), [appliedStart]);
+  // Use local timezone (WIB) — "2026-03-04" → start of day local, end of day local
+  const startISO = useMemo(() => {
+    const [y, m, d] = appliedStart.split('-').map(Number);
+    return new Date(y, m - 1, d, 0, 0, 0, 0).toISOString();
+  }, [appliedStart]);
   const endISO = useMemo(() => {
-    const d = new Date(appliedEnd);
-    d.setHours(23, 59, 59, 999);
-    return d.toISOString();
+    const [y, m, d] = appliedEnd.split('-').map(Number);
+    return new Date(y, m - 1, d, 23, 59, 59, 999).toISOString();
   }, [appliedEnd]);
 
   const { data: filteredTx, isLoading: txLoading, refetch: refetchTx } = useQuery({
