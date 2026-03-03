@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { HiPlus, HiPencil, HiTrash, HiEye } from 'react-icons/hi';
@@ -8,6 +8,7 @@ import { Table, Button, SearchBar, Pagination, Modal, Skeleton } from '../../com
 import { formatRupiah } from '../../utils/formatCurrency';
 import { getErrorMessage } from '../../utils/handleError';
 import useAuth from '../../hooks/useAuth';
+import useBarcodeScanner from '../../hooks/useBarcodeScanner';
 
 export default function ProductList() {
   const navigate = useNavigate();
@@ -18,6 +19,14 @@ export default function ProductList() {
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
   const [deleteTarget, setDeleteTarget] = useState(null);
+
+  // USB Barcode Scanner support
+  const handleBarcodeScan = useCallback((barcode) => {
+    setSearch(barcode);
+    setPage(1);
+    toast.success(`Barcode terdeteksi: ${barcode}`, { duration: 2000 });
+  }, []);
+  useBarcodeScanner(handleBarcodeScan);
 
   const { data, isLoading } = useQuery({
     queryKey: ['products', { page, search }],
@@ -143,6 +152,7 @@ export default function ProductList() {
       </div>
 
       <SearchBar
+        value={search}
         placeholder="Cari nama atau barcode produk..."
         onSearch={(v) => { setSearch(v); setPage(1); }}
         className="max-w-md"

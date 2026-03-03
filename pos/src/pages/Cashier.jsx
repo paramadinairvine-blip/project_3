@@ -7,11 +7,10 @@ import useCartStore from '../stores/cartStore';
 import ProductSearch from '../components/pos/ProductSearch';
 import ProductGrid from '../components/pos/ProductGrid';
 import Cart from '../components/pos/Cart';
-import BarcodeScanner from '../components/BarcodeScanner';
+import useBarcodeScanner from '../hooks/useBarcodeScanner';
 
 export default function Cashier() {
   const [searchQuery, setSearchQuery] = useState('');
-  const [showScanner, setShowScanner] = useState(false);
   const [showMobileCart, setShowMobileCart] = useState(false);
   const addItem = useCartStore((s) => s.addItem);
   const items = useCartStore((s) => s.items);
@@ -34,8 +33,8 @@ export default function Cashier() {
     toast.success(`${product.name} ditambahkan`, { duration: 1500, position: 'bottom-center' });
   };
 
+  // USB Barcode Scanner — auto-detect rapid keystrokes + Enter
   const handleBarcodeScan = async (barcodeValue) => {
-    setShowScanner(false);
     try {
       const { data: res } = await productAPI.getByBarcode(barcodeValue);
       const product = res.data;
@@ -49,15 +48,14 @@ export default function Cashier() {
     }
   };
 
+  useBarcodeScanner(handleBarcodeScan);
+
   return (
     <div className="h-[calc(100vh-3.5rem)] flex">
       {/* Left: Product Search & List (1/4 = 25%) */}
       <div className="w-1/4 min-w-[320px] flex flex-col overflow-hidden border-r border-gray-200">
         <div className="p-3 pb-2">
-          <ProductSearch
-            onSearch={setSearchQuery}
-            onScanClick={() => setShowScanner(true)}
-          />
+          <ProductSearch onSearch={setSearchQuery} />
         </div>
         <div className="flex-1 overflow-y-auto px-3 pb-3">
           <ProductGrid
@@ -100,14 +98,6 @@ export default function Cashier() {
             </div>
           </div>
         </div>
-      )}
-
-      {/* Barcode Scanner Modal */}
-      {showScanner && (
-        <BarcodeScanner
-          onScan={handleBarcodeScan}
-          onClose={() => setShowScanner(false)}
-        />
       )}
     </div>
   );

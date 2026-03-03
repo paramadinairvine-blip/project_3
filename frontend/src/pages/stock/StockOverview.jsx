@@ -1,10 +1,12 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { HiEye, HiFilter } from 'react-icons/hi';
+import toast from 'react-hot-toast';
 import { stockAPI, categoryAPI } from '../../api/endpoints';
 import { Table, Badge, Pagination, Modal, Loading, DateRangePicker } from '../../components/common';
 import { formatTanggalWaktu } from '../../utils/formatDate';
 import { MOVEMENT_TYPE_LABELS, MOVEMENT_TYPE_COLORS } from '../../utils/constants';
+import useBarcodeScanner from '../../hooks/useBarcodeScanner';
 
 // ─── Movement History Modal ───────────────────────────
 function MovementHistoryModal({ product, onClose }) {
@@ -75,6 +77,15 @@ export default function StockOverview() {
   const [dateTo, setDateTo] = useState('');
   const [appliedFilters, setAppliedFilters] = useState({ search: '', barcode: '', categoryId: '', dateFrom: '', dateTo: '' });
   const [historyProduct, setHistoryProduct] = useState(null);
+
+  // USB Barcode Scanner support — auto-fill barcode field and apply filter
+  const handleBarcodeScan = useCallback((scannedBarcode) => {
+    setBarcode(scannedBarcode);
+    setAppliedFilters((prev) => ({ ...prev, barcode: scannedBarcode }));
+    setPage(1);
+    toast.success(`Barcode terdeteksi: ${scannedBarcode}`, { duration: 2000 });
+  }, []);
+  useBarcodeScanner(handleBarcodeScan);
 
   const { data: categories } = useQuery({
     queryKey: ['categories'],

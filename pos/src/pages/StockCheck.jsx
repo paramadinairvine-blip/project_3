@@ -1,15 +1,14 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
-import { HiSearch, HiCamera, HiCube } from 'react-icons/hi';
+import { HiSearch, HiCube } from 'react-icons/hi';
 import { productAPI } from '../api/endpoints';
 import { formatRupiah } from '../utils/formatCurrency';
 import { Loading, EmptyState } from '../components/common';
-import BarcodeScanner from '../components/BarcodeScanner';
+import useBarcodeScanner from '../hooks/useBarcodeScanner';
 
 export default function StockCheck() {
   const [search, setSearch] = useState('');
-  const [showScanner, setShowScanner] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState(null);
 
   const { data: products, isLoading } = useQuery({
@@ -20,8 +19,8 @@ export default function StockCheck() {
     staleTime: 15000,
   });
 
+  // USB Barcode Scanner — auto-detect rapid keystrokes + Enter
   const handleBarcodeScan = async (barcodeValue) => {
-    setShowScanner(false);
     try {
       const { data: res } = await productAPI.getByBarcode(barcodeValue);
       if (res.data) {
@@ -35,6 +34,8 @@ export default function StockCheck() {
     }
   };
 
+  useBarcodeScanner(handleBarcodeScan);
+
   const handleSelectProduct = (product) => {
     setSelectedProduct(product);
   };
@@ -45,28 +46,19 @@ export default function StockCheck() {
         <h2 className="text-lg font-bold text-gray-900">Cek Stok Produk</h2>
 
         {/* Search bar */}
-        <div className="flex items-center gap-2">
-          <div className="relative flex-1">
-            <HiSearch className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-            <input
-              type="text"
-              value={search}
-              onChange={(e) => {
-                setSearch(e.target.value);
-                setSelectedProduct(null);
-              }}
-              placeholder="Cari nama produk, SKU, atau barcode..."
-              className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none bg-white"
-              autoFocus
-            />
-          </div>
-          <button
-            onClick={() => setShowScanner(true)}
-            className="flex items-center gap-2 px-4 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors text-sm font-medium"
-          >
-            <HiCamera className="w-5 h-5" />
-            <span className="hidden sm:inline">Scan</span>
-          </button>
+        <div className="relative">
+          <HiSearch className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => {
+              setSearch(e.target.value);
+              setSelectedProduct(null);
+            }}
+            placeholder="Cari nama produk atau scan barcode..."
+            className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none bg-white"
+            autoFocus
+          />
         </div>
 
         {/* Selected product detail */}
@@ -165,13 +157,6 @@ export default function StockCheck() {
           </div>
         )}
       </div>
-
-      {showScanner && (
-        <BarcodeScanner
-          onScan={handleBarcodeScan}
-          onClose={() => setShowScanner(false)}
-        />
-      )}
     </div>
   );
 }
