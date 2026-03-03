@@ -98,7 +98,7 @@ const getFinancialReport = async ({ startDate, endDate, type } = {}) => {
 
   const expenditureByType = [
     { type: 'CASH', label: 'Tunai', total: byType.CASH },
-    { type: 'BON', label: 'Bon', total: byType.BON },
+    { type: 'BON', label: 'Overbooking TU', total: byType.BON },
     { type: 'ANGGARAN', label: 'Anggaran', total: byType.ANGGARAN },
   ];
 
