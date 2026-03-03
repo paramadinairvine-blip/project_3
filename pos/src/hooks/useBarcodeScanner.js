@@ -1,5 +1,24 @@
 import { useEffect, useRef, useCallback } from 'react';
 
+// Play a short beep using Web Audio API
+function playBeep() {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const oscillator = ctx.createOscillator();
+    const gain = ctx.createGain();
+    oscillator.connect(gain);
+    gain.connect(ctx.destination);
+    oscillator.type = 'sine';
+    oscillator.frequency.value = 1200;
+    gain.gain.value = 0.3;
+    oscillator.start();
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.15);
+    oscillator.stop(ctx.currentTime + 0.15);
+  } catch {
+    // Audio not available, skip silently
+  }
+}
+
 /**
  * Hook to detect USB barcode scanner input.
  *
@@ -50,6 +69,7 @@ export default function useBarcodeScanner(onScan, { enabled = true, maxDelay = 8
           // Prevent the Enter from submitting forms, etc.
           e.preventDefault();
           e.stopPropagation();
+          playBeep();
           onScanRef.current(code);
         }
         bufferRef.current = '';

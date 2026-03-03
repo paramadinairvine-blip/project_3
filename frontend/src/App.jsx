@@ -3,6 +3,7 @@ import { Routes, Route } from 'react-router-dom';
 import MainLayout from './layouts/MainLayout';
 import ProtectedRoute from './layouts/ProtectedRoute';
 import { Loading } from './components/common';
+import NetworkStatus from './components/common/NetworkStatus';
 import { ROLES } from './utils/constants';
 
 // ─── Lazy‑loaded pages ───────────────────────────────
@@ -51,6 +52,7 @@ function PageLoader() {
 function App() {
   return (
     <Suspense fallback={<PageLoader />}>
+      <NetworkStatus />
       <Routes>
         {/* Public route */}
         <Route path="/login" element={<Login />} />

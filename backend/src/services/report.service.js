@@ -67,8 +67,15 @@ const getStockReport = async ({ categoryId, lowStockOnly = false } = {}) => {
  */
 const getFinancialReport = async ({ startDate, endDate, type } = {}) => {
   const dateFilter = {};
-  if (startDate) dateFilter.gte = new Date(startDate);
-  if (endDate) dateFilter.lte = new Date(endDate);
+  // Convert local WIB dates (UTC+7) to UTC for database query
+  if (startDate) {
+    const start = new Date(startDate + 'T00:00:00+07:00');
+    dateFilter.gte = start;
+  }
+  if (endDate) {
+    const end = new Date(endDate + 'T23:59:59.999+07:00');
+    dateFilter.lte = end;
+  }
   const hasDateFilter = Object.keys(dateFilter).length > 0;
 
   // 2a. Total purchases from received POs
@@ -81,28 +88,25 @@ const getFinancialReport = async ({ startDate, endDate, type } = {}) => {
     _count: { id: true },
   });
 
-  // 2b. Expenditures per transaction type
+  // 2b. All transactions (pendapatan/revenue from POS)
   const txWhere = { status: { not: 'CANCELLED' } };
   if (hasDateFilter) txWhere.createdAt = dateFilter;
   if (type) txWhere.type = type;
 
   const transactions = await prisma.transaction.findMany({
     where: txWhere,
-    select: { type: true, total: true, unitLembagaId: true, status: true },
+    select: { type: true, total: true, unitLembagaId: true },
   });
 
-  const byType = { CASH: 0, BON: 0, ANGGARAN: 0 };
-  transactions.forEach((t) => {
-    byType[t.type] = (byType[t.type] || 0) + Number(t.total);
-  });
+  // Summary totals by type
+  const cashTotal = transactions
+    .filter((t) => t.type === 'CASH')
+    .reduce((s, t) => s + Number(t.total), 0);
+  const bonTotal = transactions
+    .filter((t) => t.type === 'BON')
+    .reduce((s, t) => s + Number(t.total), 0);
 
-  const expenditureByType = [
-    { type: 'CASH', label: 'Tunai', total: byType.CASH },
-    { type: 'BON', label: 'Bon', total: byType.BON },
-    { type: 'ANGGARAN', label: 'Anggaran', total: byType.ANGGARAN },
-  ];
-
-  // 2c. Expenditures per unit lembaga
+  // 2c. Per unit lembaga breakdown (with cashTotal & bonTotal per unit)
   const unitLembagaIds = [...new Set(transactions.filter((t) => t.unitLembagaId).map((t) => t.unitLembagaId))];
   const unitLembagaList = unitLembagaIds.length > 0
     ? await prisma.unitLembaga.findMany({ where: { id: { in: unitLembagaIds } } })
@@ -112,58 +116,32 @@ const getFinancialReport = async ({ startDate, endDate, type } = {}) => {
   const byUnit = {};
   transactions.forEach((t) => {
     if (t.unitLembagaId) {
-      byUnit[t.unitLembagaId] = (byUnit[t.unitLembagaId] || 0) + Number(t.total);
+      if (!byUnit[t.unitLembagaId]) {
+        byUnit[t.unitLembagaId] = { cashTotal: 0, bonTotal: 0 };
+      }
+      const amount = Number(t.total);
+      if (t.type === 'CASH') {
+        byUnit[t.unitLembagaId].cashTotal += amount;
+      } else if (t.type === 'BON') {
+        byUnit[t.unitLembagaId].bonTotal += amount;
+      }
     }
   });
 
-  const expenditureByUnit = Object.entries(byUnit).map(([id, total]) => ({
-    unitLembagaId: id,
-    unitLembagaName: unitMap.get(id) || '-',
-    total,
+  const perUnit = Object.entries(byUnit).map(([id, totals]) => ({
+    name: unitMap.get(id) || '-',
+    cashTotal: totals.cashTotal,
+    bonTotal: totals.bonTotal,
+    grandTotal: totals.cashTotal + totals.bonTotal,
   }));
 
-  // 2d. Outstanding BON
-  const outstandingBon = await prisma.transaction.findMany({
-    where: { type: 'BON', status: 'PENDING' },
-    select: {
-      id: true,
-      transactionNumber: true,
-      customerName: true,
-      total: true,
-      paidAmount: true,
-      dueDate: true,
-      createdAt: true,
-    },
-    orderBy: { createdAt: 'desc' },
-  });
-
-  const outstandingTotal = outstandingBon.reduce(
-    (s, b) => s + (Number(b.total) - Number(b.paidAmount)),
-    0
-  );
-
   return {
-    period: {
-      startDate: startDate || null,
-      endDate: endDate || null,
+    summary: {
+      totalPurchase: Number(purchaseAgg._sum.totalAmount || 0),
+      cashTotal,
+      bonTotal,
     },
-    purchases: {
-      totalAmount: Number(purchaseAgg._sum.totalAmount || 0),
-      count: purchaseAgg._count.id,
-    },
-    expenditureByType,
-    expenditureByUnit,
-    totalExpenditure: expenditureByType.reduce((s, e) => s + e.total, 0),
-    outstandingBon: {
-      count: outstandingBon.length,
-      totalOutstanding: outstandingTotal,
-      items: outstandingBon.map((b) => ({
-        ...b,
-        total: Number(b.total),
-        paidAmount: Number(b.paidAmount),
-        remaining: Number(b.total) - Number(b.paidAmount),
-      })),
-    },
+    perUnit,
   };
 };
 

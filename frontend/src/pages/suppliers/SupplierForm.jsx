@@ -16,7 +16,7 @@ export default function SupplierForm() {
 
   const [form, setForm] = useState({
     name: '',
-    contactPerson: '',
+    contactName: '',
     phone: '',
     email: '',
     address: '',
@@ -35,7 +35,7 @@ export default function SupplierForm() {
     if (existing) {
       setForm({
         name: existing.name || '',
-        contactPerson: existing.contactPerson || '',
+        contactName: existing.contactName || '',
         phone: existing.phone || '',
         email: existing.email || '',
         address: existing.address || '',
@@ -77,7 +77,7 @@ export default function SupplierForm() {
     if (!validate()) return;
     mutation.mutate({
       name: form.name.trim(),
-      contactPerson: form.contactPerson.trim() || null,
+      contactName: form.contactName.trim() || null,
       phone: form.phone.trim(),
       email: form.email.trim() || null,
       address: form.address.trim() || null,
@@ -125,8 +125,8 @@ export default function SupplierForm() {
 
             <Input
               label="Contact Person"
-              value={form.contactPerson}
-              onChange={(e) => updateField('contactPerson', e.target.value)}
+              value={form.contactName}
+              onChange={(e) => updateField('contactName', e.target.value)}
               placeholder="Nama kontak"
             />
 

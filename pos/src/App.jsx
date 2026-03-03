@@ -1,6 +1,7 @@
 import { lazy, Suspense } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { Loading } from './components/common';
+import NetworkStatus from './components/common/NetworkStatus';
 import ProtectedRoute from './layouts/ProtectedRoute';
 import POSLayout from './layouts/POSLayout';
 import { ROLES } from './utils/constants';
@@ -18,6 +19,7 @@ const allowedRoles = [ROLES.ADMIN, ROLES.OPERATOR];
 export default function App() {
   return (
     <Suspense fallback={<Loading fullPage text="Memuat..." />}>
+      <NetworkStatus />
       <Routes>
         <Route path="/login" element={<Login />} />
 
