@@ -14,7 +14,7 @@ export default function UserForm({ user, onClose }) {
     fullName: '',
     email: '',
     password: '',
-    role: ROLES.OPERATOR,
+    role: ROLES.KASIR,
     phone: '',
   });
   const [errors, setErrors] = useState({});
@@ -25,7 +25,7 @@ export default function UserForm({ user, onClose }) {
         fullName: user.fullName || '',
         email: user.email || '',
         password: '',
-        role: user.role || ROLES.OPERATOR,
+        role: user.role || ROLES.KASIR,
         phone: user.phone || '',
       });
     }

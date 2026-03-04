@@ -14,7 +14,7 @@ const StockCheck = lazy(() => import('./pages/StockCheck'));
 const Dashboard = lazy(() => import('./pages/Dashboard'));
 const HoldList = lazy(() => import('./pages/HoldList'));
 
-const allowedRoles = [ROLES.ADMIN, ROLES.OPERATOR];
+const allowedRoles = [ROLES.ADMIN, ROLES.KASIR];
 
 export default function App() {
   return (

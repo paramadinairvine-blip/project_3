@@ -14,11 +14,11 @@ router.get('/', projectController.getAll);
 router.get('/:id', projectController.getById);
 router.get('/:id/report', projectController.getMaterialReport);
 
-// ADMIN & OPERATOR can create/update/manage materials
-router.post('/', authorize(ROLES.ADMIN, ROLES.OPERATOR), validateProject, projectController.create);
-router.put('/:id', authorize(ROLES.ADMIN, ROLES.OPERATOR), projectController.update);
-router.post('/:id/materials', authorize(ROLES.ADMIN, ROLES.OPERATOR), projectController.addMaterial);
-router.put('/:id/materials/:materialId', authorize(ROLES.ADMIN, ROLES.OPERATOR), projectController.updateMaterial);
+// ADMIN & KASIR can create/update/manage materials
+router.post('/', authorize(ROLES.ADMIN, ROLES.KASIR), validateProject, projectController.create);
+router.put('/:id', authorize(ROLES.ADMIN, ROLES.KASIR), projectController.update);
+router.post('/:id/materials', authorize(ROLES.ADMIN, ROLES.KASIR), projectController.addMaterial);
+router.put('/:id/materials/:materialId', authorize(ROLES.ADMIN, ROLES.KASIR), projectController.updateMaterial);
 
 // ADMIN only can delete
 router.delete('/:id', authorize(ROLES.ADMIN), projectController.remove);

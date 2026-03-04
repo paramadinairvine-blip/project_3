@@ -5,8 +5,8 @@ const { authenticate } = require('../middlewares/auth');
 const { authorize } = require('../middlewares/roleGuard');
 const { ROLES } = require('../utils/constants');
 
-// All routes require authentication + ADMIN or OPERATOR
-router.use(authenticate, authorize(ROLES.ADMIN, ROLES.OPERATOR));
+// All routes require authentication + ADMIN or KASIR
+router.use(authenticate, authorize(ROLES.ADMIN, ROLES.KASIR));
 
 router.get('/', stockController.getAllOpname);
 router.post('/', stockController.createOpname);

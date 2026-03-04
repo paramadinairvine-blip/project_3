@@ -35,7 +35,7 @@ const menuItems = [
     children: [
       { label: 'Monitoring Stock', code: 'MS', path: '/stok' },
       { label: 'Purchase Order', code: 'PO', path: '/purchase-order' },
-      { label: 'Stock Opname', code: 'SO', path: '/stok/opname', roles: [ROLES.ADMIN, ROLES.OPERATOR] },
+      { label: 'Stock Opname', code: 'SO', path: '/stok/opname', roles: [ROLES.ADMIN, ROLES.KASIR] },
       { label: 'Supplier', code: 'SP', path: '/supplier' },
     ],
   },
@@ -59,9 +59,9 @@ const menuItems = [
   {
     label: 'SETTING',
     icon: HiCog,
-    roles: [ROLES.ADMIN, ROLES.OPERATOR],
+    roles: [ROLES.ADMIN, ROLES.KASIR],
     children: [
-      { label: 'Satuan', code: 'ST', path: '/setting/satuan', roles: [ROLES.ADMIN, ROLES.OPERATOR] },
+      { label: 'Satuan', code: 'ST', path: '/setting/satuan', roles: [ROLES.ADMIN, ROLES.KASIR] },
       { label: 'Pengguna', code: 'PG', path: '/pengguna', roles: [ROLES.ADMIN] },
       { label: 'Audit Log', code: 'AL', path: '/audit-log', roles: [ROLES.ADMIN] },
     ],

@@ -1,6 +1,6 @@
 const ROLES = {
   ADMIN: 'ADMIN',
-  OPERATOR: 'OPERATOR',
+  KASIR: 'KASIR',
   VIEWER: 'VIEWER',
 };
 
@@ -61,7 +61,7 @@ const DEFAULT_PAGE_SIZE = 20;
 // Format label Bahasa Indonesia
 const ROLE_LABELS = {
   [ROLES.ADMIN]: 'Administrator',
-  [ROLES.OPERATOR]: 'Operator',
+  [ROLES.KASIR]: 'Kasir',
   [ROLES.VIEWER]: 'Viewer',
 };
 

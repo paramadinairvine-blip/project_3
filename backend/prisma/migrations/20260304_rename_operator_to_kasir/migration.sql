@@ -1,0 +1,2 @@
+-- Rename OPERATOR to KASIR in Role enum
+ALTER TYPE "Role" RENAME VALUE 'OPERATOR' TO 'KASIR';

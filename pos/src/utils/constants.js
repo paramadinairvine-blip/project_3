@@ -1,6 +1,6 @@
 export const ROLES = {
   ADMIN: 'ADMIN',
-  OPERATOR: 'OPERATOR',
+  KASIR: 'KASIR',
   VIEWER: 'VIEWER',
 };
 
@@ -18,7 +18,7 @@ export const TRANSACTION_STATUS = {
 
 export const ROLE_LABELS = {
   [ROLES.ADMIN]: 'Administrator',
-  [ROLES.OPERATOR]: 'Operator',
+  [ROLES.KASIR]: 'Kasir',
   [ROLES.VIEWER]: 'Viewer',
 };
 

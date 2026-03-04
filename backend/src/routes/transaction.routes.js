@@ -13,8 +13,8 @@ router.use(authenticate);
 router.get('/', transactionController.getAll);
 router.get('/:id', transactionController.getById);
 
-// ADMIN & OPERATOR can create
-router.post('/', authorize(ROLES.ADMIN, ROLES.OPERATOR), validateTransaction, transactionController.create);
+// ADMIN & KASIR can create
+router.post('/', authorize(ROLES.ADMIN, ROLES.KASIR), validateTransaction, transactionController.create);
 
 // ADMIN only can cancel
 router.put('/:id/cancel', authorize(ROLES.ADMIN), transactionController.cancel);
