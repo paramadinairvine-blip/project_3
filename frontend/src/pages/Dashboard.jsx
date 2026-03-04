@@ -15,6 +15,8 @@ import {
 import { reportAPI } from '../api/endpoints';
 import { Card } from '../components/common';
 import { formatRupiah } from '../utils/formatCurrency';
+import useAuth from '../hooks/useAuth';
+import { ROLES } from '../utils/constants';
 
 // ─── Helpers ──────────────────────────────────────────
 const MONTHS = [
@@ -105,6 +107,8 @@ export default function Dashboard() {
   const now = new Date();
   const [month, setMonth] = useState(now.getMonth()); // 0-indexed
   const [year, setYear] = useState(now.getFullYear());
+  const { role } = useAuth();
+  const canViewFinancial = role === ROLES.ADMIN || role === ROLES.VIEWER;
 
   const { data: dashboard, isLoading } = useQuery({
     queryKey: ['dashboard'],
@@ -115,7 +119,7 @@ export default function Dashboard() {
     refetchInterval: 60000,
   });
 
-  // Trend report for selected period (3 months comparison)
+  // Trend report for selected period (only for ADMIN/VIEWER)
   const { data: trendData } = useQuery({
     queryKey: ['trend-dashboard', year, month],
     queryFn: async () => {
@@ -127,9 +131,10 @@ export default function Dashboard() {
       });
       return data.data;
     },
+    enabled: canViewFinancial,
   });
 
-  // Financial report for selected month
+  // Financial report for selected month (only for ADMIN/VIEWER)
   const { data: financialData } = useQuery({
     queryKey: ['financial-dashboard', year, month],
     queryFn: async () => {
@@ -141,6 +146,7 @@ export default function Dashboard() {
       });
       return data.data;
     },
+    enabled: canViewFinancial,
   });
 
   const d = dashboard || {};
@@ -187,27 +193,29 @@ export default function Dashboard() {
           <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
           <p className="text-sm text-gray-500 mt-1">Ringkasan sistem inventori</p>
         </div>
-        <div className="flex items-center gap-2">
-          <HiCalendar className="w-5 h-5 text-gray-400" />
-          <select
-            value={month}
-            onChange={(e) => setMonth(parseInt(e.target.value))}
-            className="rounded-lg border-gray-300 text-sm py-2 px-3 focus:border-blue-500 focus:ring-blue-500"
-          >
-            {MONTHS.map((m, i) => (
-              <option key={i} value={i}>{m}</option>
-            ))}
-          </select>
-          <select
-            value={year}
-            onChange={(e) => setYear(parseInt(e.target.value))}
-            className="rounded-lg border-gray-300 text-sm py-2 px-3 focus:border-blue-500 focus:ring-blue-500"
-          >
-            {getYears().map((y) => (
-              <option key={y} value={y}>{y}</option>
-            ))}
-          </select>
-        </div>
+        {canViewFinancial && (
+          <div className="flex items-center gap-2">
+            <HiCalendar className="w-5 h-5 text-gray-400" />
+            <select
+              value={month}
+              onChange={(e) => setMonth(parseInt(e.target.value))}
+              className="rounded-lg border-gray-300 text-sm py-2 px-3 focus:border-blue-500 focus:ring-blue-500"
+            >
+              {MONTHS.map((m, i) => (
+                <option key={i} value={i}>{m}</option>
+              ))}
+            </select>
+            <select
+              value={year}
+              onChange={(e) => setYear(parseInt(e.target.value))}
+              className="rounded-lg border-gray-300 text-sm py-2 px-3 focus:border-blue-500 focus:ring-blue-500"
+            >
+              {getYears().map((y) => (
+                <option key={y} value={y}>{y}</option>
+              ))}
+            </select>
+          </div>
+        )}
       </div>
 
       {/* Row 1: Stat Cards */}
@@ -240,48 +248,88 @@ export default function Dashboard() {
         />
       </div>
 
-      {/* Row 2: Pie Chart (Pendapatan) + Line Chart (Grafik Penjualan) */}
+      {/* Row 2: Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Pendapatan per Tipe Transaksi */}
-        <Card>
-          <div className="mb-4">
-            <h3 className="text-lg font-bold text-gray-900">
-              Pendapatan {MONTHS[month]} {year}
-            </h3>
-            <p className="text-sm text-gray-500">Per Tipe Transaksi</p>
-          </div>
-          {pieData.length > 0 ? (
-            <PieContainer width="100%" height={300}>
-              <PieChart>
-                <Pie
-                  data={pieData}
-                  cx="50%"
-                  cy="50%"
-                  outerRadius={100}
-                  innerRadius={0}
-                  dataKey="value"
-                  label={({ name, percent }) => `${(percent * 100).toFixed(1)}%`}
-                  labelLine={true}
-                >
-                  {pieData.map((_, idx) => (
-                    <Cell key={idx} fill={COLORS[idx % COLORS.length]} />
-                  ))}
-                </Pie>
-                <PieTooltip content={<PieChartTooltip />} />
-                <Legend
-                  verticalAlign="bottom"
-                  iconType="circle"
-                  iconSize={10}
-                  formatter={(value) => <span className="text-sm text-gray-600">{value}</span>}
-                />
-              </PieChart>
-            </PieContainer>
-          ) : (
-            <div className="flex items-center justify-center h-[300px] text-gray-400 text-sm">
-              Belum ada data pendapatan di bulan ini
+        {/* Pendapatan per Tipe Transaksi — only ADMIN/VIEWER */}
+        {canViewFinancial ? (
+          <Card>
+            <div className="mb-4">
+              <h3 className="text-lg font-bold text-gray-900">
+                Pendapatan {MONTHS[month]} {year}
+              </h3>
+              <p className="text-sm text-gray-500">Per Tipe Transaksi</p>
             </div>
-          )}
-        </Card>
+            {pieData.length > 0 ? (
+              <PieContainer width="100%" height={300}>
+                <PieChart>
+                  <Pie
+                    data={pieData}
+                    cx="50%"
+                    cy="50%"
+                    outerRadius={100}
+                    innerRadius={0}
+                    dataKey="value"
+                    label={({ name, percent }) => `${(percent * 100).toFixed(1)}%`}
+                    labelLine={true}
+                  >
+                    {pieData.map((_, idx) => (
+                      <Cell key={idx} fill={COLORS[idx % COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <PieTooltip content={<PieChartTooltip />} />
+                  <Legend
+                    verticalAlign="bottom"
+                    iconType="circle"
+                    iconSize={10}
+                    formatter={(value) => <span className="text-sm text-gray-600">{value}</span>}
+                  />
+                </PieChart>
+              </PieContainer>
+            ) : (
+              <div className="flex items-center justify-center h-[300px] text-gray-400 text-sm">
+                Belum ada data pendapatan di bulan ini
+              </div>
+            )}
+          </Card>
+        ) : (
+          <Card>
+            <div className="mb-4">
+              <h3 className="text-lg font-bold text-gray-900">Top 5 Produk</h3>
+              <p className="text-sm text-gray-500">Paling banyak dikeluarkan bulan ini</p>
+            </div>
+            {topProducts.length > 0 ? (
+              <ResponsiveContainer width="100%" height={300}>
+                <BarChart data={topProducts} layout="vertical" margin={{ top: 0, right: 10, left: 0, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" horizontal={false} />
+                  <XAxis type="number" tick={{ fontSize: 11, fill: '#6b7280' }} axisLine={false} tickLine={false} />
+                  <YAxis dataKey="name" type="category" tick={{ fontSize: 11, fill: '#6b7280' }} axisLine={false} tickLine={false} width={120} />
+                  <Tooltip
+                    content={({ active, payload }) => {
+                      if (!active || !payload?.length) return null;
+                      const d = payload[0].payload;
+                      return (
+                        <div className="bg-white border border-gray-200 rounded-lg shadow-lg px-4 py-3">
+                          <p className="text-sm font-medium text-gray-900">{d.name}</p>
+                          <p className="text-sm text-blue-600">Qty: {d.qty}</p>
+                          <p className="text-sm text-green-600">Nilai: {formatRupiah(d.value)}</p>
+                        </div>
+                      );
+                    }}
+                  />
+                  <Bar dataKey="qty" fill="#3b82f6" radius={[0, 6, 6, 0]} maxBarSize={30}>
+                    {topProducts.map((_, idx) => (
+                      <Cell key={idx} fill={COLORS[idx % COLORS.length]} />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="flex items-center justify-center h-[300px] text-gray-400 text-sm">
+                Belum ada data produk bulan ini
+              </div>
+            )}
+          </Card>
+        )}
 
         {/* Grafik Penjualan (Tren 6 Bulan) */}
         <Card>
@@ -325,105 +373,107 @@ export default function Dashboard() {
         </Card>
       </div>
 
-      {/* Row 3: Pendapatan Harian + Top Produk */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Pendapatan summary */}
-        <Card>
-          <div className="mb-4">
-            <h3 className="text-lg font-bold text-gray-900">
-              Ringkasan Pendapatan
-            </h3>
-            <p className="text-sm text-gray-500">{MONTHS[month]} {year}</p>
-          </div>
-          <div className="space-y-4">
-            {(financialData?.expenditureByType || []).map((item, idx) => {
-              const totalAll = financialData?.totalExpenditure || 1;
-              const pct = totalAll > 0 ? ((item.total / totalAll) * 100).toFixed(1) : 0;
-              return (
-                <div key={idx}>
-                  <div className="flex items-center justify-between text-sm mb-1">
-                    <div className="flex items-center gap-2">
-                      <div className="w-3 h-3 rounded-full" style={{ backgroundColor: COLORS[idx % COLORS.length] }} />
-                      <span className="text-gray-700 font-medium">{item.label}</span>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <span className="text-gray-500 text-xs">{pct}%</span>
-                      <span className="font-semibold text-gray-900">{formatRupiah(item.total)}</span>
-                    </div>
-                  </div>
-                  <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
-                    <div
-                      className="h-full rounded-full transition-all"
-                      style={{ width: `${Math.min(pct, 100)}%`, backgroundColor: COLORS[idx % COLORS.length] }}
-                    />
-                  </div>
-                </div>
-              );
-            })}
-            <div className="pt-3 mt-3 border-t border-gray-200 flex items-center justify-between">
-              <span className="text-sm font-semibold text-gray-700">Total Pendapatan</span>
-              <span className="text-lg font-bold text-gray-900">
-                {formatRupiah(financialData?.totalExpenditure || 0)}
-              </span>
+      {/* Row 3: Pendapatan + Top Produk (role-based) */}
+      {canViewFinancial && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Pendapatan summary — only ADMIN/VIEWER */}
+          <Card>
+            <div className="mb-4">
+              <h3 className="text-lg font-bold text-gray-900">
+                Ringkasan Pendapatan
+              </h3>
+              <p className="text-sm text-gray-500">{MONTHS[month]} {year}</p>
             </div>
-            {trendData?.periodComparison && (
-              <div className="flex items-center gap-2 text-sm">
-                <span className={`font-medium ${trendData.periodComparison.direction === 'up' ? 'text-green-600' : 'text-red-600'}`}>
-                  {trendData.periodComparison.direction === 'up' ? '▲' : '▼'}{' '}
-                  {Math.abs(trendData.periodComparison.changePercent)}%
+            <div className="space-y-4">
+              {(financialData?.expenditureByType || []).map((item, idx) => {
+                const totalAll = financialData?.totalExpenditure || 1;
+                const pct = totalAll > 0 ? ((item.total / totalAll) * 100).toFixed(1) : 0;
+                return (
+                  <div key={idx}>
+                    <div className="flex items-center justify-between text-sm mb-1">
+                      <div className="flex items-center gap-2">
+                        <div className="w-3 h-3 rounded-full" style={{ backgroundColor: COLORS[idx % COLORS.length] }} />
+                        <span className="text-gray-700 font-medium">{item.label}</span>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <span className="text-gray-500 text-xs">{pct}%</span>
+                        <span className="font-semibold text-gray-900">{formatRupiah(item.total)}</span>
+                      </div>
+                    </div>
+                    <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
+                      <div
+                        className="h-full rounded-full transition-all"
+                        style={{ width: `${Math.min(pct, 100)}%`, backgroundColor: COLORS[idx % COLORS.length] }}
+                      />
+                    </div>
+                  </div>
+                );
+              })}
+              <div className="pt-3 mt-3 border-t border-gray-200 flex items-center justify-between">
+                <span className="text-sm font-semibold text-gray-700">Total Pendapatan</span>
+                <span className="text-lg font-bold text-gray-900">
+                  {formatRupiah(financialData?.totalExpenditure || 0)}
                 </span>
-                <span className="text-gray-500">dibanding periode sebelumnya</span>
+              </div>
+              {trendData?.periodComparison && (
+                <div className="flex items-center gap-2 text-sm">
+                  <span className={`font-medium ${trendData.periodComparison.direction === 'up' ? 'text-green-600' : 'text-red-600'}`}>
+                    {trendData.periodComparison.direction === 'up' ? '▲' : '▼'}{' '}
+                    {Math.abs(trendData.periodComparison.changePercent)}%
+                  </span>
+                  <span className="text-gray-500">dibanding periode sebelumnya</span>
+                </div>
+              )}
+            </div>
+          </Card>
+
+          {/* Top Produk */}
+          <Card>
+            <div className="mb-4">
+              <h3 className="text-lg font-bold text-gray-900">Top 5 Produk</h3>
+              <p className="text-sm text-gray-500">Paling banyak dikeluarkan bulan ini</p>
+            </div>
+            {topProducts.length > 0 ? (
+              <ResponsiveContainer width="100%" height={300}>
+                <BarChart data={topProducts} layout="vertical" margin={{ top: 0, right: 10, left: 0, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" horizontal={false} />
+                  <XAxis type="number" tick={{ fontSize: 11, fill: '#6b7280' }} axisLine={false} tickLine={false} />
+                  <YAxis
+                    dataKey="name"
+                    type="category"
+                    tick={{ fontSize: 11, fill: '#6b7280' }}
+                    axisLine={false}
+                    tickLine={false}
+                    width={120}
+                  />
+                  <Tooltip
+                    content={({ active, payload }) => {
+                      if (!active || !payload?.length) return null;
+                      const d = payload[0].payload;
+                      return (
+                        <div className="bg-white border border-gray-200 rounded-lg shadow-lg px-4 py-3">
+                          <p className="text-sm font-medium text-gray-900">{d.name}</p>
+                          <p className="text-sm text-blue-600">Qty: {d.qty}</p>
+                          <p className="text-sm text-green-600">Nilai: {formatRupiah(d.value)}</p>
+                        </div>
+                      );
+                    }}
+                  />
+                  <Bar dataKey="qty" fill="#3b82f6" radius={[0, 6, 6, 0]} maxBarSize={30}>
+                    {topProducts.map((_, idx) => (
+                      <Cell key={idx} fill={COLORS[idx % COLORS.length]} />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="flex items-center justify-center h-[300px] text-gray-400 text-sm">
+                Belum ada data produk bulan ini
               </div>
             )}
-          </div>
-        </Card>
-
-        {/* Top Produk */}
-        <Card>
-          <div className="mb-4">
-            <h3 className="text-lg font-bold text-gray-900">Top 5 Produk</h3>
-            <p className="text-sm text-gray-500">Paling banyak dikeluarkan bulan ini</p>
-          </div>
-          {topProducts.length > 0 ? (
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={topProducts} layout="vertical" margin={{ top: 0, right: 10, left: 0, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" horizontal={false} />
-                <XAxis type="number" tick={{ fontSize: 11, fill: '#6b7280' }} axisLine={false} tickLine={false} />
-                <YAxis
-                  dataKey="name"
-                  type="category"
-                  tick={{ fontSize: 11, fill: '#6b7280' }}
-                  axisLine={false}
-                  tickLine={false}
-                  width={120}
-                />
-                <Tooltip
-                  content={({ active, payload }) => {
-                    if (!active || !payload?.length) return null;
-                    const d = payload[0].payload;
-                    return (
-                      <div className="bg-white border border-gray-200 rounded-lg shadow-lg px-4 py-3">
-                        <p className="text-sm font-medium text-gray-900">{d.name}</p>
-                        <p className="text-sm text-blue-600">Qty: {d.qty}</p>
-                        <p className="text-sm text-green-600">Nilai: {formatRupiah(d.value)}</p>
-                      </div>
-                    );
-                  }}
-                />
-                <Bar dataKey="qty" fill="#3b82f6" radius={[0, 6, 6, 0]} maxBarSize={30}>
-                  {topProducts.map((_, idx) => (
-                    <Cell key={idx} fill={COLORS[idx % COLORS.length]} />
-                  ))}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
-          ) : (
-            <div className="flex items-center justify-center h-[300px] text-gray-400 text-sm">
-              Belum ada data produk bulan ini
-            </div>
-          )}
-        </Card>
-      </div>
+          </Card>
+        </div>
+      )}
 
       {/* Row 4: Produk Stok Rendah */}
       {d.lowStockItems?.length > 0 && (
