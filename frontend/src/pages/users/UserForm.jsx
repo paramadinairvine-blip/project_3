@@ -38,12 +38,22 @@ export default function UserForm({ user, onClose }) {
   }));
 
   const mutation = useMutation({
-    mutationFn: (data) => {
-      if (isEdit) return userAPI.update(user.id, data);
+    mutationFn: async (data) => {
+      if (isEdit) {
+        const result = await userAPI.update(user.id, data);
+        // If password is provided, also change it
+        if (form.newPassword && form.newPassword.length >= 6) {
+          await userAPI.changePassword(user.id, { newPassword: form.newPassword });
+        }
+        return result;
+      }
       return userAPI.create(data);
     },
     onSuccess: () => {
-      toast.success(isEdit ? 'User berhasil diperbarui' : 'User berhasil ditambahkan');
+      const msg = isEdit
+        ? form.newPassword ? 'User & password berhasil diperbarui' : 'User berhasil diperbarui'
+        : 'User berhasil ditambahkan';
+      toast.success(msg);
       queryClient.invalidateQueries({ queryKey: ['users'] });
       onClose();
     },
@@ -60,25 +70,13 @@ export default function UserForm({ user, onClose }) {
     },
   });
 
-  const passwordMutation = useMutation({
-    mutationFn: (data) => userAPI.changePassword(user.id, data),
-    onSuccess: () => {
-      toast.success('Password berhasil diubah');
-      updateField('newPassword', '');
-    },
-    onError: (err) => {
-      const msg = getErrorMessage(err, 'Gagal mengubah password');
-      setErrors((prev) => ({ ...prev, newPassword: msg }));
-      toast.error(msg);
-    },
-  });
-
   const validate = () => {
     const errs = {};
     if (!form.fullName.trim()) errs.fullName = 'Nama wajib diisi';
     if (!form.email.trim()) errs.email = 'Email wajib diisi';
     else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) errs.email = 'Format email tidak valid';
     if (!isEdit && (!form.password || form.password.length < 6)) errs.password = 'Password minimal 6 karakter';
+    if (isEdit && form.newPassword && form.newPassword.length < 6) errs.newPassword = 'Password minimal 6 karakter';
     if (!form.role) errs.role = 'Role wajib dipilih';
     setErrors(errs);
     return Object.keys(errs).length === 0;
@@ -153,35 +151,14 @@ export default function UserForm({ user, onClose }) {
         )}
 
         {isEdit && (
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Edit Password</label>
-            <div className="flex gap-2">
-              <div className="flex-1">
-                <Input
-                  type="password"
-                  value={form.newPassword}
-                  onChange={(e) => updateField('newPassword', e.target.value)}
-                  placeholder="Password baru (min. 6 karakter)"
-                  error={errors.newPassword}
-                />
-              </div>
-              <Button
-                variant="outline"
-                size="sm"
-                loading={passwordMutation.isPending}
-                onClick={() => {
-                  if (!form.newPassword || form.newPassword.length < 6) {
-                    setErrors((prev) => ({ ...prev, newPassword: 'Minimal 6 karakter' }));
-                    return;
-                  }
-                  passwordMutation.mutate({ newPassword: form.newPassword });
-                }}
-                className="shrink-0 self-start"
-              >
-                Ubah
-              </Button>
-            </div>
-          </div>
+          <Input
+            label="Edit Password"
+            type="password"
+            value={form.newPassword}
+            onChange={(e) => updateField('newPassword', e.target.value)}
+            placeholder="Kosongkan jika tidak ingin mengubah"
+            error={errors.newPassword}
+          />
         )}
 
         <Select
