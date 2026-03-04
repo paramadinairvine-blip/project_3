@@ -67,13 +67,13 @@ const getStockReport = async ({ categoryId, lowStockOnly = false } = {}) => {
  */
 const getFinancialReport = async ({ startDate, endDate, type } = {}) => {
   const dateFilter = {};
-  // Convert local WIB dates (UTC+7) to UTC for database query
+  // Accept both ISO strings (from frontend) and plain dates (YYYY-MM-DD)
   if (startDate) {
-    const start = new Date(startDate + 'T00:00:00+07:00');
+    const start = startDate.includes('T') ? new Date(startDate) : new Date(startDate + 'T00:00:00+07:00');
     dateFilter.gte = start;
   }
   if (endDate) {
-    const end = new Date(endDate + 'T23:59:59.999+07:00');
+    const end = endDate.includes('T') ? new Date(endDate) : new Date(endDate + 'T23:59:59.999+07:00');
     dateFilter.lte = end;
   }
   const hasDateFilter = Object.keys(dateFilter).length > 0;
