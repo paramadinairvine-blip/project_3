@@ -14,6 +14,7 @@ export default function UserForm({ user, onClose }) {
     fullName: '',
     email: '',
     password: '',
+    newPassword: '',
     role: ROLES.KASIR,
     phone: '',
   });
@@ -55,6 +56,19 @@ export default function UserForm({ user, onClose }) {
       if (Object.keys(fieldErrors).length > 0) {
         setErrors(fieldErrors);
       }
+      toast.error(msg);
+    },
+  });
+
+  const passwordMutation = useMutation({
+    mutationFn: (data) => userAPI.changePassword(user.id, data),
+    onSuccess: () => {
+      toast.success('Password berhasil diubah');
+      updateField('newPassword', '');
+    },
+    onError: (err) => {
+      const msg = getErrorMessage(err, 'Gagal mengubah password');
+      setErrors((prev) => ({ ...prev, newPassword: msg }));
       toast.error(msg);
     },
   });
@@ -136,6 +150,38 @@ export default function UserForm({ user, onClose }) {
             placeholder="Minimal 6 karakter"
             error={errors.password}
           />
+        )}
+
+        {isEdit && (
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Edit Password</label>
+            <div className="flex gap-2">
+              <div className="flex-1">
+                <Input
+                  type="password"
+                  value={form.newPassword}
+                  onChange={(e) => updateField('newPassword', e.target.value)}
+                  placeholder="Password baru (min. 6 karakter)"
+                  error={errors.newPassword}
+                />
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                loading={passwordMutation.isPending}
+                onClick={() => {
+                  if (!form.newPassword || form.newPassword.length < 6) {
+                    setErrors((prev) => ({ ...prev, newPassword: 'Minimal 6 karakter' }));
+                    return;
+                  }
+                  passwordMutation.mutate({ newPassword: form.newPassword });
+                }}
+                className="shrink-0 self-start"
+              >
+                Ubah
+              </Button>
+            </div>
+          </div>
         )}
 
         <Select
