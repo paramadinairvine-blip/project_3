@@ -8,12 +8,10 @@ const { ROLES } = require('../utils/constants');
 // All routes require authentication
 router.use(authenticate);
 
-// All roles can view dashboard and stock report
+// All authenticated users can view all reports (read-only)
 router.get('/dashboard', reportController.getDashboard);
 router.get('/stock', reportController.getStockReport);
-
-// ADMIN & VIEWER can view financial and trend reports
-router.get('/financial', authorize(ROLES.ADMIN, ROLES.VIEWER), reportController.getFinancialReport);
-router.get('/trend', authorize(ROLES.ADMIN, ROLES.VIEWER), reportController.getTrendReport);
+router.get('/financial', reportController.getFinancialReport);
+router.get('/trend', reportController.getTrendReport);
 
 module.exports = router;
