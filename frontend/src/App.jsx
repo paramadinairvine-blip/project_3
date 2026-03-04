@@ -71,13 +71,13 @@ function App() {
           {/* Produk — semua role bisa lihat */}
           <Route path="produk" element={<ProductList />} />
           <Route path="produk/tambah" element={
-            <ProtectedRoute allowedRoles={[ROLES.ADMIN, ROLES.OPERATOR]}>
+            <ProtectedRoute allowedRoles={[ROLES.ADMIN, ROLES.KASIR]}>
               <ProductForm />
             </ProtectedRoute>
           } />
           <Route path="produk/:id" element={<ProductDetail />} />
           <Route path="produk/:id/edit" element={
-            <ProtectedRoute allowedRoles={[ROLES.ADMIN, ROLES.OPERATOR]}>
+            <ProtectedRoute allowedRoles={[ROLES.ADMIN, ROLES.KASIR]}>
               <ProductForm />
             </ProtectedRoute>
           } />
@@ -88,12 +88,12 @@ function App() {
           {/* Supplier */}
           <Route path="supplier" element={<SupplierList />} />
           <Route path="supplier/tambah" element={
-            <ProtectedRoute allowedRoles={[ROLES.ADMIN, ROLES.OPERATOR]}>
+            <ProtectedRoute allowedRoles={[ROLES.ADMIN, ROLES.KASIR]}>
               <SupplierForm />
             </ProtectedRoute>
           } />
           <Route path="supplier/:id/edit" element={
-            <ProtectedRoute allowedRoles={[ROLES.ADMIN, ROLES.OPERATOR]}>
+            <ProtectedRoute allowedRoles={[ROLES.ADMIN, ROLES.KASIR]}>
               <SupplierForm />
             </ProtectedRoute>
           } />
@@ -101,13 +101,13 @@ function App() {
           {/* Purchase Order */}
           <Route path="purchase-order" element={<PurchaseOrderList />} />
           <Route path="purchase-order/tambah" element={
-            <ProtectedRoute allowedRoles={[ROLES.ADMIN, ROLES.OPERATOR]}>
+            <ProtectedRoute allowedRoles={[ROLES.ADMIN, ROLES.KASIR]}>
               <PurchaseOrderForm />
             </ProtectedRoute>
           } />
           <Route path="purchase-order/:id" element={<PurchaseOrderDetail />} />
           <Route path="purchase-order/:id/edit" element={
-            <ProtectedRoute allowedRoles={[ROLES.ADMIN, ROLES.OPERATOR]}>
+            <ProtectedRoute allowedRoles={[ROLES.ADMIN, ROLES.KASIR]}>
               <PurchaseOrderForm />
             </ProtectedRoute>
           } />
@@ -115,7 +115,7 @@ function App() {
           {/* Transaksi */}
           <Route path="transaksi" element={<TransactionList />} />
           <Route path="transaksi/tambah" element={
-            <ProtectedRoute allowedRoles={[ROLES.ADMIN, ROLES.OPERATOR]}>
+            <ProtectedRoute allowedRoles={[ROLES.ADMIN, ROLES.KASIR]}>
               <TransactionForm />
             </ProtectedRoute>
           } />
@@ -124,7 +124,7 @@ function App() {
           {/* Stok */}
           <Route path="stok" element={<StockOverview />} />
           <Route path="stok/opname" element={
-            <ProtectedRoute allowedRoles={[ROLES.ADMIN, ROLES.OPERATOR]}>
+            <ProtectedRoute allowedRoles={[ROLES.ADMIN, ROLES.KASIR]}>
               <StockOpname />
             </ProtectedRoute>
           } />
@@ -132,13 +132,13 @@ function App() {
           {/* Proyek */}
           <Route path="proyek" element={<ProjectList />} />
           <Route path="proyek/tambah" element={
-            <ProtectedRoute allowedRoles={[ROLES.ADMIN, ROLES.OPERATOR]}>
+            <ProtectedRoute allowedRoles={[ROLES.ADMIN, ROLES.KASIR]}>
               <ProjectForm />
             </ProtectedRoute>
           } />
           <Route path="proyek/:id" element={<ProjectDetail />} />
           <Route path="proyek/:id/edit" element={
-            <ProtectedRoute allowedRoles={[ROLES.ADMIN, ROLES.OPERATOR]}>
+            <ProtectedRoute allowedRoles={[ROLES.ADMIN, ROLES.KASIR]}>
               <ProjectForm />
             </ProtectedRoute>
           } />
@@ -177,7 +177,7 @@ function App() {
 
           {/* Setting */}
           <Route path="setting/satuan" element={
-            <ProtectedRoute allowedRoles={[ROLES.ADMIN, ROLES.OPERATOR]}>
+            <ProtectedRoute allowedRoles={[ROLES.ADMIN, ROLES.KASIR]}>
               <UnitList />
             </ProtectedRoute>
           } />

@@ -21,9 +21,9 @@ router.use(authenticate);
 router.get('/', brandController.getAll);
 router.get('/:id', brandController.getById);
 
-// ADMIN & OPERATOR can create/update
-router.post('/', authorize(ROLES.ADMIN, ROLES.OPERATOR), validateBrand, brandController.create);
-router.put('/:id', authorize(ROLES.ADMIN, ROLES.OPERATOR), validateBrand, brandController.update);
+// ADMIN & KASIR can create/update
+router.post('/', authorize(ROLES.ADMIN, ROLES.KASIR), validateBrand, brandController.create);
+router.put('/:id', authorize(ROLES.ADMIN, ROLES.KASIR), validateBrand, brandController.update);
 
 // ADMIN only can delete
 router.delete('/:id', authorize(ROLES.ADMIN), brandController.remove);

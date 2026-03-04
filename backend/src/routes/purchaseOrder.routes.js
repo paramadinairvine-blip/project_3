@@ -13,11 +13,11 @@ router.use(authenticate);
 router.get('/', poController.getAll);
 router.get('/:id', poController.getById);
 
-// ADMIN & OPERATOR can create/update/send/receive
-router.post('/', authorize(ROLES.ADMIN, ROLES.OPERATOR), validatePurchaseOrder, poController.create);
-router.put('/:id', authorize(ROLES.ADMIN, ROLES.OPERATOR), poController.update);
-router.put('/:id/send', authorize(ROLES.ADMIN, ROLES.OPERATOR), poController.send);
-router.put('/:id/receive', authorize(ROLES.ADMIN, ROLES.OPERATOR), poController.receive);
+// ADMIN & KASIR can create/update/send/receive
+router.post('/', authorize(ROLES.ADMIN, ROLES.KASIR), validatePurchaseOrder, poController.create);
+router.put('/:id', authorize(ROLES.ADMIN, ROLES.KASIR), poController.update);
+router.put('/:id/send', authorize(ROLES.ADMIN, ROLES.KASIR), poController.send);
+router.put('/:id/receive', authorize(ROLES.ADMIN, ROLES.KASIR), poController.receive);
 
 // ADMIN only can cancel
 router.put('/:id/cancel', authorize(ROLES.ADMIN), poController.cancel);

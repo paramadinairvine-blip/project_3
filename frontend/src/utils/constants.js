@@ -2,7 +2,7 @@
 
 export const ROLES = {
   ADMIN: 'ADMIN',
-  OPERATOR: 'OPERATOR',
+  KASIR: 'KASIR',
   VIEWER: 'VIEWER',
 };
 
@@ -64,7 +64,7 @@ export const DEFAULT_PAGE_SIZE = 20;
 
 export const ROLE_LABELS = {
   [ROLES.ADMIN]: 'Administrator',
-  [ROLES.OPERATOR]: 'Operator',
+  [ROLES.KASIR]: 'Kasir',
   [ROLES.VIEWER]: 'Viewer',
 };
 
@@ -163,6 +163,6 @@ export const MOVEMENT_TYPE_COLORS = {
 
 export const ROLE_COLORS = {
   [ROLES.ADMIN]: 'bg-red-100 text-red-800',
-  [ROLES.OPERATOR]: 'bg-blue-100 text-blue-800',
+  [ROLES.KASIR]: 'bg-blue-100 text-blue-800',
   [ROLES.VIEWER]: 'bg-gray-100 text-gray-800',
 };

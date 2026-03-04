@@ -12,7 +12,7 @@ datasource db {
 
 enum Role {
   ADMIN
-  OPERATOR
+  KASIR
   VIEWER
 }
 
@@ -115,7 +115,7 @@ model User {
   password  String
   fullName  String
   phone     String?
-  role      Role     @default(OPERATOR)
+  role      Role     @default(KASIR)
   isActive  Boolean  @default(true)
   avatar    String?
   createdAt DateTime @default(now())

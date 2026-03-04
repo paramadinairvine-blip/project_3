@@ -6,7 +6,7 @@ const useAuth = () => {
 
   const role = store.user?.role;
   const isAdmin = role === ROLES.ADMIN;
-  const isOperator = role === ROLES.OPERATOR;
+  const isKasir = role === ROLES.KASIR;
   const isViewer = role === ROLES.VIEWER;
 
   const checkPermission = (allowedRoles) => {
@@ -19,7 +19,7 @@ const useAuth = () => {
     ...store,
     role,
     isAdmin,
-    isOperator,
+    isKasir,
     isViewer,
     checkPermission,
   };

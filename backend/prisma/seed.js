@@ -6,7 +6,7 @@ async function main() {
 
   // ==================== USERS ====================
   const hashedAdmin = await bcrypt.hash('admin123', 10);
-  const hashedOperator = await bcrypt.hash('operator123', 10);
+  const hashedKasir = await bcrypt.hash('kasir123', 10);
   const hashedViewer = await bcrypt.hash('viewer123', 10);
 
   const admin = await prisma.user.upsert({
@@ -22,16 +22,16 @@ async function main() {
     },
   });
 
-  const operator = await prisma.user.upsert({
-    where: { email: 'operator@pesantren.id' },
+  const kasir = await prisma.user.upsert({
+    where: { email: 'kasir@pesantren.id' },
     update: {},
     create: {
-      username: 'operator',
-      email: 'operator@pesantren.id',
-      password: hashedOperator,
-      fullName: 'Operator Toko',
+      username: 'kasir',
+      email: 'kasir@pesantren.id',
+      password: hashedKasir,
+      fullName: 'Kasir Toko',
       phone: '081234567891',
-      role: 'OPERATOR',
+      role: 'KASIR',
     },
   });
 
@@ -48,7 +48,7 @@ async function main() {
     },
   });
 
-  console.log('Users seeded:', { admin: admin.id, operator: operator.id, viewer: viewer.id });
+  console.log('Users seeded:', { admin: admin.id, kasir: kasir.id, viewer: viewer.id });
 
   // ==================== CATEGORIES ====================
   const categoryData = [
