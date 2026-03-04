@@ -65,11 +65,13 @@ const getById = async (req, res) => {
 const create = async (req, res) => {
   try {
     const { username, email, password, fullName, phone, role } = req.body;
+    // Auto-generate username from email if not provided
+    const finalUsername = username || email.split('@')[0];
 
     const hashedPassword = await hashPassword(password);
 
     const user = await prisma.user.create({
-      data: { username, email, password: hashedPassword, fullName, phone, role },
+      data: { username: finalUsername, email, password: hashedPassword, fullName, phone, role },
       select: userSelect,
     });
 
@@ -78,7 +80,7 @@ const create = async (req, res) => {
       action: ACTION_TYPES.CREATE,
       tableName: 'users',
       recordId: user.id,
-      newData: { username, email, fullName, role },
+      newData: { username: finalUsername, email, fullName, role },
       ipAddress: req.ip,
       userAgent: req.get('user-agent'),
     });
