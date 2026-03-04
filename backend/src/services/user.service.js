@@ -52,16 +52,18 @@ const getById = async (id) => {
 
 const create = async ({ username, email, password, fullName, phone, role }) => {
   const hashedPassword = await hashPassword(password);
+  // Auto-generate username from email if not provided
+  const finalUsername = username || email.split('@')[0];
 
   const user = await prisma.user.create({
-    data: { username, email, password: hashedPassword, fullName, phone, role },
+    data: { username: finalUsername, email, password: hashedPassword, fullName, phone, role },
     select: userSelect,
   });
 
   return {
     result: user,
     oldData: null,
-    newData: { username, email, fullName, role },
+    newData: { username: finalUsername, email, fullName, role },
   };
 };
 
