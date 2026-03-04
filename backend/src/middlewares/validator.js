@@ -70,8 +70,6 @@ const validateUserUpdate = [
 ];
 
 const validateChangePassword = [
-  body('currentPassword')
-    .notEmpty().withMessage('Password lama wajib diisi'),
   body('newPassword')
     .notEmpty().withMessage('Password baru wajib diisi')
     .isLength({ min: 6 }).withMessage('Password baru minimal 6 karakter'),
