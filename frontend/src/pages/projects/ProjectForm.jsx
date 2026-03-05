@@ -8,12 +8,14 @@ import { getErrorMessage } from '../../utils/handleError';
 import { Card, Button, Input, Select } from '../../components/common';
 import { PROJECT_STATUS, PROJECT_STATUS_LABELS } from '../../utils/constants';
 import useUnsavedChanges from '../../hooks/useUnsavedChanges';
+import { formatRupiah } from '../../utils/formatCurrency';
 
 const emptyMaterial = () => ({
   _key: Date.now() + Math.random(),
   productId: '',
   unitId: '',
   estimatedQty: '',
+  unitPrice: '',
   notes: '',
   product: null,
 });
@@ -80,6 +82,7 @@ export default function ProjectForm() {
             productId: m.productId || '',
             unitId: m.unitId || '',
             estimatedQty: m.estimatedQty?.toString() || '',
+            unitPrice: m.unitPrice?.toString() || '',
             notes: m.notes || '',
             product: m.product || null,
           }))
@@ -87,6 +90,21 @@ export default function ProjectForm() {
       }
     }
   }, [existing]);
+  /* eslint-enable react-hooks/set-state-in-effect */
+
+  // ─── Auto-calculate budget from materials ─────────
+  const materialsTotal = materials.reduce((sum, m) => {
+    const qty = parseFloat(m.estimatedQty) || 0;
+    const price = parseFloat(m.unitPrice) || 0;
+    return sum + qty * price;
+  }, 0);
+
+  /* eslint-disable react-hooks/set-state-in-effect */
+  useEffect(() => {
+    if (materialsTotal > 0) {
+      setForm((prev) => ({ ...prev, budget: materialsTotal.toString() }));
+    }
+  }, [materialsTotal]);
   /* eslint-enable react-hooks/set-state-in-effect */
 
   // ─── Options ────────────────────────────────────────
@@ -135,6 +153,7 @@ export default function ProjectForm() {
         const product = getProductById(value);
         updated[index].product = product;
         updated[index].unitId = product?.unitOfMeasure?.id || product?.unitId || '';
+        updated[index].unitPrice = product?.sellPrice?.toString() || '';
       }
       return updated;
     });
@@ -191,6 +210,7 @@ export default function ProjectForm() {
         productId: m.productId,
         unitId: m.unitId || null,
         estimatedQty: parseFloat(m.estimatedQty) || 0,
+        unitPrice: parseFloat(m.unitPrice) || 0,
         notes: m.notes?.trim() || null,
       }));
 
@@ -211,7 +231,7 @@ export default function ProjectForm() {
   };
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
+    <div className="max-w-5xl mx-auto space-y-6">
       {/* Header */}
       <div className="flex items-center gap-3">
         <button
@@ -269,16 +289,18 @@ export default function ProjectForm() {
               />
             </div>
 
-            <Input
-              label="Estimasi Budget (Rp) *"
-              type="number"
-              min="0"
-              step="1000"
-              value={form.budget}
-              onChange={(e) => updateField('budget', e.target.value)}
-              placeholder="0"
-              error={errors.budget}
-            />
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Estimasi Budget (Rp) *
+              </label>
+              <div className="px-4 py-2.5 bg-gray-50 border border-gray-300 rounded-xl text-sm font-semibold text-gray-900">
+                {formatRupiah(form.budget)}
+              </div>
+              {materialsTotal === 0 && (
+                <p className="text-xs text-gray-400 mt-1">Otomatis dihitung dari total material</p>
+              )}
+              {errors.budget && <p className="text-xs text-red-500 mt-1">{errors.budget}</p>}
+            </div>
           </div>
         </Card>
 
@@ -300,71 +322,106 @@ export default function ProjectForm() {
                   <th className="text-left px-4 py-3 text-xs font-semibold text-gray-600 w-8">#</th>
                   <th className="text-left px-4 py-3 text-xs font-semibold text-gray-600 min-w-[200px]">Produk</th>
                   <th className="text-left px-4 py-3 text-xs font-semibold text-gray-600 min-w-[110px]">Satuan</th>
-                  <th className="text-left px-4 py-3 text-xs font-semibold text-gray-600 w-28">Estimasi Qty</th>
-                  <th className="text-left px-4 py-3 text-xs font-semibold text-gray-600 min-w-[150px]">Catatan</th>
+                  <th className="text-left px-4 py-3 text-xs font-semibold text-gray-600 w-24">Qty</th>
+                  <th className="text-left px-4 py-3 text-xs font-semibold text-gray-600 w-32">Harga</th>
+                  <th className="text-right px-4 py-3 text-xs font-semibold text-gray-600 w-32">Subtotal</th>
+                  <th className="text-left px-4 py-3 text-xs font-semibold text-gray-600 min-w-[130px]">Catatan</th>
                   <th className="w-10"></th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-50">
-                {materials.map((mat, idx) => (
-                  <tr key={mat._key} className="hover:bg-gray-50/50">
-                    <td className="px-4 py-3 text-gray-500">{idx + 1}</td>
-                    <td className="px-4 py-3">
-                      <Select
-                        value={mat.productId}
-                        onChange={(val) => updateMaterial(idx, 'productId', val)}
-                        options={productOptions}
-                        placeholder="Pilih produk..."
-                        searchable
-                      />
-                    </td>
-                    <td className="px-4 py-3">
-                      <Select
-                        value={mat.unitId}
-                        onChange={(val) => updateMaterial(idx, 'unitId', val)}
-                        options={getUnitOptions(mat.productId)}
-                        placeholder="Satuan"
-                        disabled={!mat.productId}
-                      />
-                    </td>
-                    <td className="px-4 py-3">
-                      <input
-                        type="number"
-                        min="0"
-                        step="1"
-                        value={mat.estimatedQty}
-                        onChange={(e) => updateMaterial(idx, 'estimatedQty', e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-500"
-                        placeholder="0"
-                      />
-                    </td>
-                    <td className="px-4 py-3">
-                      <input
-                        type="text"
-                        value={mat.notes}
-                        onChange={(e) => updateMaterial(idx, 'notes', e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-500"
-                        placeholder="Catatan..."
-                      />
-                    </td>
-                    <td className="px-2 py-3">
-                      <button
-                        type="button"
-                        onClick={() => removeMaterial(idx)}
-                        className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                        aria-label={`Hapus material baris ${idx + 1}`}
-                      >
-                        <HiTrash className="w-4 h-4" />
-                      </button>
-                    </td>
-                  </tr>
-                ))}
+                {materials.map((mat, idx) => {
+                  const subtotal = (parseFloat(mat.estimatedQty) || 0) * (parseFloat(mat.unitPrice) || 0);
+                  return (
+                    <tr key={mat._key} className="hover:bg-gray-50/50">
+                      <td className="px-4 py-3 text-gray-500">{idx + 1}</td>
+                      <td className="px-4 py-3">
+                        <Select
+                          value={mat.productId}
+                          onChange={(val) => updateMaterial(idx, 'productId', val)}
+                          options={productOptions}
+                          placeholder="Pilih produk..."
+                          searchable
+                        />
+                      </td>
+                      <td className="px-4 py-3">
+                        <Select
+                          value={mat.unitId}
+                          onChange={(val) => updateMaterial(idx, 'unitId', val)}
+                          options={getUnitOptions(mat.productId)}
+                          placeholder="Satuan"
+                          disabled={!mat.productId}
+                        />
+                      </td>
+                      <td className="px-4 py-3">
+                        <input
+                          type="number"
+                          min="0"
+                          step="1"
+                          value={mat.estimatedQty}
+                          onChange={(e) => updateMaterial(idx, 'estimatedQty', e.target.value)}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-500"
+                          placeholder="0"
+                        />
+                      </td>
+                      <td className="px-4 py-3">
+                        <input
+                          type="number"
+                          min="0"
+                          step="100"
+                          value={mat.unitPrice}
+                          onChange={(e) => updateMaterial(idx, 'unitPrice', e.target.value)}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-500"
+                          placeholder="0"
+                        />
+                      </td>
+                      <td className="px-4 py-3 text-right">
+                        <span className="text-sm font-medium text-gray-900 whitespace-nowrap">
+                          {subtotal > 0 ? formatRupiah(subtotal) : '-'}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3">
+                        <input
+                          type="text"
+                          value={mat.notes}
+                          onChange={(e) => updateMaterial(idx, 'notes', e.target.value)}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-500"
+                          placeholder="Catatan..."
+                        />
+                      </td>
+                      <td className="px-2 py-3">
+                        <button
+                          type="button"
+                          onClick={() => removeMaterial(idx)}
+                          className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                          aria-label={`Hapus material baris ${idx + 1}`}
+                        >
+                          <HiTrash className="w-4 h-4" />
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
+              {/* Total row */}
+              {materialsTotal > 0 && (
+                <tfoot>
+                  <tr className="bg-blue-50 border-t border-blue-100">
+                    <td colSpan={5} className="px-4 py-3 text-right text-sm font-semibold text-gray-700">
+                      Total Estimasi Budget
+                    </td>
+                    <td className="px-4 py-3 text-right text-sm font-bold text-blue-700 whitespace-nowrap">
+                      {formatRupiah(materialsTotal)}
+                    </td>
+                    <td colSpan={2}></td>
+                  </tr>
+                </tfoot>
+              )}
             </table>
           </div>
           {materials.length === 0 && (
             <div className="px-4 py-8 text-center text-gray-400 text-sm">
-              Belum ada material. Klik "Tambah Material" untuk menambahkan.
+              Belum ada material. Klik &quot;Tambah Material&quot; untuk menambahkan.
             </div>
           )}
         </Card>
