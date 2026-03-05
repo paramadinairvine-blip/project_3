@@ -66,9 +66,8 @@ export default function InvoicePrint({ transaction, onClose }) {
           >
             {/* Store Header */}
             <div style={{ textAlign: 'center', marginBottom: '24px', borderBottom: '3px double #000', paddingBottom: '12px' }}>
-              <h1 style={{ fontSize: '22px', fontWeight: 'bold', margin: '0 0 4px 0' }}>TOKO MATERIAL PESANTREN</h1>
-              <p style={{ fontSize: '11px', color: '#555', margin: '0' }}>Jl. Pesantren No. 1</p>
-              <p style={{ fontSize: '11px', color: '#555', margin: '0' }}>Telp: (021) 1234567 | Email: toko@pesantren.id</p>
+              <h1 style={{ fontSize: '22px', fontWeight: 'bold', margin: '0 0 4px 0' }}>TOKO MATERIAL PESANTREN DARUNNAJAH 2</h1>
+              <p style={{ fontSize: '11px', color: '#555', margin: '0' }}>Jl. Argapura, Desa Argapura, Kec. Cigudeg, Kabupaten Bogor, Jawa Barat, 16660</p>
             </div>
 
             {/* Title */}

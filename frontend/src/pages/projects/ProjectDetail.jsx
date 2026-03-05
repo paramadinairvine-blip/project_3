@@ -107,7 +107,7 @@ function ProjectReportPrint({ project, report, printRef }) {
     >
       <div style={{ textAlign: 'center', marginBottom: '24px', borderBottom: '2px solid #000', paddingBottom: '12px' }}>
         <h1 style={{ fontSize: '18px', fontWeight: 'bold', margin: '0 0 4px 0' }}>LAPORAN PROYEK</h1>
-        <p style={{ margin: 0 }}>TOKO MATERIAL PESANTREN</p>
+        <p style={{ margin: 0 }}>TOKO MATERIAL PESANTREN DARUNNAJAH 2</p>
       </div>
 
       <table style={{ fontSize: '12px', marginBottom: '16px' }}>

@@ -269,7 +269,7 @@ export default function TrendReport() {
       <div className="hidden">
         <div ref={printRef} className="p-8" style={{ fontFamily: 'Arial, sans-serif', fontSize: '11px' }}>
           <div style={{ textAlign: 'center', marginBottom: '16px' }}>
-            <h2 style={{ margin: '0 0 4px 0', fontSize: '16px' }}>TOKO MATERIAL PESANTREN</h2>
+            <h2 style={{ margin: '0 0 4px 0', fontSize: '16px' }}>TOKO MATERIAL PESANTREN DARUNNAJAH 2</h2>
             <h3 style={{ margin: '0 0 4px 0', fontSize: '14px' }}>Laporan Tren Pengeluaran</h3>
             <p style={{ margin: 0, fontSize: '10px', color: '#666' }}>Periode: {periodLabel}</p>
           </div>

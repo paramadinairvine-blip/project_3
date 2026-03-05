@@ -35,8 +35,8 @@ export default function DeliveryNotePrint({ transaction, onClose }) {
           >
             {/* Header */}
             <div style={{ textAlign: 'center', marginBottom: '24px', borderBottom: '2px solid #000', paddingBottom: '12px' }}>
-              <h1 style={{ fontSize: '20px', fontWeight: 'bold', margin: '0 0 4px 0' }}>TOKO MATERIAL PESANTREN</h1>
-              <p style={{ fontSize: '11px', color: '#555', margin: '0' }}>Jl. Pesantren No. 1 | Telp: (021) 1234567</p>
+              <h1 style={{ fontSize: '20px', fontWeight: 'bold', margin: '0 0 4px 0' }}>TOKO MATERIAL PESANTREN DARUNNAJAH 2</h1>
+              <p style={{ fontSize: '11px', color: '#555', margin: '0' }}>Jl. Argapura, Desa Argapura, Kec. Cigudeg, Kabupaten Bogor, Jawa Barat, 16660</p>
             </div>
 
             {/* Title */}
