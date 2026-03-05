@@ -158,22 +158,12 @@ export default function TransactionDetail() {
           </div>
         </Card>
 
-        <Card title="Unit Lembaga & Petugas" padding="md">
+        <Card title="Kasir" padding="md">
           <div className="space-y-3">
             <div className="flex justify-between">
-              <span className="text-sm text-gray-500">Unit Lembaga</span>
-              <span className="text-sm font-medium">{trx.unitLembaga?.name || '-'}</span>
+              <span className="text-sm text-gray-500">Kasir</span>
+              <span className="text-sm font-medium">{trx.creator?.fullName || '-'}</span>
             </div>
-            <div className="flex justify-between">
-              <span className="text-sm text-gray-500">Petugas</span>
-              <span className="text-sm font-medium">{trx.createdBy?.fullName || trx.user?.fullName || '-'}</span>
-            </div>
-            {trx.unitLembaga?.address && (
-              <div className="flex justify-between">
-                <span className="text-sm text-gray-500">Alamat Unit</span>
-                <span className="text-sm text-right max-w-[200px]">{trx.unitLembaga.address}</span>
-              </div>
-            )}
           </div>
         </Card>
       </div>
