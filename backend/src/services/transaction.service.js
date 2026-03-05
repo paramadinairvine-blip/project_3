@@ -253,14 +253,13 @@ const create = async (data, userId) => {
   const paidAmount = header.paidAmount || 0;
   const changeAmount = paidAmount > total ? paidAmount - total : 0;
 
-  // ── 2. Generate transaction number (single read query) ──
-  const transactionNumber = await generateTransactionNumber(prisma);
+  // ── 2. Write everything atomically using $transaction ──
+  const transaction = await prisma.$transaction(async (tx) => {
+    // Generate transaction number inside transaction for consistency
+    const transactionNumber = await generateTransactionNumber(tx);
 
-  // ── 3. Write everything using sequential queries (no interactive $transaction) ──
-  let created;
-  try {
     // Create transaction header
-    created = await prisma.transaction.create({
+    const created = await tx.transaction.create({
       data: {
         transactionNumber,
         type: header.type,
@@ -283,8 +282,8 @@ const create = async (data, userId) => {
       },
     });
 
-    // Batch create all transaction items (single query)
-    await prisma.transactionItem.createMany({
+    // Batch create all transaction items
+    await tx.transactionItem.createMany({
       data: processedItems.map((item) => ({
         transactionId: created.id,
         productId: item.productId,
@@ -300,7 +299,7 @@ const create = async (data, userId) => {
       const product = productMap[item.productId];
       const newStock = product.stock - item.baseQty;
 
-      await prisma.stockMovement.create({
+      await tx.stockMovement.create({
         data: {
           productId: item.productId,
           type: 'OUT',
@@ -314,7 +313,7 @@ const create = async (data, userId) => {
         },
       });
 
-      await prisma.product.update({
+      await tx.product.update({
         where: { id: item.productId },
         data: { stock: newStock },
       });
@@ -325,24 +324,18 @@ const create = async (data, userId) => {
 
     // Update project spent if linked
     if (header.projectId) {
-      await prisma.project.update({
+      await tx.project.update({
         where: { id: header.projectId },
         data: { spent: { increment: total } },
       });
     }
-  } catch (err) {
-    // Cleanup on failure: delete the transaction (cascade deletes items)
-    if (created?.id) {
-      await prisma.transaction.delete({ where: { id: created.id } }).catch(() => {});
-    }
-    throw err;
-  }
 
-  // ── 4. Fetch full transaction with relations ──
-  const transaction = await prisma.transaction.findUnique({
-    where: { id: created.id },
-    include: transactionIncludes,
-  });
+    // Fetch full transaction with relations
+    return tx.transaction.findUnique({
+      where: { id: created.id },
+      include: transactionIncludes,
+    });
+  }, { timeout: 30000 });
 
   // Audit log
   await createLog({
