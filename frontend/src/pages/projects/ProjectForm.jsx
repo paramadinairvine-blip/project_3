@@ -12,7 +12,6 @@ import useUnsavedChanges from '../../hooks/useUnsavedChanges';
 const emptyMaterial = () => ({
   _key: Date.now() + Math.random(),
   productId: '',
-  variantId: '',
   unitId: '',
   estimatedQty: '',
   notes: '',
@@ -79,7 +78,6 @@ export default function ProjectForm() {
             _key: m.id || Date.now() + Math.random(),
             id: m.id,
             productId: m.productId || '',
-            variantId: m.variantId || '',
             unitId: m.unitId || '',
             estimatedQty: m.estimatedQty?.toString() || '',
             notes: m.notes || '',
@@ -105,12 +103,6 @@ export default function ProjectForm() {
 
   const getProductById = (productId) =>
     (products || []).find((p) => p.id === productId) || null;
-
-  const getVariantOptions = (productId) => {
-    const product = getProductById(productId);
-    if (!product?.variants?.length) return [];
-    return product.variants.map((v) => ({ value: v.id, label: v.name }));
-  };
 
   const getUnitOptions = (productId) => {
     const product = getProductById(productId);
@@ -142,7 +134,6 @@ export default function ProjectForm() {
       if (field === 'productId') {
         const product = getProductById(value);
         updated[index].product = product;
-        updated[index].variantId = '';
         updated[index].unitId = product?.unitOfMeasure?.id || product?.unitId || '';
       }
       return updated;
@@ -198,7 +189,6 @@ export default function ProjectForm() {
       .map((m) => ({
         id: m.id || undefined,
         productId: m.productId,
-        variantId: m.variantId || null,
         unitId: m.unitId || null,
         estimatedQty: parseFloat(m.estimatedQty) || 0,
         notes: m.notes?.trim() || null,
@@ -309,7 +299,6 @@ export default function ProjectForm() {
                 <tr className="bg-gray-50 border-b border-gray-100">
                   <th className="text-left px-4 py-3 text-xs font-semibold text-gray-600 w-8">#</th>
                   <th className="text-left px-4 py-3 text-xs font-semibold text-gray-600 min-w-[200px]">Produk</th>
-                  <th className="text-left px-4 py-3 text-xs font-semibold text-gray-600 min-w-[130px]">Varian</th>
                   <th className="text-left px-4 py-3 text-xs font-semibold text-gray-600 min-w-[110px]">Satuan</th>
                   <th className="text-left px-4 py-3 text-xs font-semibold text-gray-600 w-28">Estimasi Qty</th>
                   <th className="text-left px-4 py-3 text-xs font-semibold text-gray-600 min-w-[150px]">Catatan</th>
@@ -327,15 +316,6 @@ export default function ProjectForm() {
                         options={productOptions}
                         placeholder="Pilih produk..."
                         searchable
-                      />
-                    </td>
-                    <td className="px-4 py-3">
-                      <Select
-                        value={mat.variantId}
-                        onChange={(val) => updateMaterial(idx, 'variantId', val)}
-                        options={getVariantOptions(mat.productId)}
-                        placeholder="—"
-                        disabled={!getVariantOptions(mat.productId).length}
                       />
                     </td>
                     <td className="px-4 py-3">
