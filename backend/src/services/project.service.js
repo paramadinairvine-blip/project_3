@@ -231,6 +231,7 @@ const update = async (id, data, userId) => {
             data: {
               productId: m.productId,
               estimatedQty: m.estimatedQty || 0,
+              usedQty: m.usedQty !== undefined ? m.usedQty : undefined,
               unitPrice: unitPrice || 0,
               notes: m.notes || null,
             },
@@ -242,6 +243,7 @@ const update = async (id, data, userId) => {
               projectId: id,
               productId: m.productId,
               estimatedQty: m.estimatedQty || 0,
+              usedQty: m.usedQty || 0,
               unitPrice: unitPrice || 0,
               notes: m.notes || null,
             },

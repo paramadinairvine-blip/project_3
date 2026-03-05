@@ -3,6 +3,9 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { HiArrowLeft, HiPlus, HiTrash } from 'react-icons/hi';
 import toast from 'react-hot-toast';
+import {
+  PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend,
+} from 'recharts';
 import { projectAPI, productAPI } from '../../api/endpoints';
 import { getErrorMessage } from '../../utils/handleError';
 import { Card, Button, Input, Select } from '../../components/common';
@@ -14,10 +17,35 @@ const emptyMaterial = () => ({
   _key: Date.now() + Math.random(),
   productId: '',
   estimatedQty: '',
+  usedQty: '',
   unitPrice: '',
   notes: '',
   product: null,
 });
+
+// ─── Progress Bar Component ────────────────────────────
+function ProgressBar({ percent, size = 'md' }) {
+  const clampedPercent = Math.min(100, Math.max(0, percent));
+  const color =
+    clampedPercent >= 100
+      ? 'bg-green-500'
+      : clampedPercent >= 75
+        ? 'bg-blue-500'
+        : clampedPercent >= 50
+          ? 'bg-yellow-500'
+          : 'bg-gray-400';
+
+  const height = size === 'sm' ? 'h-1.5' : 'h-2.5';
+
+  return (
+    <div className={`w-full bg-gray-200 rounded-full ${height} overflow-hidden`}>
+      <div
+        className={`${color} ${height} rounded-full transition-all duration-300`}
+        style={{ width: `${clampedPercent}%` }}
+      />
+    </div>
+  );
+}
 
 export default function ProjectForm() {
   const { id } = useParams();
@@ -72,6 +100,7 @@ export default function ProjectForm() {
             id: m.id,
             productId: m.productId || '',
             estimatedQty: m.estimatedQty?.toString() || '',
+            usedQty: m.usedQty?.toString() || '0',
             unitPrice: m.unitPrice?.toString() || '',
             notes: m.notes || '',
             product: m.product || null,
@@ -96,6 +125,23 @@ export default function ProjectForm() {
     }
   }, [materialsTotal]);
   /* eslint-enable react-hooks/set-state-in-effect */
+
+  // ─── Realization calculations (edit mode) ─────────
+  const materialsUsedTotal = materials.reduce((sum, m) => {
+    const used = parseFloat(m.usedQty) || 0;
+    const price = parseFloat(m.unitPrice) || 0;
+    return sum + used * price;
+  }, 0);
+
+  const overallMaterialProgress = (() => {
+    const totalEst = materials.reduce((s, m) => s + (parseFloat(m.estimatedQty) || 0), 0);
+    const totalUsed = materials.reduce((s, m) => s + (parseFloat(m.usedQty) || 0), 0);
+    return totalEst > 0 ? Math.round((totalUsed / totalEst) * 100) : 0;
+  })();
+
+  const budgetProgress = materialsTotal > 0
+    ? Math.round((materialsUsedTotal / materialsTotal) * 100)
+    : 0;
 
   // ─── Options ────────────────────────────────────────
   const statusOptions = Object.entries(PROJECT_STATUS_LABELS).map(([value, label]) => ({
@@ -176,6 +222,7 @@ export default function ProjectForm() {
         id: m.id || undefined,
         productId: m.productId,
         estimatedQty: parseFloat(m.estimatedQty) || 0,
+        usedQty: isEdit ? (parseInt(m.usedQty, 10) || 0) : 0,
         unitPrice: parseFloat(m.unitPrice) || 0,
         notes: m.notes?.trim() || null,
       }));
@@ -196,6 +243,20 @@ export default function ProjectForm() {
     setIsDirty(true);
   };
 
+  // ─── Chart data ─────────────────────────────────────
+  const CHART_COLORS = ['#3b82f6', '#e5e7eb'];
+  const materialChartData = [
+    { name: 'Terpakai', value: overallMaterialProgress },
+    { name: 'Sisa', value: Math.max(0, 100 - overallMaterialProgress) },
+  ];
+  const budgetChartData = [
+    { name: 'Terpakai', value: budgetProgress },
+    { name: 'Sisa', value: Math.max(0, 100 - budgetProgress) },
+  ];
+
+  // Check if there are any used materials
+  const hasRealization = materials.some((m) => (parseFloat(m.usedQty) || 0) > 0);
+
   return (
     <div className="max-w-5xl mx-auto space-y-6">
       {/* Header */}
@@ -212,10 +273,86 @@ export default function ProjectForm() {
             {isEdit ? 'Edit Proyek' : 'Tambah Proyek'}
           </h1>
           <p className="text-sm text-gray-500 mt-1">
-            {isEdit ? 'Perbarui informasi proyek' : 'Buat proyek baru untuk mengelola kebutuhan material'}
+            {isEdit ? 'Perbarui informasi proyek dan realisasi material' : 'Buat proyek baru untuk mengelola kebutuhan material'}
           </p>
         </div>
       </div>
+
+      {/* ─── Progress Summary (edit mode only) ──────────── */}
+      {isEdit && hasRealization && (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* Material Progress */}
+          <Card title="Progress Material" padding="md">
+            <div className="flex items-center gap-6">
+              <div className="w-32 h-32 flex-shrink-0">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={materialChartData}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={30}
+                      outerRadius={50}
+                      dataKey="value"
+                      startAngle={90}
+                      endAngle={-270}
+                    >
+                      {materialChartData.map((entry, i) => (
+                        <Cell key={entry.name} fill={CHART_COLORS[i]} />
+                      ))}
+                    </Pie>
+                    <Tooltip formatter={(val) => `${val}%`} />
+                    <Legend iconSize={10} wrapperStyle={{ fontSize: '12px' }} />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+              <div className="flex-1 space-y-2">
+                <div className="text-3xl font-bold text-blue-600">{overallMaterialProgress}%</div>
+                <p className="text-sm text-gray-500">Material terealisasi</p>
+                <div className="text-xs text-gray-400">
+                  {materials.reduce((s, m) => s + (parseFloat(m.usedQty) || 0), 0)} dari{' '}
+                  {materials.reduce((s, m) => s + (parseFloat(m.estimatedQty) || 0), 0)} total item
+                </div>
+              </div>
+            </div>
+          </Card>
+
+          {/* Budget Progress */}
+          <Card title="Progress Budget" padding="md">
+            <div className="flex items-center gap-6">
+              <div className="w-32 h-32 flex-shrink-0">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={budgetChartData}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={30}
+                      outerRadius={50}
+                      dataKey="value"
+                      startAngle={90}
+                      endAngle={-270}
+                    >
+                      {budgetChartData.map((entry, i) => (
+                        <Cell key={entry.name} fill={i === 0 ? '#10b981' : '#e5e7eb'} />
+                      ))}
+                    </Pie>
+                    <Tooltip formatter={(val) => `${val}%`} />
+                    <Legend iconSize={10} wrapperStyle={{ fontSize: '12px' }} />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+              <div className="flex-1 space-y-2">
+                <div className="text-3xl font-bold text-green-600">{budgetProgress}%</div>
+                <p className="text-sm text-gray-500">Budget terpakai</p>
+                <div className="text-xs text-gray-400">
+                  {formatRupiah(materialsUsedTotal)} dari {formatRupiah(materialsTotal)}
+                </div>
+              </div>
+            </div>
+          </Card>
+        </div>
+      )}
 
       <form onSubmit={handleSubmit}>
         {/* Basic Info */}
@@ -288,16 +425,29 @@ export default function ProjectForm() {
                   <th className="text-left px-4 py-3 text-xs font-semibold text-gray-600 w-8">#</th>
                   <th className="text-left px-4 py-3 text-xs font-semibold text-gray-600 min-w-[200px]">Produk</th>
                   <th className="text-left px-4 py-3 text-xs font-semibold text-gray-600 w-20">Satuan</th>
-                  <th className="text-left px-4 py-3 text-xs font-semibold text-gray-600 w-24">Qty</th>
+                  <th className="text-left px-4 py-3 text-xs font-semibold text-gray-600 w-24">Estimasi</th>
                   <th className="text-left px-4 py-3 text-xs font-semibold text-gray-600 w-32">Harga</th>
                   <th className="text-right px-4 py-3 text-xs font-semibold text-gray-600 w-32">Subtotal</th>
+                  {isEdit && (
+                    <>
+                      <th className="text-left px-4 py-3 text-xs font-semibold text-gray-600 w-24">Terpakai</th>
+                      <th className="text-left px-4 py-3 text-xs font-semibold text-gray-600 w-20">Sisa</th>
+                      <th className="text-left px-4 py-3 text-xs font-semibold text-gray-600 w-28">Progress</th>
+                    </>
+                  )}
                   <th className="text-left px-4 py-3 text-xs font-semibold text-gray-600 min-w-[130px]">Catatan</th>
                   <th className="w-10"></th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-50">
                 {materials.map((mat, idx) => {
-                  const subtotal = (parseFloat(mat.estimatedQty) || 0) * (parseFloat(mat.unitPrice) || 0);
+                  const estQty = parseFloat(mat.estimatedQty) || 0;
+                  const usedQty = parseFloat(mat.usedQty) || 0;
+                  const price = parseFloat(mat.unitPrice) || 0;
+                  const subtotal = estQty * price;
+                  const remaining = Math.max(0, estQty - usedQty);
+                  const matPercent = estQty > 0 ? Math.round((usedQty / estQty) * 100) : 0;
+
                   return (
                     <tr key={mat._key} className="hover:bg-gray-50/50">
                       <td className="px-4 py-3 text-gray-500">{idx + 1}</td>
@@ -340,6 +490,37 @@ export default function ProjectForm() {
                           {subtotal > 0 ? formatRupiah(subtotal) : '-'}
                         </span>
                       </td>
+                      {isEdit && (
+                        <>
+                          <td className="px-4 py-3">
+                            <input
+                              type="number"
+                              min="0"
+                              step="1"
+                              max={estQty || undefined}
+                              value={mat.usedQty}
+                              onChange={(e) => updateMaterial(idx, 'usedQty', e.target.value)}
+                              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-500"
+                              placeholder="0"
+                            />
+                          </td>
+                          <td className="px-4 py-3">
+                            <span className={`text-sm font-medium whitespace-nowrap ${remaining === 0 && estQty > 0 ? 'text-green-600' : 'text-gray-700'}`}>
+                              {estQty > 0 ? remaining : '-'}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3">
+                            {estQty > 0 ? (
+                              <div className="space-y-1">
+                                <ProgressBar percent={matPercent} size="sm" />
+                                <span className="text-xs text-gray-500">{matPercent}%</span>
+                              </div>
+                            ) : (
+                              <span className="text-xs text-gray-400">-</span>
+                            )}
+                          </td>
+                        </>
+                      )}
                       <td className="px-4 py-3">
                         <input
                           type="text"
@@ -373,6 +554,22 @@ export default function ProjectForm() {
                     <td className="px-4 py-3 text-right text-sm font-bold text-blue-700 whitespace-nowrap">
                       {formatRupiah(materialsTotal)}
                     </td>
+                    {isEdit && (
+                      <>
+                        <td className="px-4 py-3 text-sm font-semibold text-gray-700">
+                          {formatRupiah(materialsUsedTotal)}
+                        </td>
+                        <td className="px-4 py-3 text-sm font-semibold text-gray-700 whitespace-nowrap">
+                          {formatRupiah(Math.max(0, materialsTotal - materialsUsedTotal))}
+                        </td>
+                        <td className="px-4 py-3">
+                          <div className="space-y-1">
+                            <ProgressBar percent={budgetProgress} size="sm" />
+                            <span className="text-xs text-gray-500">{budgetProgress}%</span>
+                          </div>
+                        </td>
+                      </>
+                    )}
                     <td colSpan={2}></td>
                   </tr>
                 </tfoot>
