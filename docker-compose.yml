@@ -6,7 +6,7 @@ services:
     container_name: toko_material_db
     restart: unless-stopped
     ports:
-      - '${DB_PORT:-5432}:5432'
+      - '${DB_PORT:-5433}:5432'
     environment:
       POSTGRES_DB: ${DB_NAME:-toko_material}
       POSTGRES_USER: ${DB_USER:-postgres}

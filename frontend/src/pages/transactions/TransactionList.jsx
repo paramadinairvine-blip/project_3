@@ -1,22 +1,17 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
-import { HiPlus, HiEye } from 'react-icons/hi';
+import { HiEye } from 'react-icons/hi';
 import { transactionAPI } from '../../api/endpoints';
-import { Table, Badge, Button, SearchBar, Pagination } from '../../components/common';
+import { Table, Badge, SearchBar, Pagination } from '../../components/common';
 import { formatRupiah } from '../../utils/formatCurrency';
 import { formatTanggalWaktu } from '../../utils/formatDate';
 import {
   TRANSACTION_TYPE_LABELS, TRANSACTION_TYPE_COLORS,
   TRANSACTION_STATUS_LABELS, TRANSACTION_STATUS_COLORS,
 } from '../../utils/constants';
-import useAuth from '../../hooks/useAuth';
-
 export default function TransactionList() {
   const navigate = useNavigate();
-  const { isAdmin, isOperator } = useAuth();
-  const canCreate = isAdmin || isOperator;
-
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
 
@@ -62,7 +57,7 @@ export default function TransactionList() {
       render: (v) => <span className="text-gray-600">{v || '-'}</span>,
     },
     {
-      key: 'totalAmount',
+      key: 'total',
       header: 'Total',
       sortable: true,
       render: (v) => <span className="font-medium text-gray-900">{formatRupiah(v)}</span>,
@@ -103,11 +98,6 @@ export default function TransactionList() {
           <h1 className="text-2xl font-bold text-gray-900">Daftar Transaksi</h1>
           <p className="text-sm text-gray-500 mt-1">Kelola transaksi pengeluaran barang</p>
         </div>
-        {canCreate && (
-          <Button icon={HiPlus} onClick={() => navigate('/transaksi/tambah')}>
-            Buat Transaksi
-          </Button>
-        )}
       </div>
 
       {/* Search */}

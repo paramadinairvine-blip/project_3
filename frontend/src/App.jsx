@@ -24,7 +24,6 @@ const PurchaseOrderForm = lazy(() => import('./pages/suppliers/PurchaseOrderForm
 const PurchaseOrderDetail = lazy(() => import('./pages/suppliers/PurchaseOrderDetail'));
 
 const TransactionList = lazy(() => import('./pages/transactions/TransactionList'));
-const TransactionForm = lazy(() => import('./pages/transactions/TransactionForm'));
 const TransactionDetail = lazy(() => import('./pages/transactions/TransactionDetail'));
 
 const StockOverview = lazy(() => import('./pages/stock/StockOverview'));
@@ -114,12 +113,7 @@ function App() {
 
           {/* Transaksi */}
           <Route path="transaksi" element={<TransactionList />} />
-          <Route path="transaksi/tambah" element={
-            <ProtectedRoute allowedRoles={[ROLES.ADMIN, ROLES.KASIR]}>
-              <TransactionForm />
-            </ProtectedRoute>
-          } />
-          <Route path="transaksi/:id" element={<TransactionDetail />} />
+<Route path="transaksi/:id" element={<TransactionDetail />} />
 
           {/* Stok */}
           <Route path="stok" element={<StockOverview />} />
