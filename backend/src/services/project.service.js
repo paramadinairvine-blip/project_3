@@ -182,22 +182,76 @@ const create = async (data, userId) => {
  * Update project header fields.
  */
 const update = async (id, data, userId) => {
-  const existing = await prisma.project.findUnique({ where: { id } });
+  const existing = await prisma.project.findUnique({
+    where: { id },
+    include: { materials: true },
+  });
   if (!existing) throw Object.assign(new Error('Proyek tidak ditemukan'), { status: 404 });
 
-  const project = await prisma.project.update({
-    where: { id },
-    data: {
-      name: data.name !== undefined ? data.name : undefined,
-      description: data.description !== undefined ? data.description : undefined,
-      status: data.status !== undefined ? data.status : undefined,
-      budget: data.budget !== undefined ? data.budget : undefined,
-      startDate: data.startDate !== undefined ? (data.startDate ? new Date(data.startDate) : null) : undefined,
-      endDate: data.endDate !== undefined ? (data.endDate ? new Date(data.endDate) : null) : undefined,
-      updatedBy: userId,
-    },
-    include: projectIncludes,
-  });
+  const { materials, ...header } = data;
+
+  const project = await prisma.$transaction(async (tx) => {
+    // Update project header
+    await tx.project.update({
+      where: { id },
+      data: {
+        name: header.name !== undefined ? header.name : undefined,
+        description: header.description !== undefined ? header.description : undefined,
+        status: header.status !== undefined ? header.status : undefined,
+        budget: header.budget !== undefined ? header.budget : undefined,
+        startDate: header.startDate !== undefined ? (header.startDate ? new Date(header.startDate) : null) : undefined,
+        endDate: header.endDate !== undefined ? (header.endDate ? new Date(header.endDate) : null) : undefined,
+        updatedBy: userId,
+      },
+    });
+
+    // Sync materials if provided
+    if (materials && Array.isArray(materials)) {
+      const existingIds = existing.materials.map((m) => m.id);
+      const incomingIds = materials.filter((m) => m.id).map((m) => m.id);
+
+      // Delete removed materials
+      const toDelete = existingIds.filter((mid) => !incomingIds.includes(mid));
+      if (toDelete.length > 0) {
+        await tx.projectMaterial.deleteMany({ where: { id: { in: toDelete } } });
+      }
+
+      // Upsert materials
+      for (const m of materials) {
+        let unitPrice = m.unitPrice;
+        if (!unitPrice && m.productId) {
+          const product = await tx.product.findUnique({ where: { id: m.productId }, select: { price: true } });
+          if (product) unitPrice = Number(product.price);
+        }
+
+        if (m.id && existingIds.includes(m.id)) {
+          // Update existing material
+          await tx.projectMaterial.update({
+            where: { id: m.id },
+            data: {
+              productId: m.productId,
+              estimatedQty: m.estimatedQty || 0,
+              unitPrice: unitPrice || 0,
+              notes: m.notes || null,
+            },
+          });
+        } else {
+          // Create new material
+          await tx.projectMaterial.create({
+            data: {
+              projectId: id,
+              productId: m.productId,
+              estimatedQty: m.estimatedQty || 0,
+              unitPrice: unitPrice || 0,
+              notes: m.notes || null,
+            },
+          });
+        }
+      }
+    }
+
+    return tx.project.findUnique({ where: { id }, include: projectIncludes });
+  }, { timeout: 30000 });
 
   await createLog({
     userId,
