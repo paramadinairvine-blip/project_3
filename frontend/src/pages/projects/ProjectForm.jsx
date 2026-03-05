@@ -30,7 +30,6 @@ export default function ProjectForm() {
     description: '',
     status: PROJECT_STATUS.PLANNING,
     startDate: '',
-    endDate: '',
     budget: '',
   });
   const [materials, setMaterials] = useState([emptyMaterial()]);
@@ -72,7 +71,6 @@ export default function ProjectForm() {
         description: existing.description || '',
         status: existing.status || PROJECT_STATUS.PLANNING,
         startDate: existing.startDate ? existing.startDate.slice(0, 10) : '',
-        endDate: existing.endDate ? existing.endDate.slice(0, 10) : '',
         budget: existing.budget?.toString() || '',
       });
       if (existing.materials?.length > 0) {
@@ -211,7 +209,6 @@ export default function ProjectForm() {
       description: form.description.trim() || null,
       status: form.status,
       startDate: form.startDate ? new Date(form.startDate).toISOString() : null,
-      endDate: form.endDate ? new Date(form.endDate).toISOString() : null,
       budget: parseFloat(form.budget) || 0,
       materials: validMaterials,
     });
@@ -266,7 +263,7 @@ export default function ProjectForm() {
               rows={3}
             />
 
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <Select
                 label="Status"
                 value={form.status}
@@ -279,12 +276,6 @@ export default function ProjectForm() {
                 value={form.startDate}
                 onChange={(e) => updateField('startDate', e.target.value)}
                 error={errors.startDate}
-              />
-              <Input
-                label="Tanggal Selesai (Estimasi)"
-                type="date"
-                value={form.endDate}
-                onChange={(e) => updateField('endDate', e.target.value)}
               />
             </div>
 
