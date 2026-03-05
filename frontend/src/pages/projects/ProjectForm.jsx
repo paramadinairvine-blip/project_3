@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { HiArrowLeft, HiPlus, HiTrash } from 'react-icons/hi';
 import toast from 'react-hot-toast';
-import { projectAPI, productAPI, unitAPI } from '../../api/endpoints';
+import { projectAPI, productAPI } from '../../api/endpoints';
 import { getErrorMessage } from '../../utils/handleError';
 import { Card, Button, Input, Select } from '../../components/common';
 import { PROJECT_STATUS, PROJECT_STATUS_LABELS } from '../../utils/constants';
@@ -13,7 +13,6 @@ import { formatRupiah } from '../../utils/formatCurrency';
 const emptyMaterial = () => ({
   _key: Date.now() + Math.random(),
   productId: '',
-  unitId: '',
   estimatedQty: '',
   unitPrice: '',
   notes: '',
@@ -46,14 +45,6 @@ export default function ProjectForm() {
     },
   });
 
-  const { data: units } = useQuery({
-    queryKey: ['units'],
-    queryFn: async () => {
-      const { data } = await unitAPI.getMeasures();
-      return data.data || [];
-    },
-  });
-
   // ─── Load existing project ─────────────────────────
   const { data: existing } = useQuery({
     queryKey: ['project', id],
@@ -80,7 +71,6 @@ export default function ProjectForm() {
             _key: m.id || Date.now() + Math.random(),
             id: m.id,
             productId: m.productId || '',
-            unitId: m.unitId || '',
             estimatedQty: m.estimatedQty?.toString() || '',
             unitPrice: m.unitPrice?.toString() || '',
             notes: m.notes || '',
@@ -115,34 +105,12 @@ export default function ProjectForm() {
 
   const productOptions = (products || []).map((p) => ({
     value: p.id,
-    label: `${p.name} (${p.sku})`,
+    label: p.name,
     product: p,
   }));
 
   const getProductById = (productId) =>
     (products || []).find((p) => p.id === productId) || null;
-
-  const getUnitOptions = (productId) => {
-    const product = getProductById(productId);
-    const opts = [];
-    if (product?.unitOfMeasure) {
-      opts.push({ value: product.unitOfMeasure.id, label: product.unitOfMeasure.name });
-    } else if (product?.unitId) {
-      const u = (units || []).find((un) => un.id === product.unitId);
-      if (u) opts.push({ value: u.id, label: u.name });
-    }
-    if (product?.productUnits?.length > 0) {
-      product.productUnits.forEach((pu) => {
-        if (pu.unit && !opts.find((o) => o.value === pu.unit.id)) {
-          opts.push({ value: pu.unit.id, label: `${pu.unit.name} (×${pu.conversionFactor})` });
-        }
-      });
-    }
-    if (opts.length === 0) {
-      return (units || []).map((u) => ({ value: u.id, label: u.name }));
-    }
-    return opts;
-  };
 
   // ─── Material helpers ──────────────────────────────
   const updateMaterial = (index, field, value) => {
@@ -152,7 +120,6 @@ export default function ProjectForm() {
       if (field === 'productId') {
         const product = getProductById(value);
         updated[index].product = product;
-        updated[index].unitId = product?.unitOfMeasure?.id || product?.unitId || '';
         updated[index].unitPrice = product?.sellPrice?.toString() || '';
       }
       return updated;
@@ -208,7 +175,6 @@ export default function ProjectForm() {
       .map((m) => ({
         id: m.id || undefined,
         productId: m.productId,
-        unitId: m.unitId || null,
         estimatedQty: parseFloat(m.estimatedQty) || 0,
         unitPrice: parseFloat(m.unitPrice) || 0,
         notes: m.notes?.trim() || null,
@@ -321,7 +287,7 @@ export default function ProjectForm() {
                 <tr className="bg-gray-50 border-b border-gray-100">
                   <th className="text-left px-4 py-3 text-xs font-semibold text-gray-600 w-8">#</th>
                   <th className="text-left px-4 py-3 text-xs font-semibold text-gray-600 min-w-[200px]">Produk</th>
-                  <th className="text-left px-4 py-3 text-xs font-semibold text-gray-600 min-w-[110px]">Satuan</th>
+                  <th className="text-left px-4 py-3 text-xs font-semibold text-gray-600 w-20">Satuan</th>
                   <th className="text-left px-4 py-3 text-xs font-semibold text-gray-600 w-24">Qty</th>
                   <th className="text-left px-4 py-3 text-xs font-semibold text-gray-600 w-32">Harga</th>
                   <th className="text-right px-4 py-3 text-xs font-semibold text-gray-600 w-32">Subtotal</th>
@@ -344,14 +310,8 @@ export default function ProjectForm() {
                           searchable
                         />
                       </td>
-                      <td className="px-4 py-3">
-                        <Select
-                          value={mat.unitId}
-                          onChange={(val) => updateMaterial(idx, 'unitId', val)}
-                          options={getUnitOptions(mat.productId)}
-                          placeholder="Satuan"
-                          disabled={!mat.productId}
-                        />
+                      <td className="px-4 py-3 text-gray-600">
+                        {mat.product?.unit || '-'}
                       </td>
                       <td className="px-4 py-3">
                         <input
