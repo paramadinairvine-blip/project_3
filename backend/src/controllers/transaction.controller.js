@@ -4,7 +4,7 @@ const { DEFAULT_PAGE_SIZE } = require('../utils/constants');
 
 const getAll = async (req, res) => {
   try {
-    const { page, limit, type, status, unitLembagaId, startDate, endDate } = req.query;
+    const { page, limit, type, status, unitLembagaId, startDate, endDate, search, customerName } = req.query;
 
     const result = await transactionService.getAll({
       page: parseInt(page) || 1,
@@ -14,6 +14,8 @@ const getAll = async (req, res) => {
       unitLembagaId,
       startDate,
       endDate,
+      search,
+      customerName,
     });
 
     return paginatedResponse(

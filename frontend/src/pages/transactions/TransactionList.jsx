@@ -1,25 +1,50 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
-import { HiEye } from 'react-icons/hi';
+import { HiEye, HiSearch } from 'react-icons/hi';
 import { transactionAPI } from '../../api/endpoints';
-import { Table, Badge, SearchBar, Pagination } from '../../components/common';
+import { Table, Badge, Pagination } from '../../components/common';
 import { formatRupiah } from '../../utils/formatCurrency';
 import { formatTanggalWaktu } from '../../utils/formatDate';
 import {
   TRANSACTION_TYPE_LABELS, TRANSACTION_TYPE_COLORS,
   TRANSACTION_STATUS_LABELS, TRANSACTION_STATUS_COLORS,
 } from '../../utils/constants';
+
 export default function TransactionList() {
   const navigate = useNavigate();
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
+  const [date, setDate] = useState('');
+  const [customerName, setCustomerName] = useState('');
+
+  // Applied filters (only update on search click / enter)
+  const [appliedFilters, setAppliedFilters] = useState({
+    search: '',
+    date: '',
+    customerName: '',
+  });
+
+  const applyFilters = () => {
+    setAppliedFilters({ search, date, customerName });
+    setPage(1);
+  };
+
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter') applyFilters();
+  };
 
   const { data, isLoading } = useQuery({
-    queryKey: ['transactions', { page, search }],
+    queryKey: ['transactions', { page, ...appliedFilters }],
     queryFn: async () => {
       const params = { page, limit: 20 };
-      if (search) params.search = search;
+      if (appliedFilters.search) params.search = appliedFilters.search;
+      if (appliedFilters.customerName) params.customerName = appliedFilters.customerName;
+      if (appliedFilters.date) {
+        params.startDate = appliedFilters.date;
+        // End of selected day
+        params.endDate = appliedFilters.date + 'T23:59:59';
+      }
       const { data: res } = await transactionAPI.getAll(params);
       return res;
     },
@@ -100,12 +125,39 @@ export default function TransactionList() {
         </div>
       </div>
 
-      {/* Search */}
-      <SearchBar
-        placeholder="Cari nomor transaksi..."
-        onSearch={(v) => { setSearch(v); setPage(1); }}
-        className="max-w-md"
-      />
+      {/* Filters */}
+      <div className="flex flex-wrap items-center gap-3">
+        <input
+          type="text"
+          placeholder="Cari nomor transaksi..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          onKeyDown={handleKeyDown}
+          className="px-4 py-2.5 border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent w-full sm:w-56"
+        />
+        <input
+          type="date"
+          value={date}
+          onChange={(e) => setDate(e.target.value)}
+          onKeyDown={handleKeyDown}
+          className="px-4 py-2.5 border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent w-full sm:w-44 text-gray-500"
+        />
+        <input
+          type="text"
+          placeholder="Nama Customer"
+          value={customerName}
+          onChange={(e) => setCustomerName(e.target.value)}
+          onKeyDown={handleKeyDown}
+          className="px-4 py-2.5 border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent w-full sm:w-48"
+        />
+        <button
+          onClick={applyFilters}
+          className="p-2.5 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors"
+          title="Cari"
+        >
+          <HiSearch className="w-5 h-5" />
+        </button>
+      </div>
 
       {/* Table */}
       <Table

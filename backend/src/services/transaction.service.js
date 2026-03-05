@@ -141,6 +141,8 @@ const getAll = async ({
   unitLembagaId,
   startDate,
   endDate,
+  search,
+  customerName,
 } = {}) => {
   const where = {};
 
@@ -151,6 +153,12 @@ const getAll = async ({
     where.createdAt = {};
     if (startDate) where.createdAt.gte = new Date(startDate);
     if (endDate) where.createdAt.lte = new Date(endDate);
+  }
+  if (search) {
+    where.transactionNumber = { contains: search, mode: 'insensitive' };
+  }
+  if (customerName) {
+    where.customerName = { contains: customerName, mode: 'insensitive' };
   }
 
   const skip = (page - 1) * limit;
