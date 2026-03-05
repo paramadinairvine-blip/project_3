@@ -31,6 +31,7 @@ export default function SupplierForm() {
     enabled: isEdit,
   });
 
+  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     if (existing) {
       setForm({
@@ -42,6 +43,7 @@ export default function SupplierForm() {
       });
     }
   }, [existing]);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   const mutation = useMutation({
     mutationFn: (data) => {

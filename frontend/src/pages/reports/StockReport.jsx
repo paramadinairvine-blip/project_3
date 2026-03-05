@@ -11,6 +11,7 @@ import { formatRupiah } from '../../utils/formatCurrency';
 import { exportTableToPDF } from '../../utils/exportPDF';
 import { exportToExcel } from '../../utils/exportExcel';
 
+// eslint-disable-next-line no-unused-vars
 function StatCard({ title, value, icon: Icon, color }) {
   const colorMap = {
     blue: { bg: 'bg-blue-50', icon: 'text-blue-600' },

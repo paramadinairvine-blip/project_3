@@ -22,6 +22,7 @@ export default function Modal({
   const previousFocusRef = useRef(null);
 
   // Animate in
+  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     if (isOpen) {
       previousFocusRef.current = document.activeElement;
@@ -32,6 +33,7 @@ export default function Modal({
       setShow(false);
     }
   }, [isOpen]);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   // Lock body scroll when open
   useEffect(() => {

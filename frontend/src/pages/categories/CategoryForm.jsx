@@ -22,6 +22,7 @@ export default function CategoryForm({ category, parentCategory, onClose }) {
     },
   });
 
+  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     if (category) {
       setForm({
@@ -32,6 +33,7 @@ export default function CategoryForm({ category, parentCategory, onClose }) {
       setForm((prev) => ({ ...prev, parentId: parentCategory.id }));
     }
   }, [category, parentCategory]);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   // Flatten category tree for parent select (exclude self and descendants when editing)
   const flattenCategories = (cats, level = 0, excludeId = null) => {

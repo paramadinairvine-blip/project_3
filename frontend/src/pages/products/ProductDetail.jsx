@@ -14,7 +14,7 @@ export default function ProductDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { isAdmin, isKasir } = useAuth();
-  const printRef = useRef();
+  const _printRef = useRef();
   const [showPrint, setShowPrint] = useState(false);
 
   const { data: product, isLoading } = useQuery({

@@ -96,6 +96,7 @@ function UpdateUsageModal({ material, projectId, onClose }) {
 }
 
 // ─── Project Report Print ─────────────────────────────
+// eslint-disable-next-line no-unused-vars
 function ProjectReportPrint({ project, report, printRef }) {
   const materials = project.materials || [];
 

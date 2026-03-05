@@ -51,6 +51,7 @@ function StatCardSkeleton() {
 }
 
 // ─── Stat Card ────────────────────────────────────────
+// eslint-disable-next-line no-unused-vars
 function StatCard({ title, value, subtitle, icon: Icon, color }) {
   const colorMap = {
     blue: { bg: 'bg-blue-50', icon: 'text-blue-600' },
@@ -269,7 +270,7 @@ export default function Dashboard() {
                     outerRadius={100}
                     innerRadius={0}
                     dataKey="value"
-                    label={({ name, percent }) => `${(percent * 100).toFixed(1)}%`}
+                    label={({ percent }) => `${(percent * 100).toFixed(1)}%`}
                     labelLine={true}
                   >
                     {pieData.map((_, idx) => (

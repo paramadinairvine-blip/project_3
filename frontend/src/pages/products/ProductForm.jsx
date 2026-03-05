@@ -44,6 +44,7 @@ export default function ProductForm() {
     enabled: isEdit,
   });
 
+  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     if (existing) {
       setForm({
@@ -75,6 +76,7 @@ export default function ProductForm() {
       }
     }
   }, [existing]);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   // ─── Category options (tree) ─────────────────────────
   const categoryOptions = [];

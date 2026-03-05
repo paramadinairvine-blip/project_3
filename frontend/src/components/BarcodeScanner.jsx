@@ -6,7 +6,7 @@ import { Button } from './common';
 export default function BarcodeScanner({ onScan, onClose }) {
   const scannerRef = useRef(null);
   const html5QrCodeRef = useRef(null);
-  const [isScanning, setIsScanning] = useState(false);
+  const [, setIsScanning] = useState(false);
   const [error, setError] = useState('');
 
   const startScanner = async () => {

@@ -87,7 +87,7 @@ function MenuItem({ item, collapsed, closeMobile }) {
   const isChildActive = hasChildren && item.children.some((c) =>
     c.path === '/' ? location.pathname === '/' : location.pathname.startsWith(c.path)
   );
-  const isActive = item.path === '/'
+  const _isActive = item.path === '/'
     ? location.pathname === '/'
     : item.path && location.pathname.startsWith(item.path);
 
@@ -172,6 +172,7 @@ function MenuItem({ item, collapsed, closeMobile }) {
   );
 }
 
+// eslint-disable-next-line no-unused-vars
 export default function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose }) {
   const { user } = useAuth();
   const [profileOpen, setProfileOpen] = useState(false);

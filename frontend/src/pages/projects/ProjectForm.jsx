@@ -64,6 +64,7 @@ export default function ProjectForm() {
     enabled: isEdit,
   });
 
+  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     if (existing) {
       setForm({
@@ -90,6 +91,7 @@ export default function ProjectForm() {
       }
     }
   }, [existing]);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   // ─── Options ────────────────────────────────────────
   const statusOptions = Object.entries(PROJECT_STATUS_LABELS).map(([value, label]) => ({

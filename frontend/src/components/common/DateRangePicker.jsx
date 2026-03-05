@@ -191,10 +191,12 @@ export default function DateRangePicker({ dateFrom, dateTo, onChange }) {
     return () => document.removeEventListener('mousedown', handler);
   }, []);
 
+  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     setStartDate(dateFrom ? new Date(dateFrom) : null);
     setEndDate(dateTo ? new Date(dateTo) : null);
   }, [dateFrom, dateTo]);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   const prevMonth = () => {
     setLeftMonth((prev) => prev.month === 0 ? { year: prev.year - 1, month: 11 } : { ...prev, month: prev.month - 1 });

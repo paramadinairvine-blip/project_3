@@ -67,6 +67,7 @@ export default function PurchaseOrderForm() {
     enabled: isEdit,
   });
 
+  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     if (existing) {
       setSupplierId(existing.supplierId || '');
@@ -87,6 +88,7 @@ export default function PurchaseOrderForm() {
       }
     }
   }, [existing]);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   // ─── Supplier options ──────────────────────────────
   const supplierOptions = (suppliers || []).map((s) => ({

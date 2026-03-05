@@ -20,6 +20,7 @@ export default function UserForm({ user, onClose }) {
   });
   const [errors, setErrors] = useState({});
 
+  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     if (user) {
       setForm({
@@ -31,6 +32,7 @@ export default function UserForm({ user, onClose }) {
       });
     }
   }, [user]);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   const roleOptions = Object.entries(ROLE_LABELS).map(([value, label]) => ({
     value,

@@ -2,7 +2,7 @@ import { Navigate, useLocation } from 'react-router-dom';
 import useAuth from '../hooks/useAuth';
 
 export default function ProtectedRoute({ children, allowedRoles }) {
-  const { isAuthenticated, user, checkPermission } = useAuth();
+  const { isAuthenticated, checkPermission } = useAuth();
   const location = useLocation();
 
   if (!isAuthenticated) {
