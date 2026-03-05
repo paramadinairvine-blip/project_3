@@ -11,6 +11,7 @@ import {
   HiX,
   HiLogout,
   HiSupport,
+  HiClipboardList,
 } from 'react-icons/hi';
 import useAuth from '../hooks/useAuth';
 import { ROLES, ROLE_LABELS } from '../utils/constants';
@@ -53,6 +54,12 @@ const menuItems = [
     icon: HiCurrencyDollar,
     children: [
       { label: 'Transaksi', code: 'TR', path: '/transaksi' },
+    ],
+  },
+  {
+    label: 'PERENCANAAN',
+    icon: HiClipboardList,
+    children: [
       { label: 'Proyek', code: 'PY', path: '/proyek' },
     ],
   },
