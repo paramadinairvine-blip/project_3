@@ -100,8 +100,8 @@ function CategoryNode({ category, level = 0, onEdit, onDelete, onAddChild, canEd
 
 export default function CategoryList() {
   const queryClient = useQueryClient();
-  const { isAdmin, isOperator } = useAuth();
-  const canEdit = isAdmin || isOperator;
+  const { isAdmin, isKasir } = useAuth();
+  const canEdit = isAdmin || isKasir;
 
   const [formOpen, setFormOpen] = useState(false);
   const [editTarget, setEditTarget] = useState(null);

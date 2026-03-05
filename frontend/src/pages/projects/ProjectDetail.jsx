@@ -159,8 +159,8 @@ function ProjectReportPrint({ project, report, printRef }) {
 export default function ProjectDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { isAdmin, isOperator } = useAuth();
-  const canEdit = isAdmin || isOperator;
+  const { isAdmin, isKasir } = useAuth();
+  const canEdit = isAdmin || isKasir;
   const printRef = useRef();
 
   const [updateMaterial, setUpdateMaterial] = useState(null);

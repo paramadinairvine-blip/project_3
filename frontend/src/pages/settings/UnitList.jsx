@@ -75,8 +75,8 @@ function UnitFormModal({ unit, onClose }) {
 
 export default function UnitList() {
   const queryClient = useQueryClient();
-  const { isAdmin, isOperator } = useAuth();
-  const canEdit = isAdmin || isOperator;
+  const { isAdmin, isKasir } = useAuth();
+  const canEdit = isAdmin || isKasir;
 
   const [formOpen, setFormOpen] = useState(false);
   const [editTarget, setEditTarget] = useState(null);

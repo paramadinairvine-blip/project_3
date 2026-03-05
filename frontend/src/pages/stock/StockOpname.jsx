@@ -410,8 +410,8 @@ function OpnameViewModal({ opnameId, onClose }) {
 // ─── Main Component ───────────────────────────────────
 export default function StockOpname() {
   const queryClient = useQueryClient();
-  const { isAdmin, isOperator } = useAuth();
-  const canCreate = isAdmin || isOperator;
+  const { isAdmin, isKasir } = useAuth();
+  const canCreate = isAdmin || isKasir;
 
   const [selectedOpnameId, setSelectedOpnameId] = useState(null);
   const [showCreate, setShowCreate] = useState(false);

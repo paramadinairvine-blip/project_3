@@ -77,8 +77,8 @@ export default function PurchaseOrderDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const { isAdmin, isOperator } = useAuth();
-  const canEdit = isAdmin || isOperator;
+  const { isAdmin, isKasir } = useAuth();
+  const canEdit = isAdmin || isKasir;
 
   const [actionModal, setActionModal] = useState(null);
 

@@ -117,8 +117,8 @@ function ProjectCard({ project, canEdit, isAdmin, onEdit, onDelete, onView }) {
 export default function ProjectList() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const { isAdmin, isOperator } = useAuth();
-  const canEdit = isAdmin || isOperator;
+  const { isAdmin, isKasir } = useAuth();
+  const canEdit = isAdmin || isKasir;
 
   const [statusFilter, setStatusFilter] = useState('');
   const [deleteTarget, setDeleteTarget] = useState(null);

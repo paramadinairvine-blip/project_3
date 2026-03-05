@@ -23,8 +23,8 @@ export default function PurchaseOrderList() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [searchParams] = useSearchParams();
-  const { isAdmin, isOperator } = useAuth();
-  const canEdit = isAdmin || isOperator;
+  const { isAdmin, isKasir } = useAuth();
+  const canEdit = isAdmin || isKasir;
 
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');

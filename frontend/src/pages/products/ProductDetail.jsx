@@ -13,7 +13,7 @@ import { useState, useRef } from 'react';
 export default function ProductDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { isAdmin, isOperator } = useAuth();
+  const { isAdmin, isKasir } = useAuth();
   const printRef = useRef();
   const [showPrint, setShowPrint] = useState(false);
 
@@ -82,7 +82,7 @@ export default function ProductDetail() {
               Cetak Barcode
             </Button>
           )}
-          {(isAdmin || isOperator) && (
+          {(isAdmin || isKasir) && (
             <Button icon={HiPencil} size="sm" onClick={() => navigate(`/produk/${id}/edit`)}>
               Edit
             </Button>
