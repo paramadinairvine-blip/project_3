@@ -1,11 +1,9 @@
 import { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
-import { HiPlus, HiEye, HiBan } from 'react-icons/hi';
-import toast from 'react-hot-toast';
+import { HiPlus, HiEye } from 'react-icons/hi';
 import { transactionAPI } from '../../api/endpoints';
-import { getErrorMessage } from '../../utils/handleError';
-import { Table, Badge, Button, SearchBar, Pagination, Modal } from '../../components/common';
+import { Table, Badge, Button, SearchBar, Pagination } from '../../components/common';
 import { formatRupiah } from '../../utils/formatCurrency';
 import { formatTanggalWaktu } from '../../utils/formatDate';
 import {
@@ -16,13 +14,11 @@ import useAuth from '../../hooks/useAuth';
 
 export default function TransactionList() {
   const navigate = useNavigate();
-  const queryClient = useQueryClient();
   const { isAdmin, isOperator } = useAuth();
   const canCreate = isAdmin || isOperator;
 
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
-  const [cancelTarget, setCancelTarget] = useState(null);
 
   const { data, isLoading } = useQuery({
     queryKey: ['transactions', { page, search }],
@@ -34,26 +30,10 @@ export default function TransactionList() {
     },
   });
 
-  const cancelMutation = useMutation({
-    mutationFn: (id) => transactionAPI.cancel(id),
-    onSuccess: () => {
-      toast.success('Transaksi berhasil dibatalkan, stok dikembalikan');
-      queryClient.invalidateQueries({ queryKey: ['transactions'] });
-      setCancelTarget(null);
-    },
-    onError: (err) => toast.error(getErrorMessage(err, 'Gagal membatalkan transaksi')),
-  });
-
   const transactions = data?.data || [];
   const pagination = data?.pagination || {};
 
   const columns = [
-    {
-      key: 'transactionNumber',
-      header: 'Nomor',
-      sortable: true,
-      render: (v) => <span className="font-medium font-mono text-gray-900">{v}</span>,
-    },
     {
       key: 'createdAt',
       header: 'Tanggal',
@@ -70,11 +50,16 @@ export default function TransactionList() {
       ),
     },
     {
-      key: 'unitLembaga',
-      header: 'Unit Lembaga',
+      key: 'creator',
+      header: 'Kasir',
       render: (_, row) => (
-        <span className="text-gray-600">{row.unitLembaga?.name || '-'}</span>
+        <span className="text-gray-600">{row.creator?.fullName || '-'}</span>
       ),
+    },
+    {
+      key: 'customerName',
+      header: 'Customer',
+      render: (v) => <span className="text-gray-600">{v || '-'}</span>,
     },
     {
       key: 'totalAmount',
@@ -94,7 +79,7 @@ export default function TransactionList() {
     {
       key: 'actions',
       header: 'Aksi',
-      width: '100px',
+      width: '60px',
       render: (_, row) => (
         <div className="flex items-center gap-1">
           <button
@@ -105,16 +90,6 @@ export default function TransactionList() {
           >
             <HiEye className="w-4 h-4" />
           </button>
-          {isAdmin && row.status === 'COMPLETED' && (
-            <button
-              onClick={(e) => { e.stopPropagation(); setCancelTarget(row); }}
-              className="p-1.5 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-              title="Batalkan"
-              aria-label="Batalkan transaksi"
-            >
-              <HiBan className="w-4 h-4" />
-            </button>
-          )}
         </div>
       ),
     },
@@ -160,32 +135,6 @@ export default function TransactionList() {
           onPageChange={setPage}
         />
       )}
-
-      {/* Cancel Modal */}
-      <Modal
-        isOpen={!!cancelTarget}
-        onClose={() => setCancelTarget(null)}
-        title="Batalkan Transaksi"
-        size="sm"
-        footer={
-          <>
-            <Button variant="outline" onClick={() => setCancelTarget(null)}>Batal</Button>
-            <Button
-              variant="danger"
-              loading={cancelMutation.isPending}
-              onClick={() => cancelMutation.mutate(cancelTarget?.id)}
-            >
-              Batalkan Transaksi
-            </Button>
-          </>
-        }
-      >
-        <p className="text-sm text-gray-600">
-          Apakah Anda yakin ingin membatalkan transaksi{' '}
-          <span className="font-semibold text-gray-900">{cancelTarget?.transactionNumber}</span>?
-          Stok barang yang sudah dikeluarkan akan dikembalikan.
-        </p>
-      </Modal>
     </div>
   );
 }
