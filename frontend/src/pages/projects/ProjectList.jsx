@@ -35,8 +35,10 @@ function ProgressBar({ value, className = '' }) {
 
 function ProjectCard({ project, canEdit, isAdmin, onEdit, onDelete, onView }) {
   const progress = project.progressPercent || 0;
+  const materials = project.materials || [];
+  const actualSpent = materials.reduce((sum, m) => sum + (parseFloat(m.usedQty) || 0) * (parseFloat(m.unitPrice) || 0), 0);
   const budgetUsed = Number(project.budget) > 0
-    ? Math.round((Number(project.spent || 0) / Number(project.budget)) * 100)
+    ? Math.round((actualSpent / Number(project.budget)) * 100)
     : 0;
 
   return (
@@ -77,10 +79,10 @@ function ProjectCard({ project, canEdit, isAdmin, onEdit, onDelete, onView }) {
         <ProgressBar value={budgetUsed} />
         <div className="flex items-center justify-between mt-1">
           <span className="text-xs text-gray-400">
-            {formatRupiah(project.spent || 0)} / {formatRupiah(project.budget)}
+            {formatRupiah(actualSpent)} / {formatRupiah(project.budget)}
           </span>
           <span className="text-xs text-gray-500">
-            Sisa: {formatRupiah(project.budgetRemaining || (Number(project.budget) - Number(project.spent || 0)))}
+            Sisa: {formatRupiah(Number(project.budget) - actualSpent)}
           </span>
         </div>
       </div>
