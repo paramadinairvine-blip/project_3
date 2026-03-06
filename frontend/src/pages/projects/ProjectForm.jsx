@@ -425,8 +425,8 @@ export default function ProjectForm() {
                   <th className="text-left px-4 py-3 text-xs font-semibold text-gray-600 w-8">#</th>
                   <th className="text-left px-4 py-3 text-xs font-semibold text-gray-600 min-w-[200px]">Produk</th>
                   <th className="text-left px-4 py-3 text-xs font-semibold text-gray-600 w-20">Satuan</th>
-                  <th className="text-left px-4 py-3 text-xs font-semibold text-gray-600 w-24">Estimasi</th>
-                  <th className="text-left px-4 py-3 text-xs font-semibold text-gray-600 w-32">Harga</th>
+                  <th className="text-left px-4 py-3 text-xs font-semibold text-gray-600 w-32">Estimasi</th>
+                  <th className="text-left px-4 py-3 text-xs font-semibold text-gray-600 w-40">Harga</th>
                   <th className="text-right px-4 py-3 text-xs font-semibold text-gray-600 w-32">Subtotal</th>
                   {isEdit && (
                     <>
@@ -435,7 +435,6 @@ export default function ProjectForm() {
                       <th className="text-left px-4 py-3 text-xs font-semibold text-gray-600 w-28">Progress</th>
                     </>
                   )}
-                  <th className="text-left px-4 py-3 text-xs font-semibold text-gray-600 min-w-[130px]">Catatan</th>
                   <th className="w-10"></th>
                 </tr>
               </thead>
@@ -521,15 +520,6 @@ export default function ProjectForm() {
                           </td>
                         </>
                       )}
-                      <td className="px-4 py-3">
-                        <input
-                          type="text"
-                          value={mat.notes}
-                          onChange={(e) => updateMaterial(idx, 'notes', e.target.value)}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-500"
-                          placeholder="Catatan..."
-                        />
-                      </td>
                       <td className="px-2 py-3">
                         <button
                           type="button"
@@ -570,7 +560,7 @@ export default function ProjectForm() {
                         </td>
                       </>
                     )}
-                    <td colSpan={2}></td>
+                    <td></td>
                   </tr>
                 </tfoot>
               )}
