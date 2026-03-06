@@ -194,7 +194,7 @@ export default function ProjectDetail() {
   const materials = project.materials || [];
   const progress = project.progressPercent || 0;
   const budgetEstimate = Number(project.budget) || 0;
-  const budgetActual = Number(project.spent || report?.totalSpent || 0);
+  const budgetActual = materials.reduce((sum, m) => sum + (parseFloat(m.usedQty) || 0) * (parseFloat(m.unitPrice) || 0), 0);
   const budgetPct = budgetEstimate > 0 ? Math.round((budgetActual / budgetEstimate) * 100) : 0;
 
   return (
