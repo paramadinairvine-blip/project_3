@@ -1,4 +1,5 @@
 import { useLocation, Link } from 'react-router-dom';
+import { useQueryClient } from '@tanstack/react-query';
 import {
   HiMenuAlt2,
   HiChevronLeft,
@@ -27,13 +28,29 @@ const breadcrumbMap = {
   satuan: 'Satuan',
 };
 
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 function Breadcrumbs() {
   const location = useLocation();
+  const queryClient = useQueryClient();
   const segments = location.pathname.split('/').filter(Boolean);
 
   if (segments.length === 0) {
     return <span className="text-gray-700 font-medium text-sm">Dashboard</span>;
   }
+
+  // Helper: resolve UUID to entity name from React Query cache
+  const resolveLabel = (seg, i) => {
+    if (breadcrumbMap[seg]) return breadcrumbMap[seg];
+    if (UUID_REGEX.test(seg) && i > 0) {
+      const parentSeg = segments[i - 1];
+      if (parentSeg === 'proyek') {
+        const cached = queryClient.getQueryData(['project', seg]);
+        if (cached?.name) return cached.name;
+      }
+    }
+    return decodeURIComponent(seg);
+  };
 
   return (
     <nav className="flex items-center gap-1.5 text-sm">
@@ -42,7 +59,7 @@ function Breadcrumbs() {
       </Link>
       {segments.map((seg, i) => {
         const path = '/' + segments.slice(0, i + 1).join('/');
-        const label = breadcrumbMap[seg] || decodeURIComponent(seg);
+        const label = resolveLabel(seg, i);
         const isLast = i === segments.length - 1;
 
         return (
