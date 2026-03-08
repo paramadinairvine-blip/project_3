@@ -4,7 +4,7 @@ import { HiSearch, HiPrinter, HiChevronLeft, HiChevronRight } from 'react-icons/
 import toast from 'react-hot-toast';
 import { transactionAPI } from '../api/endpoints';
 import { formatRupiah } from '../utils/formatCurrency';
-import { TRANSACTION_TYPE_LABELS } from '../utils/constants';
+import { TRANSACTION_TYPE_LABELS, TRANSACTION_TYPE_COLORS } from '../utils/constants';
 import { Loading, EmptyState } from '../components/common';
 import ReceiptPrint from '../components/receipt/ReceiptPrint';
 import { printReceipt, isRectaConfigured } from '../utils/printerService';
@@ -216,7 +216,7 @@ export default function History() {
 
                     {/* Transaksi */}
                     <td className="px-4 py-3 align-top">
-                      <span className="text-gray-700">{TRANSACTION_TYPE_LABELS[trx.type] || trx.type}</span>
+                      <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${TRANSACTION_TYPE_COLORS[trx.type] || 'bg-gray-100 text-gray-800'}`}>{TRANSACTION_TYPE_LABELS[trx.type] || trx.type}</span>
                     </td>
 
                     {/* Konsumen */}
