@@ -38,7 +38,7 @@ export default function ReceiptPrint({ transaction, onClose }) {
             {/* Store Header */}
             <div style={{ textAlign: 'center', marginBottom: '8px' }}>
               <p style={{ fontWeight: 'bold', fontSize: '14px' }}>{STORE_INFO.NAME}</p>
-              <p style={{ fontSize: '10px' }}>Jl. Argapura, Desa Argapura, Kec. Cigudeg, Kab. Bogor, Jawa Barat, 16660</p>
+              <p style={{ fontSize: '10px' }}>{STORE_INFO.ADDRESS}</p>
               <div style={{ borderTop: '1px dashed #000', margin: '6px 0' }} />
             </div>
 

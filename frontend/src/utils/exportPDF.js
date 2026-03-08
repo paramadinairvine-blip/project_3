@@ -24,7 +24,7 @@ export function exportTableToPDF(title, headers, data, filename = 'laporan.pdf',
 
   doc.setFontSize(9);
   doc.setFont(undefined, 'normal');
-  doc.text('Jl. Argapura, Desa Argapura, Kec. Cigudeg, Kabupaten Bogor, Jawa Barat, 16660', pageWidth / 2, 21, { align: 'center' });
+  doc.text(STORE_INFO.ADDRESS, pageWidth / 2, 21, { align: 'center' });
 
   // Divider
   doc.setDrawColor(0);

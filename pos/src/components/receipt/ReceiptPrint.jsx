@@ -60,8 +60,8 @@ export default function ReceiptPrint({ transaction, paidAmount, change, onClose 
             {/* Store Header */}
             <div style={{ textAlign: 'center', marginBottom: '8px' }}>
               <p style={{ fontWeight: 'bold', fontSize: '14px' }}>{STORE_INFO.NAME}</p>
-              <p style={{ fontSize: '10px' }}>Jl. Argapura, Kp. Cipining, Desa Argapura, Kecamatan Cigudeg</p>
-              <p style={{ fontSize: '10px' }}>Telp: 085156526862</p>
+              <p style={{ fontSize: '10px' }}>{STORE_INFO.ADDRESS_LINE1}, {STORE_INFO.ADDRESS_LINE2}</p>
+              <p style={{ fontSize: '10px' }}>Telp: {STORE_INFO.SUPPORT_PHONE}</p>
               <div style={{ borderTop: '1px dashed #000', margin: '6px 0' }} />
             </div>
 

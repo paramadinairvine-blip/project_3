@@ -120,7 +120,7 @@ export default function Login() {
             {STORE_INFO.COPYRIGHT} &copy; {new Date().getFullYear()}
           </p>
           <a
-            href="https://wa.me/6285156526862"
+            href={`https://wa.me/${STORE_INFO.SUPPORT_PHONE_WA}`}
             target="_blank"
             rel="noopener noreferrer"
             className="text-xs text-blue-500 hover:text-blue-600 hover:underline"

@@ -37,7 +37,7 @@ export default function DeliveryNotePrint({ transaction, onClose }) {
             {/* Header */}
             <div style={{ textAlign: 'center', marginBottom: '24px', borderBottom: '2px solid #000', paddingBottom: '12px' }}>
               <h1 style={{ fontSize: '20px', fontWeight: 'bold', margin: '0 0 4px 0' }}>{STORE_INFO.NAME}</h1>
-              <p style={{ fontSize: '11px', color: '#555', margin: '0' }}>Jl. Argapura, Desa Argapura, Kec. Cigudeg, Kabupaten Bogor, Jawa Barat, 16660</p>
+              <p style={{ fontSize: '11px', color: '#555', margin: '0' }}>{STORE_INFO.ADDRESS}</p>
             </div>
 
             {/* Title */}

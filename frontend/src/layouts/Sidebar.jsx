@@ -279,7 +279,7 @@ export default function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose
       {/* TECHNICAL SUPPORT */}
       <div className="border-t border-gray-700 p-2">
         <a
-          href="https://wa.me/6285156526862"
+          href={`https://wa.me/${STORE_INFO.SUPPORT_PHONE_WA}`}
           target="_blank"
           rel="noopener noreferrer"
           className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-gray-400 hover:bg-gray-800 hover:text-green-400 transition-colors ${collapsed ? 'justify-center' : ''}`}

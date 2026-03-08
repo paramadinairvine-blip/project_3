@@ -5,6 +5,11 @@ export const STORE_INFO = {
   SHORT_NAME: 'TOKO MATERIAL',
   SUBTITLE: 'PESANTREN DARUNNAJAH 2',
   COPYRIGHT: 'Pesantren Darunnajah 2',
+  SUPPORT_PHONE: '085156526862',
+  SUPPORT_PHONE_WA: '6285156526862',
+  ADDRESS: 'Jl. Argapura, Desa Argapura, Kec. Cigudeg, Kabupaten Bogor, Jawa Barat, 16660',
+  ADDRESS_LINE1: 'Jl. Argapura, Kp. Cipining',
+  ADDRESS_LINE2: 'Desa Argapura, Kec. Cigudeg',
 };
 
 // ==================== Enums ====================

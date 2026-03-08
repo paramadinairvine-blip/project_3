@@ -182,9 +182,9 @@ export async function printReceipt(transaction, paidAmount, change) {
       .text(STORE_INFO.SHORT_NAME)
       .text(STORE_INFO.SUBTITLE)
       .bold(false)
-      .text('Jl. Argapura, Kp. Cipining')
-      .text('Desa Argapura, Kec. Cigudeg')
-      .text('Telp: 085156526862')
+      .text(STORE_INFO.ADDRESS_LINE1)
+      .text(STORE_INFO.ADDRESS_LINE2)
+      .text('Telp: ' + STORE_INFO.SUPPORT_PHONE)
       .text(equals());
 
     // Transaction info
