@@ -116,8 +116,6 @@ function equals(w = CHAR_WIDTH) {
 
 function connectRecta(appKey, port) {
   return new Promise((resolve, reject) => {
-    console.log(`[Recta] Connecting to ws://localhost:${port} with token=${appKey.substring(0, 4)}...`);
-
     const socket = io(`ws://localhost:${port}`, {
       transports: ['websocket'],
       query: `token=${appKey}`,
@@ -126,7 +124,6 @@ function connectRecta(appKey, port) {
     });
 
     const timeout = setTimeout(() => {
-      console.error('[Recta] Connection timeout after 5s');
       socket.close();
       reject(new Error('Timeout - Recta Host tidak merespon. Pastikan Recta Host sudah berjalan.'));
     }, 5000);
@@ -134,27 +131,23 @@ function connectRecta(appKey, port) {
     socket.open();
 
     socket.once('connect', () => {
-      console.log('[Recta] Connected successfully');
       clearTimeout(timeout);
       resolve(socket);
     });
 
     socket.once('connect_error', (err) => {
-      console.error('[Recta] connect_error:', err);
       clearTimeout(timeout);
       socket.close();
       reject(new Error('Gagal koneksi: ' + (err.message || err)));
     });
 
     socket.once('connect_timeout', () => {
-      console.error('[Recta] connect_timeout');
       clearTimeout(timeout);
       socket.close();
       reject(new Error('Timeout koneksi'));
     });
 
     socket.once('error', (err) => {
-      console.error('[Recta] error:', err);
       clearTimeout(timeout);
       socket.close();
       reject(new Error('Error: ' + (err.message || err)));
@@ -253,7 +246,6 @@ export async function printReceipt(transaction, paidAmount, change) {
     // Socket.IO v2 hasBinary only detects Buffer/ArrayBuffer/Blob/File, NOT Uint8Array
     // So we must convert to ArrayBuffer for proper binary transmission
     const buffer = r.toBuffer();
-    console.log('[Recta] Sending', buffer.length, 'bytes to printer');
     socket.send(buffer.buffer);
 
     // Disconnect after brief delay
@@ -263,7 +255,6 @@ export async function printReceipt(transaction, paidAmount, change) {
 
     return { success: true, message: 'Struk berhasil dicetak' };
   } catch (err) {
-    console.error('Recta print error:', err);
     return {
       success: false,
       message: err.message || 'Gagal mencetak - pastikan Recta Host berjalan',
