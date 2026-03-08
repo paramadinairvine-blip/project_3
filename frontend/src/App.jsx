@@ -34,6 +34,7 @@ const ProjectForm = lazy(() => import('./pages/projects/ProjectForm'));
 const ProjectDetail = lazy(() => import('./pages/projects/ProjectDetail'));
 
 const StockReport = lazy(() => import('./pages/reports/StockReport'));
+const LowStockReport = lazy(() => import('./pages/reports/LowStockReport'));
 const FinancialReport = lazy(() => import('./pages/reports/FinancialReport'));
 const TrendReport = lazy(() => import('./pages/reports/TrendReport'));
 
@@ -139,6 +140,7 @@ function App() {
 
           {/* Laporan */}
           <Route path="laporan/stok" element={<StockReport />} />
+          <Route path="laporan/stok-rendah" element={<LowStockReport />} />
           <Route path="laporan/keuangan" element={
             <ProtectedRoute allowedRoles={[ROLES.ADMIN, ROLES.VIEWER]}>
               <FinancialReport />

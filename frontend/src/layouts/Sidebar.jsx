@@ -45,6 +45,7 @@ const menuItems = [
     icon: HiChartBar,
     children: [
       { label: 'Laporan Stok', code: 'LS', path: '/laporan/stok' },
+      { label: 'Stok Rendah', code: 'SR', path: '/laporan/stok-rendah' },
       { label: 'Laporan Keuangan', code: 'LK', path: '/laporan/keuangan', roles: [ROLES.ADMIN, ROLES.VIEWER] },
       { label: 'Laporan Tren', code: 'LT', path: '/laporan/tren', roles: [ROLES.ADMIN, ROLES.VIEWER] },
     ],
