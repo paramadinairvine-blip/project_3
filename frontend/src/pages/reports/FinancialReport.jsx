@@ -98,7 +98,6 @@ export default function FinancialReport() {
   const typeOptions = [
     { value: '', label: 'Semua Tipe' },
     ...Object.entries(TRANSACTION_TYPE_LABELS)
-      .filter(([v]) => v !== TRANSACTION_TYPES.ANGGARAN)
       .map(([v, l]) => ({ value: v, label: l })),
   ];
 

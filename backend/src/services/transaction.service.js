@@ -195,7 +195,7 @@ const getById = async (id) => {
  *
  * data shape:
  * {
- *   type: 'CASH' | 'BON' | 'ANGGARAN',
+ *   type: 'CASH' | 'BON',
  *   customerName?, customerPhone?, notes?,
  *   discount?, tax?, paidAmount?,
  *   projectId?, unitLembagaId?, kepanitiaan?,

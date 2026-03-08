@@ -9,7 +9,6 @@ export const ROLES = {
 export const TRANSACTION_TYPES = {
   CASH: 'CASH',
   BON: 'BON',
-  ANGGARAN: 'ANGGARAN',
 };
 
 export const TRANSACTION_STATUS = {
@@ -71,7 +70,6 @@ export const ROLE_LABELS = {
 export const TRANSACTION_TYPE_LABELS = {
   [TRANSACTION_TYPES.CASH]: 'Tunai',
   [TRANSACTION_TYPES.BON]: 'Overbooking TU',
-  [TRANSACTION_TYPES.ANGGARAN]: 'Anggaran',
 };
 
 export const TRANSACTION_STATUS_LABELS = {
@@ -131,7 +129,6 @@ export const TRANSACTION_STATUS_COLORS = {
 export const TRANSACTION_TYPE_COLORS = {
   [TRANSACTION_TYPES.CASH]: 'bg-blue-100 text-blue-800',
   [TRANSACTION_TYPES.BON]: 'bg-orange-100 text-orange-800',
-  [TRANSACTION_TYPES.ANGGARAN]: 'bg-purple-100 text-purple-800',
 };
 
 export const PO_STATUS_COLORS = {

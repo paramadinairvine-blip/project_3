@@ -19,7 +19,6 @@ enum Role {
 enum TransactionType {
   CASH
   BON
-  ANGGARAN
 }
 
 enum TransactionStatus {

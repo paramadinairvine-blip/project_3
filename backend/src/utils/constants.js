@@ -7,7 +7,6 @@ const ROLES = {
 const TRANSACTION_TYPES = {
   CASH: 'CASH',
   BON: 'BON',
-  ANGGARAN: 'ANGGARAN',
 };
 
 const TRANSACTION_STATUS = {
@@ -68,7 +67,6 @@ const ROLE_LABELS = {
 const TRANSACTION_TYPE_LABELS = {
   [TRANSACTION_TYPES.CASH]: 'Tunai',
   [TRANSACTION_TYPES.BON]: 'Overbooking TU',
-  [TRANSACTION_TYPES.ANGGARAN]: 'Anggaran',
 };
 
 const TRANSACTION_STATUS_LABELS = {
