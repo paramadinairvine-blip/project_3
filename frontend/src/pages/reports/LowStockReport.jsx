@@ -7,11 +7,11 @@ import {
 } from 'react-icons/hi';
 import { reportAPI } from '../../api/endpoints';
 import { Badge, Button, Loading, Table, Skeleton } from '../../components/common';
-import { formatRupiah } from '../../utils/formatCurrency';
 import { exportTableToPDF } from '../../utils/exportPDF';
 import { exportToExcel } from '../../utils/exportExcel';
 import { STORE_INFO } from '../../utils/constants';
 
+// eslint-disable-next-line no-unused-vars
 function StatCard({ title, value, icon: Icon, color }) {
   const colorMap = {
     red: { bg: 'bg-red-50', icon: 'text-red-600' },
