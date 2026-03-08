@@ -9,8 +9,6 @@ const { ROLES } = require('../utils/constants');
 router.use(authenticate, authorize(ROLES.ADMIN));
 
 router.get('/', notificationController.getAll);
-router.post('/test', notificationController.sendTest);
-router.get('/wa-status', notificationController.getWhatsAppStatus);
 router.post('/check-low-stock', notificationController.checkLowStock);
 
 module.exports = router;

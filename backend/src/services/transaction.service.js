@@ -351,11 +351,9 @@ const create = async (data, userId) => {
     },
   });
 
-  // If BON, send WhatsApp notification to admin (fire-and-forget)
+  // If BON, create in-app notification for admins (fire-and-forget)
   if (data.type === 'BON') {
-    sendBonNotification(transaction).catch((err) =>
-      console.error('[WA] Gagal kirim notifikasi BON:', err.message)
-    );
+    sendBonNotification(transaction).catch(() => {});
   }
 
   return transaction;
@@ -442,11 +440,10 @@ const getByUnitLembaga = async (unitLembagaId, { startDate, endDate, page = 1, l
   return { data, total, page, limit };
 };
 
-// ─── WhatsApp notification (stub – actual WA integration later) ─────
+// ─── In-app notification ─────────────────────────────────────────────
 
 /**
- * Send a WhatsApp notification about a BON transaction to admins.
- * This is a placeholder; the real implementation will use whatsapp-web.js.
+ * Create in-app notification about a BON transaction for admins.
  */
 const sendBonNotification = async (transaction) => {
   const admins = await prisma.user.findMany({
@@ -468,8 +465,6 @@ const sendBonNotification = async (transaction) => {
       },
     });
 
-    // TODO: Send via whatsapp-web.js when WA service is configured
-    console.log(`[WA] Notifikasi BON → ${admin.fullName} (${admin.phone}): ${transaction.transactionNumber}`);
   }
 };
 

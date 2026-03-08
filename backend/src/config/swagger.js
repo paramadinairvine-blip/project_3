@@ -64,7 +64,7 @@ const options = {
       { name: 'Stock Opname', description: 'Opname stok fisik' },
       { name: 'Projects', description: 'Proyek pembangunan' },
       { name: 'Reports', description: 'Laporan stok, keuangan, tren' },
-      { name: 'Notifications', description: 'Notifikasi & WhatsApp' },
+      { name: 'Notifications', description: 'Notifikasi' },
       { name: 'Audit Logs', description: 'Log audit perubahan data' },
     ],
   },

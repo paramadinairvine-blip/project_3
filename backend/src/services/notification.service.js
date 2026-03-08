@@ -1,6 +1,5 @@
 const prisma = require('../lib/prisma');
 const stockService = require('./stock.service');
-const whatsappService = require('./whatsapp.service');
 const { DEFAULT_PAGE_SIZE } = require('../utils/constants');
 
 const getAll = async ({ page = 1, limit = DEFAULT_PAGE_SIZE, type } = {}) => {
@@ -29,11 +28,8 @@ const checkLowStock = async () => {
   const lowStockProducts = await stockService.checkLowStock();
 
   if (lowStockProducts.length === 0) {
-    return { count: 0, products: [], whatsappSent: false };
+    return { count: 0, products: [] };
   }
-
-  // Send WhatsApp notification
-  const waResult = await whatsappService.sendLowStockAlert(lowStockProducts);
 
   // Create in-app notifications for all admins
   const admins = await prisma.user.findMany({
@@ -48,8 +44,7 @@ const checkLowStock = async () => {
         title: 'Peringatan Stok Minimum',
         message: `${lowStockProducts.length} produk memiliki stok di bawah batas minimum.`,
         type: 'LOW_STOCK',
-        status: waResult ? 'SENT' : 'PENDING',
-        sentAt: waResult ? new Date() : null,
+        status: 'PENDING',
       },
     });
   }
@@ -57,7 +52,6 @@ const checkLowStock = async () => {
   return {
     count: lowStockProducts.length,
     products: lowStockProducts,
-    whatsappSent: !!waResult,
   };
 };
 

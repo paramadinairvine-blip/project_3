@@ -261,7 +261,7 @@ const send = async (id, userId) => {
  *   1. Change status to RECEIVED
  *   2. Add stock for each item (StockMovement IN)
  *   3. Update buy price if PO price differs → record PriceHistory
- *   4. Create WA notification
+ *   4. Create in-app notification
  */
 const receive = async (id, receivedItems, userId) => {
   const existing = await prisma.purchaseOrder.findUnique({
@@ -369,10 +369,8 @@ const receive = async (id, receivedItems, userId) => {
     newData: { status: 'RECEIVED', receivedItemCount: existing.items.length },
   });
 
-  // WhatsApp notification (fire-and-forget)
-  sendReceiveNotification(po).catch((err) =>
-    console.error('[WA] Gagal kirim notifikasi penerimaan PO:', err.message)
-  );
+  // In-app notification for admins (fire-and-forget)
+  sendReceiveNotification(po).catch(() => {});
 
   return po;
 };
@@ -406,7 +404,7 @@ const cancel = async (id, userId) => {
   return po;
 };
 
-// ─── WhatsApp notification (stub) ───────────────────────────────────
+// ─── In-app notification ─────────────────────────────────────────────
 
 const sendReceiveNotification = async (po) => {
   const admins = await prisma.user.findMany({
@@ -427,8 +425,6 @@ const sendReceiveNotification = async (po) => {
       },
     });
 
-    // TODO: Send via whatsapp-web.js when WA service is configured
-    console.log(`[WA] Notifikasi PO diterima → ${admin.fullName} (${admin.phone}): ${po.poNumber}`);
   }
 };
 
