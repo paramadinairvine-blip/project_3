@@ -243,7 +243,7 @@ export default function History() {
 
                     {/* Total */}
                     <td className="px-4 py-3 align-top text-right font-medium text-gray-900 whitespace-nowrap">
-                      {formatRupiah(trx.total || trx.totalAmount)}
+                      {formatRupiah(trx.total)}
                     </td>
 
                     {/* Actions */}

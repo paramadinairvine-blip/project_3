@@ -220,7 +220,7 @@ export async function printReceipt(transaction, paidAmount, change) {
       r.text(lr('Diskon', '-' + formatRupiah(trx.discount)));
     }
 
-    const total = trx.total || trx.totalAmount || 0;
+    const total = trx.total || 0;
     r.bold(true).text(lr('TOTAL', formatRupiah(total))).bold(false);
 
     if (trx.type === 'CASH') {

@@ -62,7 +62,7 @@ export default function Checkout() {
         const txData = res.data.data;
         // Auto-print via Recta if configured
         if (isRectaConfigured()) {
-          const result = await printReceipt(txData, paymentType === 'CASH' ? paidAmount : txData.total || txData.totalAmount, paymentType === 'CASH' ? getChange() : 0);
+          const result = await printReceipt(txData, paymentType === 'CASH' ? paidAmount : txData.total, paymentType === 'CASH' ? getChange() : 0);
           if (result.success) {
             toast.success(result.message);
           } else {

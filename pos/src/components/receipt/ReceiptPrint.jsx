@@ -112,7 +112,7 @@ export default function ReceiptPrint({ transaction, paidAmount, change, onClose 
               )}
               <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 'bold', fontSize: '14px' }}>
                 <span>TOTAL</span>
-                <span>{formatRupiah(trx.total || trx.totalAmount)}</span>
+                <span>{formatRupiah(trx.total)}</span>
               </div>
 
               {/* Payment info */}
