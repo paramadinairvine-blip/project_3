@@ -10,6 +10,7 @@ import { Card, Badge, Button, Select, Loading, Table, Skeleton } from '../../com
 import { formatRupiah } from '../../utils/formatCurrency';
 import { exportTableToPDF } from '../../utils/exportPDF';
 import { exportToExcel } from '../../utils/exportExcel';
+import { STORE_INFO } from '../../utils/constants';
 
 // eslint-disable-next-line no-unused-vars
 function StatCard({ title, value, icon: Icon, color }) {
@@ -202,7 +203,7 @@ export default function StockReport() {
       <div className="hidden">
         <div ref={printRef} className="p-8" style={{ fontFamily: 'Arial, sans-serif', fontSize: '11px' }}>
           <div style={{ textAlign: 'center', marginBottom: '16px' }}>
-            <h2 style={{ margin: '0 0 4px 0', fontSize: '16px' }}>TOKO MATERIAL PESANTREN DARUNNAJAH 2</h2>
+            <h2 style={{ margin: '0 0 4px 0', fontSize: '16px' }}>{STORE_INFO.NAME}</h2>
             <h3 style={{ margin: '0 0 4px 0', fontSize: '14px' }}>Laporan Stok Barang</h3>
             <p style={{ margin: 0, fontSize: '10px', color: '#666' }}>
               Dicetak: {new Date().toLocaleDateString('id-ID')}

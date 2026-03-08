@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { NavLink, Outlet } from 'react-router-dom';
 import { HiCash, HiClipboardList, HiCube, HiChartBar, HiPrinter, HiLogout, HiChevronRight } from 'react-icons/hi';
 import useAuth from '../hooks/useAuth';
-import { ROLE_LABELS } from '../utils/constants';
+import { ROLE_LABELS, STORE_INFO } from '../utils/constants';
 import PrinterSettingModal from '../components/PrinterSettingModal';
 
 const navItems = [
@@ -51,9 +51,9 @@ export default function POSLayout() {
             <div className="flex items-center gap-2.5">
               <img src="/logo-white.svg" alt="Logo" className="w-8 h-8" />
               <div className="hidden sm:flex items-center gap-2">
-                <span className="font-bold text-sm tracking-wide">TOKO MATERIAL</span>
+                <span className="font-bold text-sm tracking-wide">{STORE_INFO.SHORT_NAME}</span>
                 <span className="px-2.5 py-0.5 bg-blue-600 text-white text-[10px] font-semibold rounded tracking-wider">
-                  PESANTREN DARUNNAJAH 2
+                  {STORE_INFO.SUBTITLE}
                 </span>
               </div>
             </div>

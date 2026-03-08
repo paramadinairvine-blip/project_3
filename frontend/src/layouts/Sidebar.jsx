@@ -14,7 +14,7 @@ import {
   HiClipboardList,
 } from 'react-icons/hi';
 import useAuth from '../hooks/useAuth';
-import { ROLES, ROLE_LABELS } from '../utils/constants';
+import { ROLES, ROLE_LABELS, STORE_INFO } from '../utils/constants';
 
 const menuItems = [
   {
@@ -191,7 +191,7 @@ export default function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose
             <img src="/logo-white.svg" alt="Logo" className="w-10 h-10 flex-shrink-0 opacity-90" />
             <div className="min-w-0">
               <h1 className="text-white font-bold text-sm leading-tight tracking-wide">
-                TOKO MATERIAL
+                {STORE_INFO.SHORT_NAME}
               </h1>
               <p className="text-gray-300 text-xs leading-tight tracking-wide">
                 PESANTREN

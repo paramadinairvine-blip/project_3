@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import useAuth from '../hooks/useAuth';
 import { getErrorMessage } from '../utils/handleError';
+import { STORE_INFO } from '../utils/constants';
 
 export default function Login() {
   const [email, setEmail] = useState('');
@@ -33,8 +34,8 @@ export default function Login() {
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-blue-600 mb-4">
             <img src="/logo-white.svg" alt="Logo" className="w-10 h-10" />
           </div>
-          <h1 className="text-2xl font-bold text-gray-900">Toko Material Pesantren</h1>
-          <h2 className="text-lg font-semibold text-gray-700">Darunnajah 2</h2>
+          <h1 className="text-2xl font-bold text-gray-900">{STORE_INFO.SHORT_NAME}</h1>
+          <h2 className="text-lg font-semibold text-gray-700">{STORE_INFO.SUBTITLE}</h2>
         </div>
 
         {/* Form card */}
@@ -116,7 +117,7 @@ export default function Login() {
 
         <div className="text-center mt-6 space-y-1">
           <p className="text-xs text-gray-400">
-            Pesantren Darunnajah 2 &copy; {new Date().getFullYear()}
+            {STORE_INFO.COPYRIGHT} &copy; {new Date().getFullYear()}
           </p>
           <a
             href="https://wa.me/6285156526862"

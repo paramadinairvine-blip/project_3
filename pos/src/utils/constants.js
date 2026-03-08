@@ -1,3 +1,14 @@
+// ==================== Store Info ====================
+
+export const STORE_INFO = {
+  NAME: 'TOKO MATERIAL PESANTREN DARUNNAJAH 2',
+  SHORT_NAME: 'TOKO MATERIAL',
+  SUBTITLE: 'PESANTREN DARUNNAJAH 2',
+  COPYRIGHT: 'Pesantren Darunnajah 2',
+};
+
+// ==================== Enums ====================
+
 export const ROLES = {
   ADMIN: 'ADMIN',
   KASIR: 'KASIR',

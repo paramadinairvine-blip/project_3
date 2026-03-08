@@ -9,7 +9,7 @@ import { reportAPI } from '../../api/endpoints';
 import { Card, Badge, Button, Input, Select, Loading, Table, Skeleton, DateRangePicker } from '../../components/common';
 import { formatRupiah } from '../../utils/formatCurrency';
 import { formatTanggal } from '../../utils/formatDate';
-import { TRANSACTION_TYPE_LABELS, TRANSACTION_TYPE_COLORS, TRANSACTION_TYPES } from '../../utils/constants';
+import { TRANSACTION_TYPE_LABELS, TRANSACTION_TYPE_COLORS, TRANSACTION_TYPES, STORE_INFO } from '../../utils/constants';
 import { exportTableToPDF } from '../../utils/exportPDF';
 import { exportToExcel } from '../../utils/exportExcel';
 
@@ -192,7 +192,7 @@ export default function FinancialReport() {
       <div className="hidden">
         <div ref={printRef} className="p-8" style={{ fontFamily: 'Arial, sans-serif', fontSize: '11px' }}>
           <div style={{ textAlign: 'center', marginBottom: '16px' }}>
-            <h2 style={{ margin: '0 0 4px 0', fontSize: '16px' }}>TOKO MATERIAL PESANTREN DARUNNAJAH 2</h2>
+            <h2 style={{ margin: '0 0 4px 0', fontSize: '16px' }}>{STORE_INFO.NAME}</h2>
             <h3 style={{ margin: '0 0 4px 0', fontSize: '14px' }}>Laporan Keuangan</h3>
             <p style={{ margin: 0, fontSize: '10px', color: '#666' }}>Periode: {periodLabel}</p>
           </div>

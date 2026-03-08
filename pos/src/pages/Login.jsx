@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import useAuth from '../hooks/useAuth';
+import { STORE_INFO } from '../utils/constants';
 import { getErrorMessage } from '../utils/handleError';
 
 export default function Login() {
@@ -31,8 +32,8 @@ export default function Login() {
         {/* Logo / Title */}
         <div className="text-center mb-8">
           <img src="/logo-white.svg" alt="Logo" className="w-24 h-24 mx-auto mb-4" />
-          <h1 className="text-2xl font-bold text-white">Toko Material Pesantren</h1>
-          <p className="text-gray-400 mt-1">Darunnajah 2</p>
+          <h1 className="text-2xl font-bold text-white">{STORE_INFO.SHORT_NAME}</h1>
+          <p className="text-gray-400 mt-1">{STORE_INFO.SUBTITLE}</p>
         </div>
 
         {/* Form card */}
@@ -103,7 +104,7 @@ export default function Login() {
 
         <div className="text-center mt-6 space-y-1">
           <p className="text-xs text-gray-500">
-            Pesantren Darunnajah 2 &copy; {new Date().getFullYear()}
+            {STORE_INFO.COPYRIGHT} &copy; {new Date().getFullYear()}
           </p>
           <a
             href="https://wa.me/6285156526862"

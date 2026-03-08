@@ -6,7 +6,7 @@
 import io from 'socket.io-client';
 import { formatRupiah } from './formatCurrency';
 import { formatTanggalWaktu } from './formatDate';
-import { TRANSACTION_TYPE_LABELS } from './constants';
+import { TRANSACTION_TYPE_LABELS, STORE_INFO } from './constants';
 
 const STORAGE_KEY = 'pos-printer-settings';
 const CHAR_WIDTH = 32; // 58mm thermal printer
@@ -186,8 +186,8 @@ export async function printReceipt(transaction, paidAmount, change) {
     // Header
     r.align('center')
       .bold(true)
-      .text('TOKO MATERIAL')
-      .text('PESANTREN DARUNNAJAH 2')
+      .text(STORE_INFO.SHORT_NAME)
+      .text(STORE_INFO.SUBTITLE)
       .bold(false)
       .text('Jl. Argapura, Kp. Cipining')
       .text('Desa Argapura, Kec. Cigudeg')

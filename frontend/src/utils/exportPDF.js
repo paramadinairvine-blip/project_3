@@ -1,5 +1,6 @@
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import { STORE_INFO } from './constants';
 
 /**
  * Export table data to PDF (A4 format).
@@ -19,7 +20,7 @@ export function exportTableToPDF(title, headers, data, filename = 'laporan.pdf',
   // ─── Header ─────────────────────────────────────────
   doc.setFontSize(16);
   doc.setFont(undefined, 'bold');
-  doc.text('TOKO MATERIAL PESANTREN DARUNNAJAH 2', pageWidth / 2, 15, { align: 'center' });
+  doc.text(STORE_INFO.NAME, pageWidth / 2, 15, { align: 'center' });
 
   doc.setFontSize(9);
   doc.setFont(undefined, 'normal');

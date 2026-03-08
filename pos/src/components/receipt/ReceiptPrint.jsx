@@ -5,7 +5,7 @@ import toast from 'react-hot-toast';
 import { Button } from '../common';
 import { formatRupiah } from '../../utils/formatCurrency';
 import { formatTanggalWaktu } from '../../utils/formatDate';
-import { TRANSACTION_TYPE_LABELS } from '../../utils/constants';
+import { TRANSACTION_TYPE_LABELS, STORE_INFO } from '../../utils/constants';
 import { printReceipt, isRectaConfigured } from '../../utils/printerService';
 
 export default function ReceiptPrint({ transaction, paidAmount, change, onClose }) {
@@ -59,7 +59,7 @@ export default function ReceiptPrint({ transaction, paidAmount, change, onClose 
           >
             {/* Store Header */}
             <div style={{ textAlign: 'center', marginBottom: '8px' }}>
-              <p style={{ fontWeight: 'bold', fontSize: '14px' }}>TOKO MATERIAL PESANTREN DARUNNAJAH 2</p>
+              <p style={{ fontWeight: 'bold', fontSize: '14px' }}>{STORE_INFO.NAME}</p>
               <p style={{ fontSize: '10px' }}>Jl. Argapura, Kp. Cipining, Desa Argapura, Kecamatan Cigudeg</p>
               <p style={{ fontSize: '10px' }}>Telp: 085156526862</p>
               <div style={{ borderTop: '1px dashed #000', margin: '6px 0' }} />

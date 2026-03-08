@@ -4,7 +4,7 @@ import { HiPrinter, HiX } from 'react-icons/hi';
 import { Button } from './common';
 import { formatRupiah } from '../utils/formatCurrency';
 import { formatTanggalWaktu } from '../utils/formatDate';
-import { TRANSACTION_TYPE_LABELS } from '../utils/constants';
+import { TRANSACTION_TYPE_LABELS, STORE_INFO } from '../utils/constants';
 
 export default function ReceiptPrint({ transaction, onClose }) {
   const printRef = useRef();
@@ -37,7 +37,7 @@ export default function ReceiptPrint({ transaction, onClose }) {
           >
             {/* Store Header */}
             <div style={{ textAlign: 'center', marginBottom: '8px' }}>
-              <p style={{ fontWeight: 'bold', fontSize: '14px' }}>TOKO MATERIAL PESANTREN DARUNNAJAH 2</p>
+              <p style={{ fontWeight: 'bold', fontSize: '14px' }}>{STORE_INFO.NAME}</p>
               <p style={{ fontSize: '10px' }}>Jl. Argapura, Desa Argapura, Kec. Cigudeg, Kab. Bogor, Jawa Barat, 16660</p>
               <div style={{ borderTop: '1px dashed #000', margin: '6px 0' }} />
             </div>

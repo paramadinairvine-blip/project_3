@@ -13,6 +13,7 @@ import { formatRupiah } from '../../utils/formatCurrency';
 import { formatTanggal } from '../../utils/formatDate';
 import { exportTableToPDF } from '../../utils/exportPDF';
 import { exportToExcel } from '../../utils/exportExcel';
+import { STORE_INFO } from '../../utils/constants';
 
 const PIE_COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#14b8a6', '#f97316'];
 const BAR_COLORS = ['#3b82f6', '#60a5fa', '#93c5fd', '#2563eb', '#1d4ed8', '#3b82f6', '#60a5fa', '#93c5fd', '#2563eb', '#1d4ed8'];
@@ -269,7 +270,7 @@ export default function TrendReport() {
       <div className="hidden">
         <div ref={printRef} className="p-8" style={{ fontFamily: 'Arial, sans-serif', fontSize: '11px' }}>
           <div style={{ textAlign: 'center', marginBottom: '16px' }}>
-            <h2 style={{ margin: '0 0 4px 0', fontSize: '16px' }}>TOKO MATERIAL PESANTREN DARUNNAJAH 2</h2>
+            <h2 style={{ margin: '0 0 4px 0', fontSize: '16px' }}>{STORE_INFO.NAME}</h2>
             <h3 style={{ margin: '0 0 4px 0', fontSize: '14px' }}>Laporan Tren Pengeluaran</h3>
             <p style={{ margin: 0, fontSize: '10px', color: '#666' }}>Periode: {periodLabel}</p>
           </div>
