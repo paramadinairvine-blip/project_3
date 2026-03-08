@@ -52,8 +52,7 @@ export default function Dashboard() {
     queryKey: ['dashboard-transactions', appliedStart, appliedEnd],
     queryFn: () => transactionAPI.getAll({ startDate: startISO, endDate: endISO, limit: 500 }),
     select: (res) => {
-      const d = res.data.data;
-      const list = Array.isArray(d) ? d : d?.transactions || [];
+      const list = res.data.data || [];
       const count = list.length;
       const total = list.reduce((sum, trx) => sum + (parseFloat(trx.total) || 0), 0);
       return { count, total };

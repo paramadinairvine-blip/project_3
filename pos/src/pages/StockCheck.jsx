@@ -14,7 +14,7 @@ export default function StockCheck() {
   const { data: products, isLoading } = useQuery({
     queryKey: ['stock-products', search],
     queryFn: () => productAPI.getAll({ search, limit: 50, isActive: true }),
-    select: (res) => res.data.data?.products || res.data.data || [],
+    select: (res) => res.data.data || [],
     enabled: search.length > 0,
     staleTime: 15000,
   });

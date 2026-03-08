@@ -37,8 +37,7 @@ export default function History() {
     queryKey: ['transactions-history', filterStart, filterEnd],
     queryFn: () => transactionAPI.getAll(queryParams),
     select: (res) => {
-      const d = res.data.data;
-      return Array.isArray(d) ? d : d?.transactions || [];
+      return res.data.data || [];
     },
     refetchInterval: 30000,
   });
