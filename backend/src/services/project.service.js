@@ -220,8 +220,8 @@ const update = async (id, data, userId) => {
       for (const m of materials) {
         let unitPrice = m.unitPrice;
         if (!unitPrice && m.productId) {
-          const product = await tx.product.findUnique({ where: { id: m.productId }, select: { price: true } });
-          if (product) unitPrice = Number(product.price);
+          const product = await tx.product.findUnique({ where: { id: m.productId }, select: { sellPrice: true } });
+          if (product) unitPrice = Number(product.sellPrice);
         }
 
         if (m.id && existingIds.includes(m.id)) {
