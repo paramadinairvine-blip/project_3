@@ -181,16 +181,16 @@ export default function PurchaseOrderDetail() {
       render: (v) => <span className="font-medium">{v}</span>,
     },
     {
-      key: 'unitPrice',
+      key: 'price',
       header: 'Harga Satuan',
       render: (v) => formatRupiah(v),
     },
     {
-      key: 'totalPrice',
+      key: 'subtotal',
       header: 'Total',
       render: (v, row) => (
         <span className="font-medium text-gray-900">
-          {formatRupiah(v || (row.quantity * row.unitPrice))}
+          {formatRupiah(v || (row.quantity * row.price))}
         </span>
       ),
     },
