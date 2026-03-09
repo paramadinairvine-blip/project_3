@@ -76,20 +76,6 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
-// One-time fix endpoint: run pending migrations and fixes
-app.get('/api/fix-bon', async (req, res) => {
-  try {
-    const prisma = require('./lib/prisma');
-
-    const result = await prisma.transaction.updateMany({
-      where: { type: 'BON', status: 'PENDING' },
-      data: { status: 'COMPLETED', paidAt: new Date() },
-    });
-    res.json({ fixed: result.count });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
 
 // API Routes
 app.use('/api', routes);
