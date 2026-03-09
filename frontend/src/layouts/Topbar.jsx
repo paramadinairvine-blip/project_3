@@ -1,11 +1,12 @@
 import { useLocation, Link } from 'react-router-dom';
-import { useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import {
   HiMenuAlt2,
   HiChevronLeft,
   HiChevronRight,
   HiBell,
 } from 'react-icons/hi';
+import { productAPI, transactionAPI, purchaseOrderAPI, supplierAPI, projectAPI } from '../api/endpoints';
 
 const breadcrumbMap = {
   '': 'Dashboard',
@@ -30,39 +31,41 @@ const breadcrumbMap = {
 
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
+// Map parent segment to query config
+const entityQueryMap = {
+  produk: { key: 'product', fetchFn: (id) => productAPI.getById(id), labelField: 'name' },
+  proyek: { key: 'project', fetchFn: (id) => projectAPI.getById(id), labelField: 'name' },
+  transaksi: { key: 'transaction', fetchFn: (id) => transactionAPI.getById(id), labelField: 'transactionNumber' },
+  'purchase-order': { key: 'purchase-order', fetchFn: (id) => purchaseOrderAPI.getById(id), labelField: 'poNumber' },
+  supplier: { key: 'supplier', fetchFn: (id) => supplierAPI.getById(id), labelField: 'name' },
+};
+
+// Component that subscribes to React Query cache for UUID resolution
+function EntityLabel({ id, parentSeg }) {
+  const config = entityQueryMap[parentSeg];
+  const { data } = useQuery({
+    queryKey: [config.key, id],
+    queryFn: async () => { const { data } = await config.fetchFn(id); return data.data; },
+    staleTime: 5 * 60 * 1000,
+  });
+
+  return data?.[config.labelField] || id;
+}
+
 function Breadcrumbs() {
   const location = useLocation();
-  const queryClient = useQueryClient();
   const segments = location.pathname.split('/').filter(Boolean);
 
   if (segments.length === 0) {
     return <span className="text-gray-700 font-medium text-sm">Dashboard</span>;
   }
 
-  // Helper: resolve UUID to entity name from React Query cache
   const resolveLabel = (seg, i) => {
     if (breadcrumbMap[seg]) return breadcrumbMap[seg];
     if (UUID_REGEX.test(seg) && i > 0) {
       const parentSeg = segments[i - 1];
-      if (parentSeg === 'proyek') {
-        const cached = queryClient.getQueryData(['project', seg]);
-        if (cached?.name) return cached.name;
-      }
-      if (parentSeg === 'produk') {
-        const cached = queryClient.getQueryData(['product', seg]);
-        if (cached?.name) return cached.name;
-      }
-      if (parentSeg === 'transaksi') {
-        const cached = queryClient.getQueryData(['transaction', seg]);
-        if (cached?.transactionNumber) return cached.transactionNumber;
-      }
-      if (parentSeg === 'purchase-order') {
-        const cached = queryClient.getQueryData(['purchase-order', seg]);
-        if (cached?.poNumber) return cached.poNumber;
-      }
-      if (parentSeg === 'supplier') {
-        const cached = queryClient.getQueryData(['supplier', seg]);
-        if (cached?.name) return cached.name;
+      if (entityQueryMap[parentSeg]) {
+        return <EntityLabel id={seg} parentSeg={parentSeg} />;
       }
     }
     return decodeURIComponent(seg);
