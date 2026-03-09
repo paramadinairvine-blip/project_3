@@ -48,6 +48,22 @@ function Breadcrumbs() {
         const cached = queryClient.getQueryData(['project', seg]);
         if (cached?.name) return cached.name;
       }
+      if (parentSeg === 'produk') {
+        const cached = queryClient.getQueryData(['product', seg]);
+        if (cached?.name) return cached.name;
+      }
+      if (parentSeg === 'transaksi') {
+        const cached = queryClient.getQueryData(['transaction', seg]);
+        if (cached?.transactionNumber) return cached.transactionNumber;
+      }
+      if (parentSeg === 'purchase-order') {
+        const cached = queryClient.getQueryData(['purchase-order', seg]);
+        if (cached?.poNumber) return cached.poNumber;
+      }
+      if (parentSeg === 'supplier') {
+        const cached = queryClient.getQueryData(['supplier', seg]);
+        if (cached?.name) return cached.name;
+      }
     }
     return decodeURIComponent(seg);
   };
