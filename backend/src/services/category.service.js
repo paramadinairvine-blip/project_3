@@ -1,4 +1,5 @@
 const prisma = require('../lib/prisma');
+const AppError = require('../utils/AppError');
 
 const getAll = async () => {
   return prisma.category.findMany({
@@ -45,7 +46,7 @@ const getById = async (id) => {
   });
 
   if (!category) {
-    throw Object.assign(new Error('Kategori tidak ditemukan'), { status: 404 });
+    throw new AppError('Kategori tidak ditemukan', 404);
   }
 
   return category;
@@ -55,7 +56,7 @@ const create = async ({ name, description, parentId, userId }) => {
   if (parentId) {
     const parent = await prisma.category.findUnique({ where: { id: parentId } });
     if (!parent) {
-      throw Object.assign(new Error('Kategori induk tidak ditemukan'), { status: 404 });
+      throw new AppError('Kategori induk tidak ditemukan', 404);
     }
   }
 
@@ -75,16 +76,16 @@ const create = async ({ name, description, parentId, userId }) => {
 const update = async (id, { name, description, parentId, userId }) => {
   const existing = await prisma.category.findUnique({ where: { id } });
   if (!existing) {
-    throw Object.assign(new Error('Kategori tidak ditemukan'), { status: 404 });
+    throw new AppError('Kategori tidak ditemukan', 404);
   }
 
   if (parentId) {
     if (parentId === id) {
-      throw Object.assign(new Error('Kategori tidak boleh menjadi induk diri sendiri'), { status: 400 });
+      throw new AppError('Kategori tidak boleh menjadi induk diri sendiri', 400);
     }
     const parent = await prisma.category.findUnique({ where: { id: parentId } });
     if (!parent) {
-      throw Object.assign(new Error('Kategori induk tidak ditemukan'), { status: 404 });
+      throw new AppError('Kategori induk tidak ditemukan', 404);
     }
   }
 
@@ -116,14 +117,11 @@ const remove = async (id, userId) => {
   });
 
   if (!existing) {
-    throw Object.assign(new Error('Kategori tidak ditemukan'), { status: 404 });
+    throw new AppError('Kategori tidak ditemukan', 404);
   }
 
   if (existing._count.children > 0) {
-    throw Object.assign(
-      new Error('Kategori masih memiliki sub-kategori, hapus sub-kategori terlebih dahulu'),
-      { status: 400 }
-    );
+    throw new AppError('Kategori masih memiliki sub-kategori, hapus sub-kategori terlebih dahulu', 400);
   }
 
   await prisma.category.update({

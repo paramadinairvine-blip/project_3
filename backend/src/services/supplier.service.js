@@ -1,5 +1,6 @@
 const prisma = require('../lib/prisma');
 const { DEFAULT_PAGE_SIZE } = require('../utils/constants');
+const AppError = require('../utils/AppError');
 
 const getAll = async ({ page = 1, limit = DEFAULT_PAGE_SIZE, search } = {}) => {
   const where = { isActive: true };
@@ -47,7 +48,7 @@ const getById = async (id) => {
   });
 
   if (!supplier) {
-    throw Object.assign(new Error('Supplier tidak ditemukan'), { status: 404 });
+    throw new AppError('Supplier tidak ditemukan', 404);
   }
 
   return supplier;
@@ -69,7 +70,7 @@ const create = async ({ name, contactName, phone, email, address, userId }) => {
 const update = async (id, { name, contactName, phone, email, address, userId }) => {
   const existing = await prisma.supplier.findUnique({ where: { id } });
   if (!existing) {
-    throw Object.assign(new Error('Supplier tidak ditemukan'), { status: 404 });
+    throw new AppError('Supplier tidak ditemukan', 404);
   }
 
   const updateData = {};
@@ -101,7 +102,7 @@ const update = async (id, { name, contactName, phone, email, address, userId }) 
 const remove = async (id, userId) => {
   const existing = await prisma.supplier.findUnique({ where: { id } });
   if (!existing) {
-    throw Object.assign(new Error('Supplier tidak ditemukan'), { status: 404 });
+    throw new AppError('Supplier tidak ditemukan', 404);
   }
 
   await prisma.supplier.update({

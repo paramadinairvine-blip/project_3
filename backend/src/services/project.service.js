@@ -1,6 +1,7 @@
 const prisma = require('../lib/prisma');
 const { DEFAULT_PAGE_SIZE } = require('../utils/constants');
 const { createLog, ACTION_TYPES } = require('./auditLog.service');
+const AppError = require('../utils/AppError');
 
 // ─── shared includes ────────────────────────────────────────────────
 
@@ -77,7 +78,7 @@ const getById = async (id) => {
     include: projectIncludes,
   });
 
-  if (!project) throw Object.assign(new Error('Proyek tidak ditemukan'), { status: 404 });
+  if (!project) throw new AppError('Proyek tidak ditemukan', 404);
 
   // Build budget summary
   const totalEstimatedCost = project.materials.reduce(
@@ -186,7 +187,7 @@ const update = async (id, data, userId) => {
     where: { id },
     include: { materials: true },
   });
-  if (!existing) throw Object.assign(new Error('Proyek tidak ditemukan'), { status: 404 });
+  if (!existing) throw new AppError('Proyek tidak ditemukan', 404);
 
   const { materials, ...header } = data;
 
@@ -272,7 +273,7 @@ const update = async (id, data, userId) => {
  */
 const remove = async (id, userId) => {
   const existing = await prisma.project.findUnique({ where: { id } });
-  if (!existing) throw Object.assign(new Error('Proyek tidak ditemukan'), { status: 404 });
+  if (!existing) throw new AppError('Proyek tidak ditemukan', 404);
 
   const project = await prisma.project.update({
     where: { id },
@@ -297,7 +298,7 @@ const remove = async (id, userId) => {
  */
 const addMaterial = async (projectId, materialData, userId) => {
   const project = await prisma.project.findUnique({ where: { id: projectId } });
-  if (!project) throw Object.assign(new Error('Proyek tidak ditemukan'), { status: 404 });
+  if (!project) throw new AppError('Proyek tidak ditemukan', 404);
 
   let unitPrice = materialData.unitPrice;
   if (unitPrice === undefined || unitPrice === null) {
@@ -338,7 +339,7 @@ const addMaterial = async (projectId, materialData, userId) => {
 const updateMaterialUsage = async (projectId, materialId, usedQty, userId) => {
   const material = await prisma.projectMaterial.findUnique({ where: { id: materialId } });
   if (!material || material.projectId !== projectId) {
-    throw Object.assign(new Error('Material proyek tidak ditemukan'), { status: 404 });
+    throw new AppError('Material proyek tidak ditemukan', 404);
   }
 
   const oldUsedQty = material.usedQty;
@@ -378,7 +379,7 @@ const getProgressSummary = async (projectId) => {
     },
   });
 
-  if (!project) throw Object.assign(new Error('Proyek tidak ditemukan'), { status: 404 });
+  if (!project) throw new AppError('Proyek tidak ditemukan', 404);
 
   const materials = project.materials.map((m) => {
     const estimatedCost = m.estimatedQty * Number(m.unitPrice);
@@ -439,7 +440,7 @@ const getMaterialReport = async (projectId) => {
     },
   });
 
-  if (!project) throw Object.assign(new Error('Proyek tidak ditemukan'), { status: 404 });
+  if (!project) throw new AppError('Proyek tidak ditemukan', 404);
 
   const report = project.materials.map((m) => {
     const remaining = Math.max(0, m.estimatedQty - m.usedQty);

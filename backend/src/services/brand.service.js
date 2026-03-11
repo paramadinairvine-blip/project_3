@@ -1,5 +1,6 @@
 const prisma = require('../lib/prisma');
 const { DEFAULT_PAGE_SIZE } = require('../utils/constants');
+const AppError = require('../utils/AppError');
 
 const getAll = async ({ page = 1, limit = DEFAULT_PAGE_SIZE, search, isActive } = {}) => {
   const where = {};
@@ -39,7 +40,7 @@ const getById = async (id) => {
   });
 
   if (!brand) {
-    throw Object.assign(new Error('Brand tidak ditemukan'), { status: 404 });
+    throw new AppError('Brand tidak ditemukan', 404);
   }
 
   return brand;
@@ -54,7 +55,7 @@ const create = async ({ name }) => {
 const update = async (id, { name, isActive }) => {
   const existing = await prisma.brand.findUnique({ where: { id } });
   if (!existing) {
-    throw Object.assign(new Error('Brand tidak ditemukan'), { status: 404 });
+    throw new AppError('Brand tidak ditemukan', 404);
   }
 
   const data = {};
@@ -76,7 +77,7 @@ const remove = async (id) => {
   });
 
   if (!existing) {
-    throw Object.assign(new Error('Brand tidak ditemukan'), { status: 404 });
+    throw new AppError('Brand tidak ditemukan', 404);
   }
 
   if (existing._count.products > 0) {

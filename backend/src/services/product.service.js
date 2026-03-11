@@ -2,6 +2,7 @@ const prisma = require('../lib/prisma');
 const { DEFAULT_PAGE_SIZE } = require('../utils/constants');
 const { generateBarcode } = require('../utils/generateBarcode');
 const { createLog, ACTION_TYPES } = require('./auditLog.service');
+const AppError = require('../utils/AppError');
 
 // Shared include for product queries
 const productIncludes = {
@@ -78,7 +79,7 @@ const getById = async (id) => {
   });
 
   if (!product) {
-    throw Object.assign(new Error('Produk tidak ditemukan'), { status: 404 });
+    throw new AppError('Produk tidak ditemukan', 404);
   }
 
   return product;
@@ -197,7 +198,7 @@ const create = async (data, userId) => {
 const update = async (id, data, userId) => {
   const existing = await prisma.product.findUnique({ where: { id } });
   if (!existing) {
-    throw Object.assign(new Error('Produk tidak ditemukan'), { status: 404 });
+    throw new AppError('Produk tidak ditemukan', 404);
   }
 
   const { variants, units, ...productData } = data;
@@ -306,7 +307,7 @@ const update = async (id, data, userId) => {
 const remove = async (id, userId) => {
   const existing = await prisma.product.findUnique({ where: { id } });
   if (!existing) {
-    throw Object.assign(new Error('Produk tidak ditemukan'), { status: 404 });
+    throw new AppError('Produk tidak ditemukan', 404);
   }
 
   const product = await prisma.product.update({
@@ -347,7 +348,7 @@ const getByBarcode = async (barcode) => {
 
   if (variant) return { ...variant.product, matchedVariant: variant };
 
-  throw Object.assign(new Error('Produk dengan barcode tersebut tidak ditemukan'), { status: 404 });
+  throw new AppError('Produk dengan barcode tersebut tidak ditemukan', 404);
 };
 
 /**
@@ -360,7 +361,7 @@ const generateProductBarcode = async (productId) => {
   });
 
   if (!product) {
-    throw Object.assign(new Error('Produk tidak ditemukan'), { status: 404 });
+    throw new AppError('Produk tidak ditemukan', 404);
   }
 
   const categoryCode = product.category ? product.category.name.substring(0, 3) : 'GEN';

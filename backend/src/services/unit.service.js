@@ -1,4 +1,5 @@
 const prisma = require('../lib/prisma');
+const AppError = require('../utils/AppError');
 
 // ==================== UnitOfMeasure ====================
 
@@ -11,7 +12,7 @@ const getAllUnits = async () => {
 
 const createUnit = async ({ name, abbreviation }) => {
   if (!name || !abbreviation) {
-    throw Object.assign(new Error('Nama dan singkatan wajib diisi'), { status: 400 });
+    throw new AppError('Nama dan singkatan wajib diisi', 400);
   }
 
   const unit = await prisma.unitOfMeasure.create({
@@ -28,7 +29,7 @@ const createUnit = async ({ name, abbreviation }) => {
 const updateUnit = async (id, { name, abbreviation, isActive }) => {
   const existing = await prisma.unitOfMeasure.findUnique({ where: { id } });
   if (!existing) {
-    throw Object.assign(new Error('Satuan tidak ditemukan'), { status: 404 });
+    throw new AppError('Satuan tidak ditemukan', 404);
   }
 
   const updateData = {};
@@ -51,7 +52,7 @@ const updateUnit = async (id, { name, abbreviation, isActive }) => {
 const deleteUnit = async (id) => {
   const existing = await prisma.unitOfMeasure.findUnique({ where: { id } });
   if (!existing) {
-    throw Object.assign(new Error('Satuan tidak ditemukan'), { status: 404 });
+    throw new AppError('Satuan tidak ditemukan', 404);
   }
 
   await prisma.unitOfMeasure.update({
@@ -77,7 +78,7 @@ const getAllUnitLembaga = async () => {
 
 const createUnitLembaga = async ({ name }) => {
   if (!name) {
-    throw Object.assign(new Error('Nama unit lembaga wajib diisi'), { status: 400 });
+    throw new AppError('Nama unit lembaga wajib diisi', 400);
   }
 
   const unit = await prisma.unitLembaga.create({
@@ -94,7 +95,7 @@ const createUnitLembaga = async ({ name }) => {
 const updateUnitLembaga = async (id, { name, isActive }) => {
   const existing = await prisma.unitLembaga.findUnique({ where: { id } });
   if (!existing) {
-    throw Object.assign(new Error('Unit lembaga tidak ditemukan'), { status: 404 });
+    throw new AppError('Unit lembaga tidak ditemukan', 404);
   }
 
   const updateData = {};
@@ -116,7 +117,7 @@ const updateUnitLembaga = async (id, { name, isActive }) => {
 const deleteUnitLembaga = async (id) => {
   const existing = await prisma.unitLembaga.findUnique({ where: { id } });
   if (!existing) {
-    throw Object.assign(new Error('Unit lembaga tidak ditemukan'), { status: 404 });
+    throw new AppError('Unit lembaga tidak ditemukan', 404);
   }
 
   await prisma.unitLembaga.update({

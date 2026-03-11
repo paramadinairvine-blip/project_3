@@ -1,5 +1,6 @@
 const prisma = require('../lib/prisma');
 const { generateBarcode } = require('../utils/generateBarcode');
+const AppError = require('../utils/AppError');
 
 /**
  * Regex for valid barcode formats.
@@ -33,10 +34,7 @@ const generate = async (categoryCode = 'GEN') => {
     }
   }
 
-  throw Object.assign(
-    new Error('Gagal membuat barcode unik, silakan coba lagi'),
-    { status: 500 }
-  );
+  throw new AppError('Gagal membuat barcode unik, silakan coba lagi', 500);
 };
 
 /**
@@ -86,7 +84,7 @@ const validate = (barcode) => {
  */
 const getProductByBarcode = async (barcode) => {
   if (!barcode) {
-    throw Object.assign(new Error('Barcode tidak boleh kosong'), { status: 400 });
+    throw new AppError('Barcode tidak boleh kosong', 400);
   }
 
   // Search in products
@@ -124,7 +122,7 @@ const getProductByBarcode = async (barcode) => {
     return { source: 'variant', data: variant.product, matchedVariant: variant };
   }
 
-  throw Object.assign(new Error('Produk dengan barcode tersebut tidak ditemukan'), { status: 404 });
+  throw new AppError('Produk dengan barcode tersebut tidak ditemukan', 404);
 };
 
 /**
@@ -135,7 +133,7 @@ const getProductByBarcode = async (barcode) => {
  */
 const bulkGenerate = async (productIds) => {
   if (!productIds || productIds.length === 0) {
-    throw Object.assign(new Error('Daftar produk tidak boleh kosong'), { status: 400 });
+    throw new AppError('Daftar produk tidak boleh kosong', 400);
   }
 
   const results = [];

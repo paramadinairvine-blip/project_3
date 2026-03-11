@@ -2,6 +2,7 @@ const prisma = require('../lib/prisma');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
+const AppError = require('../utils/AppError');
 
 const SALT_ROUNDS = 12;
 const ACCESS_TOKEN_EXPIRES = process.env.JWT_EXPIRES_IN || '7d';
@@ -42,16 +43,16 @@ const login = async (email, password) => {
   const user = await prisma.user.findUnique({ where: { email } });
 
   if (!user) {
-    throw Object.assign(new Error('Email atau password salah'), { status: 401 });
+    throw new AppError('Email atau password salah', 401);
   }
 
   if (!user.isActive) {
-    throw Object.assign(new Error('Akun tidak aktif, silakan hubungi administrator'), { status: 403 });
+    throw new AppError('Akun tidak aktif, silakan hubungi administrator', 403);
   }
 
   const isMatch = await bcrypt.compare(password, user.password);
   if (!isMatch) {
-    throw Object.assign(new Error('Email atau password salah'), { status: 401 });
+    throw new AppError('Email atau password salah', 401);
   }
 
   // Generate tokens
@@ -86,7 +87,7 @@ const login = async (email, password) => {
  */
 const refreshToken = async (token) => {
   if (!token) {
-    throw Object.assign(new Error('Refresh token wajib diisi'), { status: 400 });
+    throw new AppError('Refresh token wajib diisi', 400);
   }
 
   const stored = await prisma.refreshToken.findUnique({
@@ -95,11 +96,11 @@ const refreshToken = async (token) => {
   });
 
   if (!stored) {
-    throw Object.assign(new Error('Refresh token tidak valid'), { status: 401 });
+    throw new AppError('Refresh token tidak valid', 401);
   }
 
   if (stored.revoked) {
-    throw Object.assign(new Error('Refresh token telah dicabut'), { status: 401 });
+    throw new AppError('Refresh token telah dicabut', 401);
   }
 
   if (new Date() > stored.expiresAt) {
@@ -108,11 +109,11 @@ const refreshToken = async (token) => {
       where: { id: stored.id },
       data: { revoked: true },
     });
-    throw Object.assign(new Error('Refresh token telah kadaluarsa, silakan login kembali'), { status: 401 });
+    throw new AppError('Refresh token telah kadaluarsa, silakan login kembali', 401);
   }
 
   if (!stored.user.isActive) {
-    throw Object.assign(new Error('Akun tidak aktif, silakan hubungi administrator'), { status: 403 });
+    throw new AppError('Akun tidak aktif, silakan hubungi administrator', 403);
   }
 
   const accessToken = generateAccessToken(stored.user);

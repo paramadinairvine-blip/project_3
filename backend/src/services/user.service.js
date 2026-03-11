@@ -2,6 +2,7 @@ const prisma = require('../lib/prisma');
 const bcrypt = require('bcryptjs');
 const { hashPassword } = require('./auth.service');
 const { DEFAULT_PAGE_SIZE, ROLES } = require('../utils/constants');
+const AppError = require('../utils/AppError');
 
 const userSelect = {
   id: true,
@@ -44,7 +45,7 @@ const getById = async (id) => {
   });
 
   if (!user) {
-    throw Object.assign(new Error('User tidak ditemukan'), { status: 404 });
+    throw new AppError('User tidak ditemukan', 404);
   }
 
   return user;
@@ -70,7 +71,7 @@ const create = async ({ username, email, password, fullName, phone, role }) => {
 const update = async (id, { username, email, fullName, phone, role, isActive }) => {
   const existing = await prisma.user.findUnique({ where: { id } });
   if (!existing) {
-    throw Object.assign(new Error('User tidak ditemukan'), { status: 404 });
+    throw new AppError('User tidak ditemukan', 404);
   }
 
   const updateData = {};
@@ -97,11 +98,11 @@ const update = async (id, { username, email, fullName, phone, role, isActive }) 
 const remove = async (id, requestingUserId) => {
   const existing = await prisma.user.findUnique({ where: { id } });
   if (!existing) {
-    throw Object.assign(new Error('User tidak ditemukan'), { status: 404 });
+    throw new AppError('User tidak ditemukan', 404);
   }
 
   if (existing.id === requestingUserId) {
-    throw Object.assign(new Error('Tidak dapat menghapus akun sendiri'), { status: 400 });
+    throw new AppError('Tidak dapat menghapus akun sendiri', 400);
   }
 
   await prisma.user.update({
@@ -119,27 +120,27 @@ const remove = async (id, requestingUserId) => {
 const changePassword = async (id, { oldPassword, newPassword, requestingUser }) => {
   // Allow: ADMIN can change anyone's password, non-admin can only change own
   if (requestingUser.role !== ROLES.ADMIN && requestingUser.id !== id) {
-    throw Object.assign(new Error('Anda tidak memiliki izin untuk mengubah password user lain'), { status: 403 });
+    throw new AppError('Anda tidak memiliki izin untuk mengubah password user lain', 403);
   }
 
   const user = await prisma.user.findUnique({ where: { id } });
   if (!user) {
-    throw Object.assign(new Error('User tidak ditemukan'), { status: 404 });
+    throw new AppError('User tidak ditemukan', 404);
   }
 
   // Non-admin must provide old password
   if (requestingUser.role !== ROLES.ADMIN) {
     if (!oldPassword) {
-      throw Object.assign(new Error('Password lama wajib diisi'), { status: 400 });
+      throw new AppError('Password lama wajib diisi', 400);
     }
     const isMatch = await bcrypt.compare(oldPassword, user.password);
     if (!isMatch) {
-      throw Object.assign(new Error('Password lama tidak sesuai'), { status: 400 });
+      throw new AppError('Password lama tidak sesuai', 400);
     }
   }
 
   if (!newPassword || newPassword.length < 6) {
-    throw Object.assign(new Error('Password baru minimal 6 karakter'), { status: 400 });
+    throw new AppError('Password baru minimal 6 karakter', 400);
   }
 
   const hashedPassword = await hashPassword(newPassword);

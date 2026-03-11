@@ -2,6 +2,7 @@ const prisma = require('../lib/prisma');
 const { DEFAULT_PAGE_SIZE } = require('../utils/constants');
 const { createLog, ACTION_TYPES } = require('./auditLog.service');
 const { format } = require('date-fns');
+const AppError = require('../utils/AppError');
 
 /**
  * Get the current stock of a product (or a specific variant).
@@ -15,7 +16,7 @@ const getCurrentStock = async (productId, variantId = null) => {
       select: { id: true, name: true, stock: true, sku: true },
     });
     if (!variant) {
-      throw Object.assign(new Error('Varian produk tidak ditemukan'), { status: 404 });
+      throw new AppError('Varian produk tidak ditemukan', 404);
     }
     return variant;
   }
@@ -35,7 +36,7 @@ const getCurrentStock = async (productId, variantId = null) => {
   });
 
   if (!product) {
-    throw Object.assign(new Error('Produk tidak ditemukan'), { status: 404 });
+    throw new AppError('Produk tidak ditemukan', 404);
   }
 
   return product;
@@ -109,7 +110,7 @@ const addMovement = async ({ productId, variantId, unitId, quantity, movementTyp
   return prisma.$transaction(async (tx) => {
     const product = await tx.product.findUnique({ where: { id: productId } });
     if (!product) {
-      throw Object.assign(new Error('Produk tidak ditemukan'), { status: 404 });
+      throw new AppError('Produk tidak ditemukan', 404);
     }
 
 
@@ -134,7 +135,7 @@ const addMovement = async ({ productId, variantId, unitId, quantity, movementTyp
       case 'OUT':
         newStock = previousStock - convertedQty;
         if (newStock < 0) {
-          throw Object.assign(new Error('Stok tidak mencukupi'), { status: 400 });
+          throw new AppError('Stok tidak mencukupi', 400);
         }
         break;
       case 'ADJUSTMENT':
@@ -143,7 +144,7 @@ const addMovement = async ({ productId, variantId, unitId, quantity, movementTyp
         newStock = convertedQty;
         break;
       default:
-        throw Object.assign(new Error('Tipe pergerakan stok tidak valid'), { status: 400 });
+        throw new AppError('Tipe pergerakan stok tidak valid', 400);
     }
 
     // Record the movement
@@ -337,15 +338,15 @@ const createOpname = async (userId) => {
 const updateOpnameItem = async (opnameId, itemId, actualQty) => {
   const opname = await prisma.stockOpname.findUnique({ where: { id: opnameId } });
   if (!opname) {
-    throw Object.assign(new Error('Sesi opname tidak ditemukan'), { status: 404 });
+    throw new AppError('Sesi opname tidak ditemukan', 404);
   }
   if (opname.status === 'COMPLETED') {
-    throw Object.assign(new Error('Sesi opname sudah selesai, tidak bisa diubah'), { status: 400 });
+    throw new AppError('Sesi opname sudah selesai, tidak bisa diubah', 400);
   }
 
   const item = await prisma.stockOpnameItem.findUnique({ where: { id: itemId } });
   if (!item || item.stockOpnameId !== opnameId) {
-    throw Object.assign(new Error('Item opname tidak ditemukan'), { status: 404 });
+    throw new AppError('Item opname tidak ditemukan', 404);
   }
 
   const difference = actualQty - item.systemStock;
@@ -370,10 +371,10 @@ const completeOpname = async (opnameId, userId) => {
   });
 
   if (!opname) {
-    throw Object.assign(new Error('Sesi opname tidak ditemukan'), { status: 404 });
+    throw new AppError('Sesi opname tidak ditemukan', 404);
   }
   if (opname.status === 'COMPLETED') {
-    throw Object.assign(new Error('Sesi opname sudah selesai'), { status: 400 });
+    throw new AppError('Sesi opname sudah selesai', 400);
   }
 
   const result = await prisma.$transaction(async (tx) => {

@@ -1,6 +1,7 @@
 const poService = require('../services/purchaseOrder.service');
 const { successResponse, errorResponse, paginatedResponse } = require('../utils/responseHelper');
 const { DEFAULT_PAGE_SIZE } = require('../utils/constants');
+const logger = require('../utils/logger');
 
 const getAll = async (req, res) => {
   try {
@@ -67,11 +68,11 @@ const send = async (req, res) => {
 const receive = async (req, res) => {
   try {
     const receivedItems = req.body?.receivedItems;
-    console.log('[PO RECEIVE] id:', req.params.id, '| receivedItems:', JSON.stringify(receivedItems), '| userId:', req.user.id);
+    logger.debug({ poId: req.params.id, receivedItems, userId: req.user.id }, 'PO receive request');
     const po = await poService.receive(req.params.id, receivedItems, req.user.id);
     return successResponse(res, po, 'Barang dari purchase order berhasil diterima');
   } catch (err) {
-    console.error('[PO RECEIVE ERROR]', err.message, err.stack);
+    logger.error({ err, poId: req.params.id }, 'PO receive failed');
     return errorResponse(res, err.message, err.status || 500);
   }
 };

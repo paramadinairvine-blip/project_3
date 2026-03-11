@@ -1,11 +1,10 @@
 const { Prisma } = require('@prisma/client');
 const { errorResponse } = require('../utils/responseHelper');
+const AppError = require('../utils/AppError');
+const logger = require('../utils/logger');
 
 const errorHandler = (err, req, res, next) => {
-  console.error(`[ERROR] ${err.name || 'Error'}:`, err.message);
-  if (process.env.NODE_ENV === 'development') {
-    console.error(err.stack);
-  }
+  logger.error({ err, method: req.method, url: req.originalUrl }, err.message);
 
   // --- Prisma errors ---
   if (err instanceof Prisma.PrismaClientKnownRequestError) {
@@ -69,6 +68,11 @@ const errorHandler = (err, req, res, next) => {
   // --- Validation errors (express-validator style thrown manually) ---
   if (err.name === 'ValidationError' || err.type === 'validation') {
     return errorResponse(res, err.message || 'Validasi gagal', 422, err.errors || null);
+  }
+
+  // --- AppError (custom) ---
+  if (err instanceof AppError) {
+    return errorResponse(res, err.message, err.status);
   }
 
   // --- Generic / unknown errors ---

@@ -1,5 +1,6 @@
 const prisma = require('../lib/prisma');
 const { DEFAULT_PAGE_SIZE } = require('../utils/constants');
+const AppError = require('../utils/AppError');
 
 /**
  * Valid action types for audit logging.
@@ -141,7 +142,7 @@ const getLogById = async (id) => {
   });
 
   if (!log) {
-    throw Object.assign(new Error('Log audit tidak ditemukan'), { status: 404 });
+    throw new AppError('Log audit tidak ditemukan', 404);
   }
 
   return log;
@@ -163,27 +164,27 @@ const rollback = async (logId, userId) => {
   const log = await prisma.auditLog.findUnique({ where: { id: logId } });
 
   if (!log) {
-    throw Object.assign(new Error('Log audit tidak ditemukan'), { status: 404 });
+    throw new AppError('Log audit tidak ditemukan', 404);
   }
 
   if (!log.oldData) {
-    throw Object.assign(new Error('Tidak ada data lama untuk di-rollback'), { status: 400 });
+    throw new AppError('Tidak ada data lama untuk di-rollback', 400);
   }
 
   if (!log.entityId) {
-    throw Object.assign(new Error('ID record tidak ditemukan pada log ini'), { status: 400 });
+    throw new AppError('ID record tidak ditemukan pada log ini', 400);
   }
 
   const model = getModelDelegate(log.entity);
   if (!model) {
-    throw Object.assign(new Error(`Tabel "${log.entity}" tidak dikenali untuk rollback`), { status: 400 });
+    throw new AppError(`Tabel "${log.entity}" tidak dikenali untuk rollback`, 400);
   }
 
   // Get current state before rollback for the new audit log
   const currentRecord = await model.findUnique({ where: { id: log.entityId } });
 
   if (!currentRecord) {
-    throw Object.assign(new Error('Record yang akan di-rollback tidak ditemukan'), { status: 404 });
+    throw new AppError('Record yang akan di-rollback tidak ditemukan', 404);
   }
 
   // Strip metadata fields that shouldn't be overwritten via rollback

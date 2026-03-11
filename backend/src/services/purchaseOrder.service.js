@@ -2,6 +2,7 @@ const prisma = require('../lib/prisma');
 const { format } = require('date-fns');
 const { DEFAULT_PAGE_SIZE } = require('../utils/constants');
 const { createLog, ACTION_TYPES } = require('./auditLog.service');
+const AppError = require('../utils/AppError');
 
 // ─── helpers ────────────────────────────────────────────────────────
 
@@ -89,7 +90,7 @@ const getById = async (id) => {
     include: poIncludes,
   });
 
-  if (!po) throw Object.assign(new Error('Purchase order tidak ditemukan'), { status: 404 });
+  if (!po) throw new AppError('Purchase order tidak ditemukan', 404);
   return po;
 };
 
@@ -166,9 +167,9 @@ const update = async (id, data, userId) => {
     include: { items: true },
   });
 
-  if (!existing) throw Object.assign(new Error('Purchase order tidak ditemukan'), { status: 404 });
+  if (!existing) throw new AppError('Purchase order tidak ditemukan', 404);
   if (existing.status !== 'DRAFT') {
-    throw Object.assign(new Error('Hanya PO berstatus DRAFT yang dapat diubah'), { status: 400 });
+    throw new AppError('Hanya PO berstatus DRAFT yang dapat diubah', 400);
   }
 
   const { items, ...header } = data;
@@ -228,9 +229,9 @@ const update = async (id, data, userId) => {
 const send = async (id, userId) => {
   const existing = await prisma.purchaseOrder.findUnique({ where: { id } });
 
-  if (!existing) throw Object.assign(new Error('Purchase order tidak ditemukan'), { status: 404 });
+  if (!existing) throw new AppError('Purchase order tidak ditemukan', 404);
   if (existing.status !== 'DRAFT') {
-    throw Object.assign(new Error('Hanya PO berstatus DRAFT yang dapat dikirim'), { status: 400 });
+    throw new AppError('Hanya PO berstatus DRAFT yang dapat dikirim', 400);
   }
 
   const po = await prisma.purchaseOrder.update({
@@ -269,12 +270,12 @@ const receive = async (id, receivedItems, userId) => {
     include: { items: { include: { product: true } }, supplier: true },
   });
 
-  if (!existing) throw Object.assign(new Error('Purchase order tidak ditemukan'), { status: 404 });
+  if (!existing) throw new AppError('Purchase order tidak ditemukan', 404);
   if (existing.status === 'RECEIVED') {
-    throw Object.assign(new Error('Purchase order sudah diterima sebelumnya'), { status: 400 });
+    throw new AppError('Purchase order sudah diterima sebelumnya', 400);
   }
   if (existing.status === 'CANCELLED') {
-    throw Object.assign(new Error('Purchase order yang dibatalkan tidak dapat diterima'), { status: 400 });
+    throw new AppError('Purchase order yang dibatalkan tidak dapat diterima', 400);
   }
 
   // Build a map of itemId → receivedQty for fast lookup
@@ -299,7 +300,7 @@ const receive = async (id, receivedItems, userId) => {
       // Add stock (StockMovement IN)
       const product = await tx.product.findUnique({ where: { id: item.productId } });
       if (!product) {
-        throw Object.assign(new Error(`Produk ${item.productId} tidak ditemukan`), { status: 400 });
+        throw new AppError(`Produk ${item.productId} tidak ditemukan`, 400);
       }
       const previousStock = product.stock;
       const newStock = previousStock + receivedQty;
@@ -381,9 +382,9 @@ const receive = async (id, receivedItems, userId) => {
 const cancel = async (id, userId) => {
   const existing = await prisma.purchaseOrder.findUnique({ where: { id } });
 
-  if (!existing) throw Object.assign(new Error('Purchase order tidak ditemukan'), { status: 404 });
+  if (!existing) throw new AppError('Purchase order tidak ditemukan', 404);
   if (existing.status !== 'DRAFT' && existing.status !== 'SENT') {
-    throw Object.assign(new Error('Hanya PO berstatus DRAFT atau SENT yang dapat dibatalkan'), { status: 400 });
+    throw new AppError('Hanya PO berstatus DRAFT atau SENT yang dapat dibatalkan', 400);
   }
 
   const po = await prisma.purchaseOrder.update({

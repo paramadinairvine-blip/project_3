@@ -2,6 +2,7 @@ const prisma = require('../lib/prisma');
 const { format } = require('date-fns');
 const { DEFAULT_PAGE_SIZE } = require('../utils/constants');
 const { createLog, ACTION_TYPES } = require('./auditLog.service');
+const AppError = require('../utils/AppError');
 
 // ─── helpers ────────────────────────────────────────────────────────
 
@@ -72,14 +73,11 @@ const deductStock = async (tx, { productId, quantity, referenceId, userId, unitI
   const qty = await convertToBaseQty(tx, productId, unitId, quantity);
   const product = await tx.product.findUnique({ where: { id: productId } });
 
-  if (!product) throw Object.assign(new Error('Produk tidak ditemukan'), { status: 404 });
+  if (!product) throw new AppError('Produk tidak ditemukan', 404);
 
   const newStock = product.stock - qty;
   if (newStock < 0) {
-    throw Object.assign(
-      new Error(`Stok ${product.name} tidak mencukupi (tersisa ${product.stock})`),
-      { status: 400 }
-    );
+    throw new AppError(`Stok ${product.name} tidak mencukupi (tersisa ${product.stock})`, 400);
   }
 
   await tx.stockMovement.create({
@@ -107,7 +105,7 @@ const restoreStock = async (tx, { productId, quantity, referenceId, userId, unit
   const qty = await convertToBaseQty(tx, productId, unitId, quantity);
   const product = await tx.product.findUnique({ where: { id: productId } });
 
-  if (!product) throw Object.assign(new Error('Produk tidak ditemukan'), { status: 404 });
+  if (!product) throw new AppError('Produk tidak ditemukan', 404);
 
   const newStock = product.stock + qty;
 
@@ -186,7 +184,7 @@ const getById = async (id) => {
     include: transactionIncludes,
   });
 
-  if (!trx) throw Object.assign(new Error('Transaksi tidak ditemukan'), { status: 404 });
+  if (!trx) throw new AppError('Transaksi tidak ditemukan', 404);
   return trx;
 };
 
@@ -222,7 +220,7 @@ const create = async (data, userId) => {
   for (const item of items) {
     const product = productMap[item.productId];
     if (!product) {
-      throw Object.assign(new Error(`Produk tidak ditemukan: ${item.productId}`), { status: 404 });
+      throw new AppError(`Produk tidak ditemukan: ${item.productId}`, 404);
     }
 
     // Convert quantity to base unit
@@ -235,10 +233,7 @@ const create = async (data, userId) => {
     }
 
     if (product.stock - qty < 0) {
-      throw Object.assign(
-        new Error(`Stok ${product.name} tidak mencukupi (tersisa ${product.stock})`),
-        { status: 400 }
-      );
+      throw new AppError(`Stok ${product.name} tidak mencukupi (tersisa ${product.stock})`, 400);
     }
 
     const itemDiscount = item.discount || 0;
@@ -368,9 +363,9 @@ const cancel = async (id, userId) => {
     include: { items: true },
   });
 
-  if (!existing) throw Object.assign(new Error('Transaksi tidak ditemukan'), { status: 404 });
+  if (!existing) throw new AppError('Transaksi tidak ditemukan', 404);
   if (existing.status === 'CANCELLED') {
-    throw Object.assign(new Error('Transaksi sudah dibatalkan sebelumnya'), { status: 400 });
+    throw new AppError('Transaksi sudah dibatalkan sebelumnya', 400);
   }
 
   const transaction = await prisma.$transaction(async (tx) => {
