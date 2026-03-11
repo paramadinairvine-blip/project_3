@@ -23,6 +23,8 @@ export default function ProductForm() {
   const [barcodeMode, setBarcodeMode] = useState('auto');
   const [sellUnits, setSellUnits] = useState([]);
   const [imagePreview, setImagePreview] = useState(null);
+  const [imageUploading, setImageUploading] = useState(false);
+  const [imageProgress, setImageProgress] = useState(0);
   const [errors, setErrors] = useState({});
   const [isDirty, setIsDirty] = useState(false);
 
@@ -146,14 +148,28 @@ export default function ProductForm() {
       toast.error('Ukuran file maksimal 2MB');
       return;
     }
+    setImageUploading(true);
+    setImageProgress(0);
     const reader = new FileReader();
+    reader.onprogress = (event) => {
+      if (event.lengthComputable) {
+        const pct = Math.round((event.loaded / event.total) * 100);
+        setImageProgress(pct);
+      }
+    };
     reader.onload = () => {
       const base64 = reader.result;
       setImagePreview(base64);
       updateForm('image', base64);
+      setImageUploading(false);
+      setImageProgress(100);
       toast.success('Gambar berhasil dimuat');
     };
-    reader.onerror = () => toast.error('Gagal membaca file gambar');
+    reader.onerror = () => {
+      setImageUploading(false);
+      setImageProgress(0);
+      toast.error('Gagal membaca file gambar');
+    };
     reader.readAsDataURL(file);
   };
 
@@ -245,18 +261,29 @@ export default function ProductForm() {
 
         <Card title="Foto Produk">
           <div className="flex items-start gap-6">
-            <div className="w-32 h-32 rounded-xl border-2 border-dashed border-gray-300 flex items-center justify-center overflow-hidden bg-gray-50 flex-shrink-0">
-              {imagePreview ? (
+            <div className="w-32 h-32 rounded-xl border-2 border-dashed border-gray-300 flex items-center justify-center overflow-hidden bg-gray-50 flex-shrink-0 relative">
+              {imageUploading ? (
+                <div className="absolute inset-0 flex flex-col items-center justify-center bg-gray-50 z-10">
+                  <svg className="animate-spin w-8 h-8 text-blue-500 mb-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                  </svg>
+                  <span className="text-xs text-blue-600 font-medium">{imageProgress}%</span>
+                  <div className="w-20 h-1.5 bg-gray-200 rounded-full mt-1 overflow-hidden">
+                    <div className="h-full bg-blue-500 rounded-full transition-all duration-300" style={{ width: `${imageProgress}%` }} />
+                  </div>
+                </div>
+              ) : imagePreview ? (
                 <img src={imagePreview} alt="Preview" className="w-full h-full object-cover" />
               ) : (
                 <span className="text-xs text-gray-400 text-center px-2">Belum ada foto</span>
               )}
             </div>
             <div>
-              <label className="inline-flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 cursor-pointer transition-colors">
+              <label className={`inline-flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded-lg text-sm font-medium transition-colors ${imageUploading ? 'text-gray-400 cursor-not-allowed opacity-60' : 'text-gray-700 hover:bg-gray-50 cursor-pointer'}`}>
                 <HiUpload className="w-4 h-4" />
-                Upload Gambar
-                <input type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={handleImageUpload} />
+                {imageUploading ? 'Memproses...' : 'Upload Gambar'}
+                <input type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={handleImageUpload} disabled={imageUploading} />
               </label>
               <p className="text-xs text-gray-500 mt-2">Format: JPG, PNG, WebP. Maks 2MB.</p>
             </div>
