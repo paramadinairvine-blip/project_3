@@ -4,7 +4,7 @@ import { HiPlus, HiPencil, HiTrash } from 'react-icons/hi';
 import toast from 'react-hot-toast';
 import { unitAPI } from '../../api/endpoints';
 import { getErrorMessage } from '../../utils/handleError';
-import { Button, Badge, Modal, Loading, Input } from '../../components/common';
+import { Button, Badge, Modal, Loading, Input, Table } from '../../components/common';
 import useAuth from '../../hooks/useAuth';
 
 function UnitFormModal({ unit, onClose }) {
@@ -115,7 +115,62 @@ export default function UnitList() {
     setEditTarget(null);
   };
 
-  if (isLoading) return <Loading text="Memuat satuan..." />;
+  const columns = [
+    {
+      key: 'name',
+      header: 'Nama Satuan',
+      sortable: true,
+      render: (val) => <span className="font-medium text-gray-900">{val}</span>,
+    },
+    {
+      key: 'abbreviation',
+      header: 'Singkatan',
+      sortable: true,
+      render: (val) => (
+        <span className="text-sm font-mono text-gray-600 bg-gray-100 px-2 py-0.5 rounded">
+          {val}
+        </span>
+      ),
+    },
+    {
+      key: 'isActive',
+      header: 'Status',
+      render: (val) =>
+        val !== false ? (
+          <Badge variant="success" size="sm">Aktif</Badge>
+        ) : (
+          <Badge variant="danger" size="sm">Non-Aktif</Badge>
+        ),
+    },
+    ...(canEdit
+      ? [
+          {
+            key: 'actions',
+            header: 'Aksi',
+            headerClassName: 'text-right',
+            className: 'text-right',
+            render: (_, row) => (
+              <div className="flex items-center justify-end gap-1">
+                <button
+                  onClick={(e) => { e.stopPropagation(); handleEdit(row); }}
+                  className="p-1.5 text-gray-400 hover:text-yellow-600 hover:bg-yellow-50 rounded-lg transition-colors"
+                  title="Edit"
+                >
+                  <HiPencil className="w-4 h-4" />
+                </button>
+                <button
+                  onClick={(e) => { e.stopPropagation(); setDeleteTarget(row); }}
+                  className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                  title="Hapus"
+                >
+                  <HiTrash className="w-4 h-4" />
+                </button>
+              </div>
+            ),
+          },
+        ]
+      : []),
+  ];
 
   return (
     <div className="space-y-6">
@@ -135,75 +190,13 @@ export default function UnitList() {
       </div>
 
       {/* Unit Table */}
-      <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
-        {units?.length > 0 ? (
-          <table className="w-full">
-            <thead className="bg-gray-50 border-b border-gray-200">
-              <tr>
-                <th className="text-left px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Nama Satuan
-                </th>
-                <th className="text-left px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Singkatan
-                </th>
-                <th className="text-left px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Status
-                </th>
-                {canEdit && (
-                  <th className="text-right px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Aksi
-                  </th>
-                )}
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100">
-              {units.map((unit) => (
-                <tr key={unit.id} className="hover:bg-gray-50 transition-colors">
-                  <td className="px-6 py-4">
-                    <span className="font-medium text-gray-900">{unit.name}</span>
-                  </td>
-                  <td className="px-6 py-4">
-                    <span className="text-sm font-mono text-gray-600 bg-gray-100 px-2 py-0.5 rounded">
-                      {unit.abbreviation}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4">
-                    {unit.isActive !== false ? (
-                      <Badge variant="success" size="sm">Aktif</Badge>
-                    ) : (
-                      <Badge variant="danger" size="sm">Non-Aktif</Badge>
-                    )}
-                  </td>
-                  {canEdit && (
-                    <td className="px-6 py-4 text-right">
-                      <div className="flex items-center justify-end gap-1">
-                        <button
-                          onClick={() => handleEdit(unit)}
-                          className="p-1.5 text-gray-400 hover:text-yellow-600 hover:bg-yellow-50 rounded-lg transition-colors"
-                          title="Edit"
-                        >
-                          <HiPencil className="w-4 h-4" />
-                        </button>
-                        <button
-                          onClick={() => setDeleteTarget(unit)}
-                          className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                          title="Hapus"
-                        >
-                          <HiTrash className="w-4 h-4" />
-                        </button>
-                      </div>
-                    </td>
-                  )}
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        ) : (
-          <div className="px-6 py-12 text-center text-gray-400 text-sm">
-            Belum ada satuan. Klik tombol "Tambah Satuan" untuk memulai.
-          </div>
-        )}
-      </div>
+      <Table
+        columns={columns}
+        data={units || []}
+        loading={isLoading}
+        sortable
+        emptyMessage='Belum ada satuan. Klik tombol "Tambah Satuan" untuk memulai.'
+      />
 
       {/* Form Modal */}
       {formOpen && (
