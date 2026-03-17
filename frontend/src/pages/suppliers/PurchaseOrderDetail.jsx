@@ -9,7 +9,7 @@ import { formatRupiah } from '../../utils/formatCurrency';
 import { formatTanggalWaktu } from '../../utils/formatDate';
 import { PO_STATUS, PO_STATUS_LABELS, PO_STATUS_COLORS } from '../../utils/constants';
 import useAuth from '../../hooks/useAuth';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 const TIMELINE_CONFIG = {
   DRAFT: { label: 'Draft Dibuat', color: 'bg-gray-400' },
@@ -82,6 +82,7 @@ export default function PurchaseOrderDetail() {
   const canEdit = isAdmin || isKasir;
 
   const [actionModal, setActionModal] = useState(null);
+  const [receivedQtys, setReceivedQtys] = useState({});
 
   const { data: po, isLoading } = useQuery({
     queryKey: ['purchase-order', id],
@@ -102,7 +103,7 @@ export default function PurchaseOrderDetail() {
   });
 
   const receiveMutation = useMutation({
-    mutationFn: () => purchaseOrderAPI.receive(id),
+    mutationFn: (receivedItems) => purchaseOrderAPI.receive(id, { receivedItems }),
     onSuccess: () => {
       toast.success('Barang berhasil diterima, stok diperbarui');
       queryClient.invalidateQueries({ queryKey: ['purchase-order', id] });
@@ -123,9 +124,28 @@ export default function PurchaseOrderDetail() {
 
   const handleAction = () => {
     if (actionModal === 'send') sendMutation.mutate();
-    else if (actionModal === 'receive') receiveMutation.mutate();
     else if (actionModal === 'cancel') cancelMutation.mutate();
   };
+
+  const handleReceive = () => {
+    const items = (po?.items || []).map((item) => ({
+      itemId: item.id,
+      receivedQty: parseInt(receivedQtys[item.id]) || 0,
+    }));
+    receiveMutation.mutate(items);
+  };
+
+  // Initialize receivedQtys when opening receive modal
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    if (actionModal === 'receive' && po?.items) {
+      const initial = {};
+      po.items.forEach((item) => {
+        initial[item.id] = item.quantity;
+      });
+      setReceivedQtys(initial);
+    }
+  }, [actionModal, po?.items]);
 
   const isActionLoading = sendMutation.isPending || receiveMutation.isPending || cancelMutation.isPending;
 
@@ -134,12 +154,6 @@ export default function PurchaseOrderDetail() {
       title: 'Kirim PO ke Supplier',
       message: 'PO akan dikirim ke supplier. Lanjutkan?',
       buttonText: 'Kirim',
-      variant: 'primary',
-    },
-    receive: {
-      title: 'Terima Barang',
-      message: 'Konfirmasi penerimaan barang? Stok produk akan otomatis bertambah.',
-      buttonText: 'Terima Barang',
       variant: 'primary',
     },
     cancel: {
@@ -322,9 +336,9 @@ export default function PurchaseOrderDetail() {
         {po.updatedAt !== po.createdAt && <p>Terakhir diubah: {formatTanggalWaktu(po.updatedAt)}</p>}
       </div>
 
-      {/* Action Modal */}
+      {/* Action Modal (Send / Cancel) */}
       <Modal
-        isOpen={!!actionModal}
+        isOpen={!!actionModal && actionModal !== 'receive'}
         onClose={() => setActionModal(null)}
         title={modalCfg.title}
         size="sm"
@@ -338,6 +352,57 @@ export default function PurchaseOrderDetail() {
         }
       >
         <p className="text-sm text-gray-600">{modalCfg.message}</p>
+      </Modal>
+
+      {/* Receive Modal — tabel input qty per item */}
+      <Modal
+        isOpen={actionModal === 'receive'}
+        onClose={() => setActionModal(null)}
+        title="Terima Barang"
+        size="lg"
+        footer={
+          <>
+            <Button variant="outline" onClick={() => setActionModal(null)}>Batal</Button>
+            <Button loading={receiveMutation.isPending} onClick={handleReceive}>
+              Terima Barang
+            </Button>
+          </>
+        }
+      >
+        <p className="text-sm text-gray-600 mb-4">
+          Masukkan jumlah barang yang diterima untuk setiap item. Default sudah diisi sesuai jumlah yang dipesan.
+        </p>
+        <div className="border border-gray-200 rounded-lg overflow-hidden">
+          <table className="w-full text-sm">
+            <thead className="bg-gray-50 border-b border-gray-200">
+              <tr>
+                <th className="px-4 py-2.5 text-left font-semibold text-gray-600">Produk</th>
+                <th className="px-4 py-2.5 text-left font-semibold text-gray-600">Satuan</th>
+                <th className="px-4 py-2.5 text-right font-semibold text-gray-600">Dipesan</th>
+                <th className="px-4 py-2.5 text-right font-semibold text-gray-600">Diterima</th>
+              </tr>
+            </thead>
+            <tbody>
+              {(po?.items || []).map((item) => (
+                <tr key={item.id} className="border-b border-gray-100">
+                  <td className="px-4 py-2.5 font-medium text-gray-900">{item.product?.name || '-'}</td>
+                  <td className="px-4 py-2.5 text-gray-600">{item.unit?.name || item.product?.unit || '-'}</td>
+                  <td className="px-4 py-2.5 text-right text-gray-600">{item.quantity}</td>
+                  <td className="px-4 py-2.5 text-right">
+                    <input
+                      type="number"
+                      min="0"
+                      max={item.quantity}
+                      value={receivedQtys[item.id] ?? item.quantity}
+                      onChange={(e) => setReceivedQtys((prev) => ({ ...prev, [item.id]: e.target.value }))}
+                      className="w-20 rounded border-gray-300 text-sm py-1.5 px-2 text-right focus:border-blue-500 focus:ring-blue-500"
+                    />
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </Modal>
     </div>
   );
