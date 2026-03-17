@@ -114,8 +114,9 @@ export const reportAPI = {
 // ==================== Notification ====================
 export const notificationAPI = {
   getAll: (params) => api.get('/notifications', { params }),
-  sendTest: (data) => api.post('/notifications/test', data),
-  getWAStatus: () => api.get('/notifications/wa-status'),
+  getMe: (params) => api.get('/notifications/me', { params }),
+  markRead: (id) => api.put(`/notifications/${id}/read`),
+  markAllRead: () => api.put('/notifications/read-all'),
   checkLowStock: () => api.post('/notifications/check-low-stock'),
 };
 

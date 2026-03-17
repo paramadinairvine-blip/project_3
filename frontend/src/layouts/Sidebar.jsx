@@ -27,6 +27,7 @@ const menuItems = [
     icon: HiCube,
     children: [
       { label: 'Kategori', code: 'KT', path: '/kategori' },
+      { label: 'Brand', code: 'BR', path: '/brand' },
       { label: 'Master Produk', code: 'MP', path: '/produk' },
     ],
   },

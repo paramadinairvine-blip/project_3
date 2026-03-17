@@ -4,9 +4,9 @@ import {
   HiMenuAlt2,
   HiChevronLeft,
   HiChevronRight,
-  HiBell,
 } from 'react-icons/hi';
 import { productAPI, transactionAPI, purchaseOrderAPI, supplierAPI, projectAPI } from '../api/endpoints';
+import NotificationDropdown from '../components/NotificationDropdown';
 
 const breadcrumbMap = {
   '': 'Dashboard',
@@ -14,6 +14,7 @@ const breadcrumbMap = {
   tambah: 'Tambah',
   edit: 'Edit',
   kategori: 'Kategori',
+  brand: 'Brand',
   supplier: 'Supplier',
   'purchase-order': 'Purchase Order',
   transaksi: 'Transaksi',
@@ -132,10 +133,7 @@ export default function Topbar({ collapsed, onToggle, onMobileOpen }) {
 
         {/* Right side */}
         <div className="flex items-center gap-2">
-          {/* Notification bell */}
-          <button className="relative text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg p-2 transition-colors">
-            <HiBell className="w-5 h-5" />
-          </button>
+          <NotificationDropdown />
         </div>
       </div>
     </header>

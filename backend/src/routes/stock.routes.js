@@ -11,9 +11,11 @@ router.use(authenticate);
 // ==================== Stock ====================
 // All roles can read
 router.get('/', stockController.getAllStock);
-router.get('/:productId', stockController.getStockByProduct);
 
-// ADMIN only can adjust
+// ADMIN only can adjust (specific route before wildcard)
 router.post('/adjustment', authorize(ROLES.ADMIN), stockController.adjustStock);
+
+// Wildcard route last
+router.get('/:productId', stockController.getStockByProduct);
 
 module.exports = router;

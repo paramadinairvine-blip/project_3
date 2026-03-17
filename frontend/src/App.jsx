@@ -16,6 +16,7 @@ const ProductForm = lazy(() => import('./pages/products/ProductForm'));
 const ProductDetail = lazy(() => import('./pages/products/ProductDetail'));
 
 const CategoryList = lazy(() => import('./pages/categories/CategoryList'));
+const BrandList = lazy(() => import('./pages/brands/BrandList'));
 
 const SupplierList = lazy(() => import('./pages/suppliers/SupplierList'));
 const SupplierForm = lazy(() => import('./pages/suppliers/SupplierForm'));
@@ -84,6 +85,9 @@ function App() {
 
           {/* Kategori */}
           <Route path="kategori" element={<CategoryList />} />
+
+          {/* Brand */}
+          <Route path="brand" element={<BrandList />} />
 
           {/* Supplier */}
           <Route path="supplier" element={<SupplierList />} />
