@@ -191,9 +191,23 @@ export default function PurchaseOrderDetail() {
     },
     {
       key: 'quantity',
-      header: 'Jumlah',
+      header: 'Dipesan',
       render: (v) => <span className="font-medium">{v}</span>,
     },
+    ...(po.status === 'RECEIVED' ? [{
+      key: 'receivedQty',
+      header: 'Diterima',
+      render: (v, row) => {
+        const qty = v ?? 0;
+        const isShort = qty < row.quantity;
+        return (
+          <span className={`font-medium ${isShort ? 'text-amber-600' : 'text-green-600'}`}>
+            {qty}
+            {isShort && <span className="text-xs text-amber-500 ml-1">(-{row.quantity - qty})</span>}
+          </span>
+        );
+      },
+    }] : []),
     {
       key: 'price',
       header: 'Harga Satuan',
