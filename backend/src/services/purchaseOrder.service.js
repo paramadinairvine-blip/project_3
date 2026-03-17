@@ -272,13 +272,16 @@ const receive = async (id, receivedItems, userId) => {
 
   if (!existing) throw new AppError('Purchase order tidak ditemukan', 404);
   if (existing.status === 'RECEIVED') {
-    throw new AppError('Purchase order sudah diterima sebelumnya', 400);
+    throw new AppError('Purchase order sudah diterima sepenuhnya', 400);
   }
   if (existing.status === 'CANCELLED') {
     throw new AppError('Purchase order yang dibatalkan tidak dapat diterima', 400);
   }
+  if (existing.status === 'DRAFT') {
+    throw new AppError('PO berstatus DRAFT belum bisa diterima, kirim dulu ke supplier', 400);
+  }
 
-  // Build a map of itemId → receivedQty for fast lookup
+  // Build a map of itemId → receivedQty for this batch
   const receivedMap = new Map();
   if (receivedItems && receivedItems.length > 0) {
     for (const ri of receivedItems) {
@@ -287,14 +290,39 @@ const receive = async (id, receivedItems, userId) => {
   }
 
   const po = await prisma.$transaction(async (tx) => {
+    let allFullyReceived = true;
+
     for (const item of existing.items) {
-      const receivedQty = receivedMap.get(item.id) ?? item.quantity;
+      // For this batch: how many are being received now
+      const batchQty = receivedMap.get(item.id) ?? item.quantity;
+
+      // Skip items with 0 qty in this batch
+      if (batchQty <= 0) {
+        // Check if this item is already fully received
+        if (item.receivedQty < item.quantity) allFullyReceived = false;
+        continue;
+      }
+
+      // Calculate new total receivedQty (accumulated)
+      const newReceivedQty = item.receivedQty + batchQty;
+      const cappedReceivedQty = Math.min(newReceivedQty, item.quantity);
+
+      // Actual qty to add to stock (don't exceed ordered qty)
+      const actualAddQty = cappedReceivedQty - item.receivedQty;
+      if (actualAddQty <= 0) {
+        // Already fully received for this item
+        continue;
+      }
 
       // Update PO item receivedQty
       await tx.purchaseOrderItem.update({
         where: { id: item.id },
-        data: { receivedQty },
+        data: { receivedQty: cappedReceivedQty },
       });
+
+      if (cappedReceivedQty < item.quantity) {
+        allFullyReceived = false;
+      }
 
       // Add stock (StockMovement IN)
       const product = await tx.product.findUnique({ where: { id: item.productId } });
@@ -302,18 +330,18 @@ const receive = async (id, receivedItems, userId) => {
         throw new AppError(`Produk ${item.productId} tidak ditemukan`, 400);
       }
       const previousStock = product.stock;
-      const newStock = previousStock + receivedQty;
+      const newStock = previousStock + actualAddQty;
 
       await tx.stockMovement.create({
         data: {
           productId: item.productId,
           type: 'IN',
-          quantity: receivedQty,
+          quantity: actualAddQty,
           previousStock,
           newStock,
           referenceType: 'PO',
           referenceId: id,
-          notes: `Penerimaan PO ${existing.poNumber}`,
+          notes: `Penerimaan PO ${existing.poNumber} (batch)`,
           createdBy: userId,
         },
       });
@@ -346,11 +374,13 @@ const receive = async (id, receivedItems, userId) => {
       }
     }
 
+    const newStatus = allFullyReceived ? 'RECEIVED' : 'PARTIALLY_RECEIVED';
+
     return tx.purchaseOrder.update({
       where: { id },
       data: {
-        status: 'RECEIVED',
-        receivedAt: new Date(),
+        status: newStatus,
+        receivedAt: allFullyReceived ? new Date() : existing.receivedAt,
         updatedBy: userId,
       },
       include: poIncludes,
@@ -363,7 +393,7 @@ const receive = async (id, receivedItems, userId) => {
     tableName: 'purchase_orders',
     recordId: id,
     oldData: { status: existing.status },
-    newData: { status: 'RECEIVED', receivedItemCount: existing.items.length },
+    newData: { status: po.status, receivedItemCount: existing.items.length },
   });
 
   // In-app notification for admins (fire-and-forget)
@@ -379,7 +409,7 @@ const cancel = async (id, userId) => {
   const existing = await prisma.purchaseOrder.findUnique({ where: { id } });
 
   if (!existing) throw new AppError('Purchase order tidak ditemukan', 404);
-  if (existing.status !== 'DRAFT' && existing.status !== 'SENT') {
+  if (!['DRAFT', 'SENT'].includes(existing.status)) {
     throw new AppError('Hanya PO berstatus DRAFT atau SENT yang dapat dibatalkan', 400);
   }
 

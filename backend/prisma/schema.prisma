@@ -44,6 +44,7 @@ enum ReferenceType {
 enum POStatus {
   DRAFT
   SENT
+  PARTIALLY_RECEIVED
   RECEIVED
   CANCELLED
 }

@@ -48,6 +48,7 @@ export const REFERENCE_TYPES = {
 export const PO_STATUS = {
   DRAFT: 'DRAFT',
   SENT: 'SENT',
+  PARTIALLY_RECEIVED: 'PARTIALLY_RECEIVED',
   RECEIVED: 'RECEIVED',
   CANCELLED: 'CANCELLED',
 };
@@ -109,6 +110,7 @@ export const REFERENCE_TYPE_LABELS = {
 export const PO_STATUS_LABELS = {
   [PO_STATUS.DRAFT]: 'Draft',
   [PO_STATUS.SENT]: 'Terkirim',
+  [PO_STATUS.PARTIALLY_RECEIVED]: 'Diterima Sebagian',
   [PO_STATUS.RECEIVED]: 'Diterima',
   [PO_STATUS.CANCELLED]: 'Dibatalkan',
 };
@@ -148,6 +150,7 @@ export const TRANSACTION_TYPE_COLORS = {
 export const PO_STATUS_COLORS = {
   [PO_STATUS.DRAFT]: 'bg-gray-100 text-gray-800',
   [PO_STATUS.SENT]: 'bg-blue-100 text-blue-800',
+  [PO_STATUS.PARTIALLY_RECEIVED]: 'bg-amber-100 text-amber-800',
   [PO_STATUS.RECEIVED]: 'bg-green-100 text-green-800',
   [PO_STATUS.CANCELLED]: 'bg-red-100 text-red-800',
 };

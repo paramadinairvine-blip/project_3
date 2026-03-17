@@ -14,13 +14,14 @@ import { useState, useEffect } from 'react';
 const TIMELINE_CONFIG = {
   DRAFT: { label: 'Draft Dibuat', color: 'bg-gray-400' },
   SENT: { label: 'Dikirim ke Supplier', color: 'bg-blue-500' },
+  PARTIALLY_RECEIVED: { label: 'Diterima Sebagian', color: 'bg-amber-500' },
   RECEIVED: { label: 'Barang Diterima', color: 'bg-green-500' },
   CANCELLED: { label: 'Dibatalkan', color: 'bg-red-500' },
 };
 
 // eslint-disable-next-line no-unused-vars
 function StatusTimeline({ status, createdAt, updatedAt }) {
-  const flow = ['DRAFT', 'SENT', 'RECEIVED'];
+  const flow = ['DRAFT', 'SENT', 'PARTIALLY_RECEIVED', 'RECEIVED'];
   const cancelled = status === 'CANCELLED';
 
   const getStepState = (step) => {
@@ -135,13 +136,14 @@ export default function PurchaseOrderDetail() {
     receiveMutation.mutate(items);
   };
 
-  // Initialize receivedQtys when opening receive modal
+  // Initialize receivedQtys when opening receive modal — pre-fill with remaining qty
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (actionModal === 'receive' && po?.items) {
       const initial = {};
       po.items.forEach((item) => {
-        initial[item.id] = item.quantity;
+        const remaining = item.quantity - (item.receivedQty || 0);
+        initial[item.id] = Math.max(0, remaining);
       });
       setReceivedQtys(initial);
     }
@@ -194,7 +196,7 @@ export default function PurchaseOrderDetail() {
       header: 'Dipesan',
       render: (v) => <span className="font-medium">{v}</span>,
     },
-    ...(po.status === 'RECEIVED' ? [{
+    ...(['RECEIVED', 'PARTIALLY_RECEIVED'].includes(po.status) ? [{
       key: 'receivedQty',
       header: 'Diterima',
       render: (v, row) => {
@@ -202,8 +204,8 @@ export default function PurchaseOrderDetail() {
         const isShort = qty < row.quantity;
         return (
           <span className={`font-medium ${isShort ? 'text-amber-600' : 'text-green-600'}`}>
-            {qty}
-            {isShort && <span className="text-xs text-amber-500 ml-1">(-{row.quantity - qty})</span>}
+            {qty} / {row.quantity}
+            {isShort && <span className="text-xs text-amber-500 ml-1">(sisa {row.quantity - qty})</span>}
           </span>
         );
       },
@@ -258,14 +260,16 @@ export default function PurchaseOrderDetail() {
                 </Button>
               </>
             )}
-            {po.status === PO_STATUS.SENT && (
+            {(po.status === PO_STATUS.SENT || po.status === PO_STATUS.PARTIALLY_RECEIVED) && (
               <>
                 <Button size="sm" icon={HiCheck} onClick={() => setActionModal('receive')}>
                   Terima Barang
                 </Button>
-                <Button variant="danger" size="sm" icon={HiBan} onClick={() => setActionModal('cancel')}>
-                  Batalkan
-                </Button>
+                {po.status === PO_STATUS.SENT && (
+                  <Button variant="danger" size="sm" icon={HiBan} onClick={() => setActionModal('cancel')}>
+                    Batalkan
+                  </Button>
+                )}
               </>
             )}
           </div>
@@ -384,7 +388,10 @@ export default function PurchaseOrderDetail() {
         }
       >
         <p className="text-sm text-gray-600 mb-4">
-          Masukkan jumlah barang yang diterima untuk setiap item. Default sudah diisi sesuai jumlah yang dipesan.
+          {po?.status === 'PARTIALLY_RECEIVED'
+            ? 'Masukkan jumlah barang yang diterima pada batch ini. Default diisi sisa yang belum diterima.'
+            : 'Masukkan jumlah barang yang diterima untuk setiap item. Default sudah diisi sesuai jumlah yang dipesan.'
+          }
         </p>
         <div className="border border-gray-200 rounded-lg overflow-hidden">
           <table className="w-full text-sm">
@@ -393,27 +400,45 @@ export default function PurchaseOrderDetail() {
                 <th className="px-4 py-2.5 text-left font-semibold text-gray-600">Produk</th>
                 <th className="px-4 py-2.5 text-left font-semibold text-gray-600">Satuan</th>
                 <th className="px-4 py-2.5 text-right font-semibold text-gray-600">Dipesan</th>
-                <th className="px-4 py-2.5 text-right font-semibold text-gray-600">Diterima</th>
+                {po?.status === 'PARTIALLY_RECEIVED' && (
+                  <th className="px-4 py-2.5 text-right font-semibold text-gray-600">Sudah Diterima</th>
+                )}
+                <th className="px-4 py-2.5 text-right font-semibold text-gray-600">Diterima Batch Ini</th>
               </tr>
             </thead>
             <tbody>
-              {(po?.items || []).map((item) => (
-                <tr key={item.id} className="border-b border-gray-100">
-                  <td className="px-4 py-2.5 font-medium text-gray-900">{item.product?.name || '-'}</td>
-                  <td className="px-4 py-2.5 text-gray-600">{item.unit?.name || item.product?.unit || '-'}</td>
-                  <td className="px-4 py-2.5 text-right text-gray-600">{item.quantity}</td>
-                  <td className="px-4 py-2.5 text-right">
-                    <input
-                      type="number"
-                      min="0"
-                      max={item.quantity}
-                      value={receivedQtys[item.id] ?? item.quantity}
-                      onChange={(e) => setReceivedQtys((prev) => ({ ...prev, [item.id]: e.target.value }))}
-                      className="w-20 rounded border-gray-300 text-sm py-1.5 px-2 text-right focus:border-blue-500 focus:ring-blue-500"
-                    />
-                  </td>
-                </tr>
-              ))}
+              {(po?.items || []).map((item) => {
+                const remaining = item.quantity - (item.receivedQty || 0);
+                const isFullyReceived = remaining <= 0;
+                return (
+                  <tr key={item.id} className={`border-b border-gray-100 ${isFullyReceived ? 'bg-green-50' : ''}`}>
+                    <td className="px-4 py-2.5 font-medium text-gray-900">{item.product?.name || '-'}</td>
+                    <td className="px-4 py-2.5 text-gray-600">{item.unit?.name || item.product?.unit || '-'}</td>
+                    <td className="px-4 py-2.5 text-right text-gray-600">{item.quantity}</td>
+                    {po?.status === 'PARTIALLY_RECEIVED' && (
+                      <td className="px-4 py-2.5 text-right text-gray-600">
+                        <span className={isFullyReceived ? 'text-green-600 font-medium' : 'text-amber-600'}>
+                          {item.receivedQty || 0}
+                        </span>
+                      </td>
+                    )}
+                    <td className="px-4 py-2.5 text-right">
+                      {isFullyReceived ? (
+                        <span className="text-green-600 text-xs font-medium">Lengkap</span>
+                      ) : (
+                        <input
+                          type="number"
+                          min="0"
+                          max={remaining}
+                          value={receivedQtys[item.id] ?? remaining}
+                          onChange={(e) => setReceivedQtys((prev) => ({ ...prev, [item.id]: e.target.value }))}
+                          className="w-20 rounded border-gray-300 text-sm py-1.5 px-2 text-right focus:border-blue-500 focus:ring-blue-500"
+                        />
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
