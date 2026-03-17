@@ -15,6 +15,7 @@ const STATUS_TABS = [
   { key: '', label: 'Semua' },
   { key: PO_STATUS.DRAFT, label: 'Draft' },
   { key: PO_STATUS.SENT, label: 'Terkirim' },
+  { key: PO_STATUS.PARTIALLY_RECEIVED, label: 'Sebagian' },
   { key: PO_STATUS.RECEIVED, label: 'Diterima' },
   { key: PO_STATUS.CANCELLED, label: 'Dibatalkan' },
 ];
@@ -178,7 +179,7 @@ export default function PurchaseOrderList() {
             </>
           )}
 
-          {canEdit && row.status === PO_STATUS.SENT && (
+          {canEdit && (row.status === PO_STATUS.SENT || row.status === PO_STATUS.PARTIALLY_RECEIVED) && (
             <>
               <button
                 onClick={(e) => { e.stopPropagation(); navigate(`/purchase-order/${row.id}`); }}
@@ -188,14 +189,16 @@ export default function PurchaseOrderList() {
               >
                 <HiCheck className="w-4 h-4" />
               </button>
-              <button
-                onClick={(e) => { e.stopPropagation(); setActionModal({ type: 'cancel', po: row }); }}
-                className="p-1.5 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                title="Batalkan"
-                aria-label="Batalkan PO"
-              >
-                <HiBan className="w-4 h-4" />
-              </button>
+              {row.status === PO_STATUS.SENT && (
+                <button
+                  onClick={(e) => { e.stopPropagation(); setActionModal({ type: 'cancel', po: row }); }}
+                  className="p-1.5 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                  title="Batalkan"
+                  aria-label="Batalkan PO"
+                >
+                  <HiBan className="w-4 h-4" />
+                </button>
+              )}
             </>
           )}
         </div>
