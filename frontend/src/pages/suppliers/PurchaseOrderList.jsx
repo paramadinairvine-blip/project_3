@@ -29,7 +29,7 @@ export default function PurchaseOrderList() {
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState(searchParams.get('status') || '');
-  const [actionModal, setActionModal] = useState(null); // { type: 'send'|'receive'|'cancel', po }
+  const [actionModal, setActionModal] = useState(null); // { type: 'send'|'cancel', po }
 
   const supplierFilter = searchParams.get('supplier') || '';
 
@@ -55,16 +55,6 @@ export default function PurchaseOrderList() {
     onError: (err) => toast.error(getErrorMessage(err, 'Gagal mengirim PO')),
   });
 
-  const receiveMutation = useMutation({
-    mutationFn: (id) => purchaseOrderAPI.receive(id),
-    onSuccess: () => {
-      toast.success('Barang PO berhasil diterima, stok diperbarui');
-      queryClient.invalidateQueries({ queryKey: ['purchase-orders'] });
-      setActionModal(null);
-    },
-    onError: (err) => toast.error(getErrorMessage(err, 'Gagal menerima barang')),
-  });
-
   const cancelMutation = useMutation({
     mutationFn: (id) => purchaseOrderAPI.cancel(id),
     onSuccess: () => {
@@ -82,11 +72,10 @@ export default function PurchaseOrderList() {
     if (!actionModal) return;
     const { type, po } = actionModal;
     if (type === 'send') sendMutation.mutate(po.id);
-    else if (type === 'receive') receiveMutation.mutate(po.id);
     else if (type === 'cancel') cancelMutation.mutate(po.id);
   };
 
-  const isActionLoading = sendMutation.isPending || receiveMutation.isPending || cancelMutation.isPending;
+  const isActionLoading = sendMutation.isPending || cancelMutation.isPending;
 
   const getActionModalText = () => {
     if (!actionModal) return {};
@@ -96,12 +85,6 @@ export default function PurchaseOrderList() {
         title: 'Kirim PO ke Supplier',
         message: `Kirim PO ${po.poNumber} ke supplier ${po.supplier?.name || ''}? Status akan berubah menjadi "Terkirim".`,
         buttonText: 'Kirim PO',
-        buttonVariant: 'primary',
-      };
-      case 'receive': return {
-        title: 'Terima Barang PO',
-        message: `Konfirmasi penerimaan barang PO ${po.poNumber}? Stok produk akan otomatis bertambah sesuai item PO.`,
-        buttonText: 'Terima Barang',
         buttonVariant: 'primary',
       };
       case 'cancel': return {
@@ -198,7 +181,7 @@ export default function PurchaseOrderList() {
           {canEdit && row.status === PO_STATUS.SENT && (
             <>
               <button
-                onClick={(e) => { e.stopPropagation(); setActionModal({ type: 'receive', po: row }); }}
+                onClick={(e) => { e.stopPropagation(); navigate(`/purchase-order/${row.id}`); }}
                 className="p-1.5 text-gray-500 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors"
                 title="Terima Barang"
                 aria-label="Terima Barang"
