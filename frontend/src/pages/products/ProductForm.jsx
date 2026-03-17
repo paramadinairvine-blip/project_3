@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { HiPlus, HiTrash, HiUpload, HiArrowLeft, HiRefresh } from 'react-icons/hi';
 import toast from 'react-hot-toast';
-import { productAPI, categoryAPI, unitAPI } from '../../api/endpoints';
+import { productAPI, categoryAPI, brandAPI, unitAPI } from '../../api/endpoints';
 import { Button, Input, Select, Card } from '../../components/common';
 import { getErrorMessage } from '../../utils/handleError';
 import useUnsavedChanges from '../../hooks/useUnsavedChanges';
@@ -32,6 +32,11 @@ export default function ProductForm() {
   const { data: categories } = useQuery({
     queryKey: ['categories'],
     queryFn: async () => { const { data } = await categoryAPI.getAll(); return data.data; },
+  });
+
+  const { data: brands } = useQuery({
+    queryKey: ['brands'],
+    queryFn: async () => { const { data } = await brandAPI.getAll(); return data.data; },
   });
 
   const { data: unitMeasures } = useQuery({
@@ -97,6 +102,8 @@ export default function ProductForm() {
       }
     });
   }
+
+  const brandOptions = (brands || []).map((b) => ({ value: b.id, label: b.name }));
 
   const commonUnits = ['pcs', 'kg', 'sak', 'box', 'batang', 'meter', 'liter', 'lembar', 'roll', 'set'];
 
@@ -255,6 +262,7 @@ export default function ProductForm() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Input label="Nama Produk" value={form.name} onChange={(e) => updateForm('name', e.target.value)} error={errors.name} placeholder="Contoh: Semen Tiga Roda 50kg" className="md:col-span-2" autoFocus />
             <Select label="Kategori" options={categoryOptions} value={form.categoryId} onChange={(v) => updateForm('categoryId', v)} error={errors.categoryId} placeholder="Pilih kategori..." searchable />
+            <Select label="Brand" options={brandOptions} value={form.brandId} onChange={(v) => updateForm('brandId', v)} placeholder="Pilih brand (opsional)..." searchable />
             <Input label="Deskripsi" type="textarea" value={form.description} onChange={(e) => updateForm('description', e.target.value)} placeholder="Deskripsi produk (opsional)" className="md:col-span-2" />
           </div>
         </Card>
