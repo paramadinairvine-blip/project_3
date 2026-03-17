@@ -289,7 +289,6 @@ const receive = async (id, receivedItems, userId) => {
   const po = await prisma.$transaction(async (tx) => {
     for (const item of existing.items) {
       const receivedQty = receivedMap.get(item.id) ?? item.quantity;
-      console.log('[PO RECEIVE] Processing item:', item.id, '| productId:', item.productId, '| receivedQty:', receivedQty);
 
       // Update PO item receivedQty
       await tx.purchaseOrderItem.update({
@@ -304,7 +303,6 @@ const receive = async (id, receivedItems, userId) => {
       }
       const previousStock = product.stock;
       const newStock = previousStock + receivedQty;
-      console.log('[PO RECEIVE] Stock update:', product.name, '| prev:', previousStock, '| new:', newStock);
 
       await tx.stockMovement.create({
         data: {
@@ -330,7 +328,6 @@ const receive = async (id, receivedItems, userId) => {
       const currentBuyPrice = Number(product.buyPrice);
 
       if (poBuyPrice !== currentBuyPrice) {
-        console.log('[PO RECEIVE] Price changed for', product.name, '| old:', currentBuyPrice, '| new:', poBuyPrice);
         await tx.priceHistory.create({
           data: {
             productId: item.productId,
@@ -349,7 +346,6 @@ const receive = async (id, receivedItems, userId) => {
       }
     }
 
-    console.log('[PO RECEIVE] Updating PO status to RECEIVED');
     return tx.purchaseOrder.update({
       where: { id },
       data: {

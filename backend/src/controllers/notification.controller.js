@@ -1,5 +1,6 @@
 const prisma = require('../lib/prisma');
 const stockService = require('../services/stock.service');
+const notificationService = require('../services/notification.service');
 const { successResponse, errorResponse, paginatedResponse } = require('../utils/responseHelper');
 const { DEFAULT_PAGE_SIZE } = require('../utils/constants');
 
@@ -71,4 +72,50 @@ const checkLowStock = async (req, res) => {
   }
 };
 
-module.exports = { getAll, checkLowStock };
+const getMyNotifications = async (req, res) => {
+  try {
+    const { page, limit } = req.query;
+    const pageNum = parseInt(page) || 1;
+    const limitNum = parseInt(limit) || DEFAULT_PAGE_SIZE;
+
+    const result = await notificationService.getMyNotifications(req.user.id, {
+      page: pageNum,
+      limit: limitNum,
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: 'Notifikasi berhasil diambil',
+      data: result.data,
+      unreadCount: result.unreadCount,
+      pagination: {
+        total: result.total,
+        page: result.page,
+        limit: result.limit,
+        totalPages: Math.ceil(result.total / result.limit),
+      },
+    });
+  } catch (err) {
+    return errorResponse(res, err.message, err.status || 500);
+  }
+};
+
+const markAsRead = async (req, res) => {
+  try {
+    await notificationService.markAsRead(req.params.id, req.user.id);
+    return successResponse(res, null, 'Notifikasi ditandai telah dibaca');
+  } catch (err) {
+    return errorResponse(res, err.message, err.status || 500);
+  }
+};
+
+const markAllAsRead = async (req, res) => {
+  try {
+    const result = await notificationService.markAllAsRead(req.user.id);
+    return successResponse(res, { count: result.count }, 'Semua notifikasi ditandai telah dibaca');
+  } catch (err) {
+    return errorResponse(res, err.message, err.status || 500);
+  }
+};
+
+module.exports = { getAll, checkLowStock, getMyNotifications, markAsRead, markAllAsRead };
