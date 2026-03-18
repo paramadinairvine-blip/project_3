@@ -19,4 +19,4 @@ RUN mkdir -p uploads
 
 EXPOSE 5000
 
-CMD ["node", "src/index.js"]
+CMD ["sh", "-c", "npx prisma migrate deploy && node src/index.js"]
