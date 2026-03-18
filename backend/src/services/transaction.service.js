@@ -203,57 +203,66 @@ const getById = async (id) => {
 const create = async (data, userId) => {
   const { items, ...header } = data;
 
-  // ── 1. Pre-validate: fetch all products & check stock BEFORE writing ──
-  const productIds = [...new Set(items.map((i) => i.productId))];
-  const products = await prisma.product.findMany({
-    where: { id: { in: productIds } },
-    include: { productUnits: true },
-  });
-
-  const productMap = {};
-  for (const p of products) productMap[p.id] = p;
-
-  // Calculate totals & validate
-  let subtotal = 0;
-  const processedItems = [];
-
-  for (const item of items) {
-    const product = productMap[item.productId];
-    if (!product) {
-      throw new AppError(`Produk tidak ditemukan: ${item.productId}`, 404);
-    }
-
-    // Convert quantity to base unit
-    let qty = item.quantity;
-    if (item.unitId && product.unitId && product.unitId !== item.unitId) {
-      const pu = product.productUnits.find(
-        (u) => u.productId === item.productId && u.unitId === item.unitId
-      );
-      if (pu) qty = Math.round(item.quantity * Number(pu.conversionFactor));
-    }
-
-    if (product.stock - qty < 0) {
-      throw new AppError(`Stok ${product.name} tidak mencukupi (tersisa ${product.stock})`, 400);
-    }
-
-    const itemDiscount = item.discount || 0;
-    const itemSubtotal = item.quantity * item.price - itemDiscount;
-    subtotal += itemSubtotal;
-    processedItems.push({ ...item, discount: itemDiscount, subtotal: itemSubtotal, baseQty: qty });
-  }
-
-  const discount = header.discount || 0;
-  const tax = header.tax || 0;
-  const total = subtotal - discount + tax;
-  const paidAmount = header.paidAmount || 0;
-  const changeAmount = paidAmount > total ? paidAmount - total : 0;
-
-  // ── 2. Write everything atomically using $transaction ──
+  // Everything runs inside a single transaction with row-level locking
+  // to prevent race conditions on stock checks & deductions.
   const transaction = await prisma.$transaction(async (tx) => {
-    // Generate transaction number inside transaction for consistency
+    // ── 1. Lock & fetch products using SELECT ... FOR UPDATE ──
+    const productIds = [...new Set(items.map((i) => i.productId))];
+    const products = await tx.$queryRawUnsafe(
+      `SELECT p.*, json_agg(pu.*) FILTER (WHERE pu.id IS NOT NULL) AS "productUnits"
+       FROM "Product" p
+       LEFT JOIN "ProductUnit" pu ON pu."productId" = p.id
+       WHERE p.id IN (${productIds.map((_, i) => `$${i + 1}`).join(', ')})
+       GROUP BY p.id
+       FOR UPDATE OF p`,
+      ...productIds
+    );
+
+    const productMap = {};
+    for (const p of products) {
+      // Parse productUnits from raw query (null when no units)
+      p.productUnits = p.productUnits || [];
+      productMap[p.id] = p;
+    }
+
+    // ── 2. Validate stock & calculate totals ──
+    let subtotal = 0;
+    const processedItems = [];
+
+    for (const item of items) {
+      const product = productMap[item.productId];
+      if (!product) {
+        throw new AppError(`Produk tidak ditemukan: ${item.productId}`, 404);
+      }
+
+      // Convert quantity to base unit
+      let qty = item.quantity;
+      if (item.unitId && product.unitId && product.unitId !== item.unitId) {
+        const pu = product.productUnits.find(
+          (u) => u.productId === item.productId && u.unitId === item.unitId
+        );
+        if (pu) qty = Math.round(item.quantity * Number(pu.conversionFactor));
+      }
+
+      if (product.stock - qty < 0) {
+        throw new AppError(`Stok ${product.name} tidak mencukupi (tersisa ${product.stock})`, 400);
+      }
+
+      const itemDiscount = item.discount || 0;
+      const itemSubtotal = item.quantity * item.price - itemDiscount;
+      subtotal += itemSubtotal;
+      processedItems.push({ ...item, discount: itemDiscount, subtotal: itemSubtotal, baseQty: qty });
+    }
+
+    const discount = header.discount || 0;
+    const tax = header.tax || 0;
+    const total = subtotal - discount + tax;
+    const paidAmount = header.paidAmount || 0;
+    const changeAmount = paidAmount > total ? paidAmount - total : 0;
+
+    // ── 3. Write transaction data ──
     const transactionNumber = await generateTransactionNumber(tx);
 
-    // Create transaction header
     const created = await tx.transaction.create({
       data: {
         transactionNumber,
@@ -277,19 +286,19 @@ const create = async (data, userId) => {
       },
     });
 
-    // Batch create all transaction items
     await tx.transactionItem.createMany({
       data: processedItems.map((item) => ({
         transactionId: created.id,
         productId: item.productId,
         quantity: item.quantity,
+        baseQty: item.baseQty,
         price: item.price,
         discount: item.discount,
         subtotal: item.subtotal,
       })),
     });
 
-    // Deduct stock & create stock movements for each item
+    // ── 4. Deduct stock (data already locked, safe from race condition) ──
     for (const item of processedItems) {
       const product = productMap[item.productId];
       const newStock = product.stock - item.baseQty;
@@ -325,7 +334,6 @@ const create = async (data, userId) => {
       });
     }
 
-    // Fetch full transaction with relations
     return tx.transaction.findUnique({
       where: { id: created.id },
       include: transactionIncludes,
@@ -369,14 +377,33 @@ const cancel = async (id, userId) => {
   }
 
   const transaction = await prisma.$transaction(async (tx) => {
-    // Restore stock for every item
+    // Restore stock for every item using baseQty (already converted to base unit)
     for (const item of existing.items) {
-      await restoreStock(tx, {
-        productId: item.productId,
-        quantity: item.quantity,
-        referenceId: id,
-        userId,
-        unitId: item.unitId || undefined,
+      // Use baseQty if available (new transactions), fallback to quantity (old data)
+      const restoreQty = item.baseQty || item.quantity;
+
+      const product = await tx.product.findUnique({ where: { id: item.productId } });
+      if (!product) continue;
+
+      const newStock = product.stock + restoreQty;
+
+      await tx.stockMovement.create({
+        data: {
+          productId: item.productId,
+          type: 'IN',
+          quantity: restoreQty,
+          previousStock: product.stock,
+          newStock,
+          referenceType: 'TRANSACTION',
+          referenceId: id,
+          notes: 'Pembatalan transaksi',
+          createdBy: userId,
+        },
+      });
+
+      await tx.product.update({
+        where: { id: item.productId },
+        data: { stock: newStock },
       });
     }
 

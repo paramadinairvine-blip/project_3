@@ -294,7 +294,7 @@ const receive = async (id, receivedItems, userId) => {
 
     for (const item of existing.items) {
       // For this batch: how many are being received now
-      const batchQty = receivedMap.get(item.id) ?? item.quantity;
+      const batchQty = receivedMap.get(item.id) ?? 0;
 
       // Skip items with 0 qty in this batch
       if (batchQty <= 0) {

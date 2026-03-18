@@ -382,15 +382,29 @@ const completeOpname = async (opnameId, userId) => {
     const adjustments = [];
     for (const item of opname.items) {
       if (item.difference !== 0) {
-        const product = await tx.product.findUnique({ where: { id: item.productId } });
+        // Lock the product row to prevent race conditions
+        const [product] = await tx.$queryRawUnsafe(
+          `SELECT * FROM "Product" WHERE id = $1 FOR UPDATE`,
+          item.productId
+        );
+
+        if (!product) continue;
+
+        // Apply the opname difference to CURRENT stock instead of overwriting.
+        // This preserves transactions/POs that happened during opname.
+        // Example: systemStock=100, actualStock=95, difference=-5
+        //          currentStock=110 (changed during opname)
+        //          newStock = 110 + (-5) = 105 ✓ (not overwritten to 95)
+        const currentStock = product.stock;
+        const newStock = currentStock + item.difference;
 
         const movement = await tx.stockMovement.create({
           data: {
             productId: item.productId,
             type: 'OPNAME',
             quantity: item.difference,
-            previousStock: product.stock,
-            newStock: item.actualStock,
+            previousStock: currentStock,
+            newStock,
             referenceType: 'OPNAME',
             referenceId: opnameId,
             notes: `Stock opname ${opname.opnameNumber}: selisih ${item.difference > 0 ? '+' : ''}${item.difference}`,
@@ -400,7 +414,7 @@ const completeOpname = async (opnameId, userId) => {
 
         await tx.product.update({
           where: { id: item.productId },
-          data: { stock: item.actualStock },
+          data: { stock: newStock },
         });
 
         adjustments.push(movement);
