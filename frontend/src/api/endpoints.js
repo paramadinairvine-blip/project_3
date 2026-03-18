@@ -120,6 +120,14 @@ export const notificationAPI = {
   checkLowStock: () => api.post('/notifications/check-low-stock'),
 };
 
+// ==================== Return ====================
+export const returnAPI = {
+  getAll: (params) => api.get('/returns', { params }),
+  getById: (id) => api.get(`/returns/${id}`),
+  getByTransaction: (transactionId) => api.get(`/returns/transaction/${transactionId}`),
+  create: (data) => api.post('/returns', data),
+};
+
 // ==================== Audit Log ====================
 export const auditLogAPI = {
   getAll: (params) => api.get('/audit-logs', { params }),

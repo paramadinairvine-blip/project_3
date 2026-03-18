@@ -1,12 +1,13 @@
 import { useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { HiSearch, HiPrinter, HiChevronLeft, HiChevronRight } from 'react-icons/hi';
+import { HiSearch, HiPrinter, HiChevronLeft, HiChevronRight, HiRefresh } from 'react-icons/hi';
 import toast from 'react-hot-toast';
 import { transactionAPI } from '../api/endpoints';
 import { formatRupiah } from '../utils/formatCurrency';
 import { TRANSACTION_TYPE_LABELS, TRANSACTION_TYPE_COLORS } from '../utils/constants';
 import { Loading, EmptyState } from '../components/common';
 import ReceiptPrint from '../components/receipt/ReceiptPrint';
+import ReturModal from '../components/ReturModal';
 import { printReceipt, isRectaConfigured } from '../utils/printerService';
 import DualCalendar from '../components/common/DualCalendar';
 
@@ -14,6 +15,7 @@ export default function History() {
   const [search, setSearch] = useState('');
   const [showSearch, setShowSearch] = useState(false);
   const [receiptData, setReceiptData] = useState(null);
+  const [returData, setReturData] = useState(null);
   const [page, setPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(50);
 
@@ -68,6 +70,15 @@ export default function History() {
     setFilterStart(null);
     setFilterEnd(null);
     setPage(1);
+  };
+
+  const handleRetur = async (trx) => {
+    try {
+      const { data: res } = await transactionAPI.getById(trx.id);
+      setReturData(res.data);
+    } catch {
+      toast.error('Gagal memuat detail transaksi');
+    }
   };
 
   const handlePrint = async (trx) => {
@@ -248,7 +259,7 @@ export default function History() {
 
                     {/* Actions */}
                     <td className="px-4 py-3 align-top">
-                      <div className="flex items-center justify-center">
+                      <div className="flex items-center justify-center gap-2">
                         <button
                           onClick={() => handlePrint(trx)}
                           className="p-2 bg-indigo-500 text-white rounded-lg hover:bg-indigo-600 transition-colors"
@@ -256,6 +267,16 @@ export default function History() {
                         >
                           <HiPrinter className="w-4 h-4" />
                         </button>
+                        {trx.status === 'COMPLETED' && (
+                          <button
+                            onClick={() => handleRetur(trx)}
+                            className="px-3 py-2 bg-white border-2 border-green-500 text-green-600 rounded-lg hover:bg-green-50 transition-colors flex items-center gap-1.5 text-xs font-bold"
+                            title="Retur"
+                          >
+                            <HiRefresh className="w-4 h-4" />
+                            RETUR
+                          </button>
+                        )}
                       </div>
                     </td>
                   </tr>
@@ -271,6 +292,14 @@ export default function History() {
         <ReceiptPrint
           transaction={receiptData}
           onClose={() => setReceiptData(null)}
+        />
+      )}
+
+      {/* Retur Modal */}
+      {returData && (
+        <ReturModal
+          transaction={returData}
+          onClose={() => setReturData(null)}
         />
       )}
     </div>

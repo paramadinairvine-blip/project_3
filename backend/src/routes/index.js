@@ -16,6 +16,7 @@ const projectRoutes = require('./project.routes');
 const reportRoutes = require('./report.routes');
 const brandRoutes = require('./brand.routes');
 const notificationRoutes = require('./notification.routes');
+const returnRoutes = require('./return.routes');
 
 router.use('/auth', authRoutes);
 router.use('/users', userRoutes);
@@ -32,5 +33,6 @@ router.use('/projects', projectRoutes);
 router.use('/reports', reportRoutes);
 router.use('/brands', brandRoutes);
 router.use('/notifications', notificationRoutes);
+router.use('/returns', returnRoutes);
 
 module.exports = router;

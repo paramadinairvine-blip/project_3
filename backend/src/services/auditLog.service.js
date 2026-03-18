@@ -36,6 +36,8 @@ const getModelDelegate = (tableName) => {
     unit_of_measures: prisma.unitOfMeasure,
     unit_lembaga: prisma.unitLembaga,
     notifications: prisma.notification,
+    transaction_returns: prisma.transactionReturn,
+    transaction_return_items: prisma.transactionReturnItem,
   };
 
   return map[tableName] || null;

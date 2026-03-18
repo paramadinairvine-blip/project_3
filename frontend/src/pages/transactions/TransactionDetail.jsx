@@ -1,6 +1,6 @@
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { HiArrowLeft, HiBan, HiPrinter } from 'react-icons/hi';
+import { HiArrowLeft, HiBan, HiPrinter, HiRefresh } from 'react-icons/hi';
 import toast from 'react-hot-toast';
 import { useState } from 'react';
 import { transactionAPI } from '../../api/endpoints';
@@ -16,6 +16,7 @@ import useAuth from '../../hooks/useAuth';
 import ReceiptPrint from '../../components/ReceiptPrint';
 import DeliveryNotePrint from '../../components/DeliveryNotePrint';
 import InvoicePrint from '../../components/InvoicePrint';
+import ReturModal from '../../components/ReturModal';
 
 export default function TransactionDetail() {
   const { id } = useParams();
@@ -24,6 +25,7 @@ export default function TransactionDetail() {
   const { isAdmin } = useAuth();
 
   const [showCancel, setShowCancel] = useState(false);
+  const [showRetur, setShowRetur] = useState(false);
   const [printMode, setPrintMode] = useState(null); // 'receipt' | 'delivery' | 'invoice'
 
   const { data: trx, isLoading } = useQuery({
@@ -119,6 +121,12 @@ export default function TransactionDetail() {
             Faktur
           </Button>
 
+          {trx.status === 'COMPLETED' && (
+            <Button variant="outline" size="sm" icon={HiRefresh} onClick={() => setShowRetur(true)} aria-label="Retur transaksi"
+              className="!text-green-600 !border-green-300 hover:!bg-green-50">
+              Retur
+            </Button>
+          )}
           {isAdmin && trx.status === 'COMPLETED' && (
             <Button variant="danger" size="sm" icon={HiBan} onClick={() => setShowCancel(true)} aria-label="Batalkan transaksi">
               Batalkan
@@ -206,6 +214,11 @@ export default function TransactionDetail() {
           Stok barang akan dikembalikan.
         </p>
       </Modal>
+
+      {/* Retur Modal */}
+      {showRetur && (
+        <ReturModal transaction={trx} onClose={() => setShowRetur(false)} />
+      )}
 
       {/* Print Modals */}
       {printMode === 'receipt' && (

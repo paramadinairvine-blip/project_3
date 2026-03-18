@@ -27,6 +27,9 @@ const PurchaseOrderDetail = lazy(() => import('./pages/suppliers/PurchaseOrderDe
 const TransactionList = lazy(() => import('./pages/transactions/TransactionList'));
 const TransactionDetail = lazy(() => import('./pages/transactions/TransactionDetail'));
 
+const ReturnList = lazy(() => import('./pages/returns/ReturnList'));
+const ReturnDetail = lazy(() => import('./pages/returns/ReturnDetail'));
+
 const StockOverview = lazy(() => import('./pages/stock/StockOverview'));
 const StockOpname = lazy(() => import('./pages/stock/StockOpname'));
 
@@ -118,7 +121,11 @@ function App() {
 
           {/* Transaksi */}
           <Route path="transaksi" element={<TransactionList />} />
-<Route path="transaksi/:id" element={<TransactionDetail />} />
+          <Route path="transaksi/:id" element={<TransactionDetail />} />
+
+          {/* Retur */}
+          <Route path="retur" element={<ReturnList />} />
+          <Route path="retur/:id" element={<ReturnDetail />} />
 
           {/* Stok */}
           <Route path="stok" element={<StockOverview />} />

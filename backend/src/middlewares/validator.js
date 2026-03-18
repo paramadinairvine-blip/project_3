@@ -217,6 +217,21 @@ const validateStockOpname = [
   handleValidationErrors,
 ];
 
+// ==================== Return ====================
+
+const validateReturn = [
+  body('transactionId')
+    .notEmpty().withMessage('ID transaksi wajib diisi'),
+  body('items')
+    .isArray({ min: 1 }).withMessage('Item retur harus berupa array minimal 1 item'),
+  body('items.*.transactionItemId')
+    .notEmpty().withMessage('ID item transaksi wajib diisi'),
+  body('items.*.quantity')
+    .notEmpty().withMessage('Jumlah retur wajib diisi')
+    .isInt({ min: 1 }).withMessage('Jumlah retur harus minimal 1'),
+  handleValidationErrors,
+];
+
 module.exports = {
   handleValidationErrors,
   validateLogin,
@@ -231,4 +246,5 @@ module.exports = {
   validateSupplier,
   validateProject,
   validateStockOpname,
+  validateReturn,
 };

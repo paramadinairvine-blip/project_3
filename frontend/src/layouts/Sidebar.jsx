@@ -56,6 +56,7 @@ const menuItems = [
     icon: HiCurrencyDollar,
     children: [
       { label: 'Transaksi', code: 'TR', path: '/transaksi' },
+      { label: 'Retur', code: 'RT', path: '/retur' },
     ],
   },
   {
