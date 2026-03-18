@@ -208,20 +208,23 @@ const create = async (data, userId) => {
   const transaction = await prisma.$transaction(async (tx) => {
     // ── 1. Lock & fetch products using SELECT ... FOR UPDATE ──
     const productIds = [...new Set(items.map((i) => i.productId))];
-    const products = await tx.$queryRawUnsafe(
-      `SELECT p.*, json_agg(pu.*) FILTER (WHERE pu.id IS NOT NULL) AS "productUnits"
-       FROM "products" p
-       LEFT JOIN "product_units" pu ON pu."productId" = p.id
-       WHERE p.id IN (${productIds.map((_, i) => `$${i + 1}`).join(', ')})
-       GROUP BY p.id
-       FOR UPDATE OF p`,
+
+    // Step 1a: Lock product rows (FOR UPDATE not allowed with GROUP BY)
+    await tx.$queryRawUnsafe(
+      `SELECT id FROM "products"
+       WHERE id IN (${productIds.map((_, i) => `$${i + 1}`).join(', ')})
+       FOR UPDATE`,
       ...productIds
     );
 
+    // Step 1b: Fetch products with units (rows are now locked)
+    const products = await tx.product.findMany({
+      where: { id: { in: productIds } },
+      include: { productUnits: true },
+    });
+
     const productMap = {};
     for (const p of products) {
-      // Parse productUnits from raw query (null when no units)
-      p.productUnits = p.productUnits || [];
       productMap[p.id] = p;
     }
 
