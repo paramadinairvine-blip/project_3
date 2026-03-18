@@ -136,37 +136,47 @@ const bulkGenerate = async (productIds) => {
     throw new AppError('Daftar produk tidak boleh kosong', 400);
   }
 
+  // Batch fetch all products with their categories in one query
+  const products = await prisma.product.findMany({
+    where: { id: { in: productIds } },
+    include: { category: { select: { name: true } } },
+  });
+
+  const productMap = {};
+  for (const p of products) productMap[p.id] = p;
+
+  // Separate products that need barcodes from those that don't
+  const toGenerate = [];
   const results = [];
 
   for (const productId of productIds) {
-    try {
-      const product = await prisma.product.findUnique({
-        where: { id: productId },
-        include: { category: { select: { name: true } } },
-      });
-
-      if (!product) {
-        results.push({ productId, barcode: null, status: 'error', message: 'Produk tidak ditemukan' });
-        continue;
-      }
-
-      if (product.barcode) {
-        results.push({ productId, barcode: product.barcode, status: 'skipped', message: 'Sudah memiliki barcode' });
-        continue;
-      }
-
-      const categoryCode = product.category ? product.category.name.substring(0, 3) : 'GEN';
-      const barcode = await generate(categoryCode);
-
-      await prisma.product.update({
-        where: { id: productId },
-        data: { barcode },
-      });
-
-      results.push({ productId, barcode, status: 'success', message: 'Barcode berhasil dibuat' });
-    } catch (err) {
-      results.push({ productId, barcode: null, status: 'error', message: err.message });
+    const product = productMap[productId];
+    if (!product) {
+      results.push({ productId, barcode: null, status: 'error', message: 'Produk tidak ditemukan' });
+      continue;
     }
+    if (product.barcode) {
+      results.push({ productId, barcode: product.barcode, status: 'skipped', message: 'Sudah memiliki barcode' });
+      continue;
+    }
+    toGenerate.push(product);
+  }
+
+  // Generate and assign barcodes inside a transaction for atomicity
+  if (toGenerate.length > 0) {
+    await prisma.$transaction(async (tx) => {
+      for (const product of toGenerate) {
+        const categoryCode = product.category ? product.category.name.substring(0, 3) : 'GEN';
+        const barcode = await generate(categoryCode);
+
+        await tx.product.update({
+          where: { id: product.id },
+          data: { barcode },
+        });
+
+        results.push({ productId: product.id, barcode, status: 'success', message: 'Barcode berhasil dibuat' });
+      }
+    }, { timeout: 30000 });
   }
 
   const successCount = results.filter((r) => r.status === 'success').length;

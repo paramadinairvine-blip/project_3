@@ -37,15 +37,15 @@ const checkLowStock = async () => {
     select: { id: true },
   });
 
-  for (const admin of admins) {
-    await prisma.notification.create({
-      data: {
+  if (admins.length > 0) {
+    await prisma.notification.createMany({
+      data: admins.map((admin) => ({
         userId: admin.id,
         title: 'Peringatan Stok Minimum',
         message: `${lowStockProducts.length} produk memiliki stok di bawah batas minimum.`,
         type: 'LOW_STOCK',
         status: 'PENDING',
-      },
+      })),
     });
   }
 

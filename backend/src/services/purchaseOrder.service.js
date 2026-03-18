@@ -435,23 +435,20 @@ const cancel = async (id, userId) => {
 
 const sendReceiveNotification = async (po) => {
   const admins = await prisma.user.findMany({
-    where: { role: 'ADMIN', isActive: true },
-    select: { id: true, fullName: true, phone: true },
+    where: { role: 'ADMIN', isActive: true, phone: { not: null } },
+    select: { id: true },
   });
 
-  for (const admin of admins) {
-    if (!admin.phone) continue;
-
-    await prisma.notification.create({
-      data: {
+  if (admins.length > 0) {
+    await prisma.notification.createMany({
+      data: admins.map((admin) => ({
         userId: admin.id,
         title: 'Barang PO Diterima',
         message: `PO ${po.poNumber} dari ${po.supplier?.name || 'supplier'} telah diterima. Total: Rp ${Number(po.totalAmount).toLocaleString('id-ID')}.`,
         type: 'PO_RECEIVED',
         status: 'PENDING',
-      },
+      })),
     });
-
   }
 };
 

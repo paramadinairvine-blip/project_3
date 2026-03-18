@@ -139,27 +139,31 @@ const create = async (data, userId) => {
 
     // Add materials if provided
     if (materials && materials.length > 0) {
-      for (const m of materials) {
-        // Fetch product price if unitPrice not specified
-        let unitPrice = m.unitPrice;
-        if (unitPrice === undefined || unitPrice === null) {
-          const product = await tx.product.findUnique({
-            where: { id: m.productId },
-            select: { sellPrice: true },
-          });
-          unitPrice = product ? product.sellPrice : 0;
-        }
+      // Batch fetch product prices to avoid N+1 queries
+      const missingPriceIds = materials
+        .filter((m) => m.unitPrice === undefined || m.unitPrice === null)
+        .map((m) => m.productId);
 
-        await tx.projectMaterial.create({
-          data: {
-            projectId: created.id,
-            productId: m.productId,
-            estimatedQty: m.estimatedQty,
-            unitPrice,
-            notes: m.notes || null,
-          },
+      const priceMap = {};
+      if (missingPriceIds.length > 0) {
+        const products = await tx.product.findMany({
+          where: { id: { in: [...new Set(missingPriceIds)] } },
+          select: { id: true, sellPrice: true },
         });
+        for (const p of products) priceMap[p.id] = p.sellPrice;
       }
+
+      await tx.projectMaterial.createMany({
+        data: materials.map((m) => ({
+          projectId: created.id,
+          productId: m.productId,
+          estimatedQty: m.estimatedQty,
+          unitPrice: (m.unitPrice !== undefined && m.unitPrice !== null)
+            ? m.unitPrice
+            : (priceMap[m.productId] || 0),
+          notes: m.notes || null,
+        })),
+      });
     }
 
     return tx.project.findUnique({
@@ -217,13 +221,23 @@ const update = async (id, data, userId) => {
         await tx.projectMaterial.deleteMany({ where: { id: { in: toDelete } } });
       }
 
+      // Batch fetch product prices for materials without unitPrice
+      const missingPriceIds = materials
+        .filter((m) => !m.unitPrice && m.productId)
+        .map((m) => m.productId);
+
+      const priceMap = {};
+      if (missingPriceIds.length > 0) {
+        const products = await tx.product.findMany({
+          where: { id: { in: [...new Set(missingPriceIds)] } },
+          select: { id: true, sellPrice: true },
+        });
+        for (const p of products) priceMap[p.id] = Number(p.sellPrice);
+      }
+
       // Upsert materials
       for (const m of materials) {
-        let unitPrice = m.unitPrice;
-        if (!unitPrice && m.productId) {
-          const product = await tx.product.findUnique({ where: { id: m.productId }, select: { sellPrice: true } });
-          if (product) unitPrice = Number(product.sellPrice);
-        }
+        const unitPrice = m.unitPrice || priceMap[m.productId] || 0;
 
         if (m.id && existingIds.includes(m.id)) {
           // Update existing material
@@ -233,7 +247,7 @@ const update = async (id, data, userId) => {
               productId: m.productId,
               estimatedQty: m.estimatedQty || 0,
               usedQty: m.usedQty !== undefined ? m.usedQty : undefined,
-              unitPrice: unitPrice || 0,
+              unitPrice,
               notes: m.notes || null,
             },
           });
@@ -245,7 +259,7 @@ const update = async (id, data, userId) => {
               productId: m.productId,
               estimatedQty: m.estimatedQty || 0,
               usedQty: m.usedQty || 0,
-              unitPrice: unitPrice || 0,
+              unitPrice,
               notes: m.notes || null,
             },
           });
