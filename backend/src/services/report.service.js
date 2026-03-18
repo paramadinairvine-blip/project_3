@@ -116,34 +116,61 @@ const getFinancialReport = async ({ startDate, endDate, type } = {}) => {
     .filter((t) => t.type === 'BON')
     .reduce((s, t) => s + Number(t.total), 0);
 
-  // 2c. Per unit lembaga breakdown (with cashTotal & bonTotal per unit)
-  const unitLembagaIds = [...new Set(transactions.filter((t) => t.unitLembagaId).map((t) => t.unitLembagaId))];
-  const unitLembagaList = unitLembagaIds.length > 0
-    ? await prisma.unitLembaga.findMany({ where: { id: { in: unitLembagaIds } } })
-    : [];
-  const unitMap = new Map(unitLembagaList.map((u) => [u.id, u.name]));
-
-  const byUnit = {};
-  transactions.forEach((t) => {
-    if (t.unitLembagaId) {
-      if (!byUnit[t.unitLembagaId]) {
-        byUnit[t.unitLembagaId] = { cashTotal: 0, bonTotal: 0 };
-      }
-      const amount = Number(t.total);
-      if (t.type === 'CASH') {
-        byUnit[t.unitLembagaId].cashTotal += amount;
-      } else if (t.type === 'BON') {
-        byUnit[t.unitLembagaId].bonTotal += amount;
-      }
-    }
+  // 2c. Per-cashier daily breakdown
+  const txWithCashier = await prisma.transaction.findMany({
+    where: txWhere,
+    select: { type: true, total: true, createdAt: true, createdBy: true },
   });
 
-  const perUnit = Object.entries(byUnit).map(([id, totals]) => ({
-    name: unitMap.get(id) || '-',
-    cashTotal: totals.cashTotal,
-    bonTotal: totals.bonTotal,
-    grandTotal: totals.cashTotal + totals.bonTotal,
-  }));
+  // Get all returns with creator info for the period
+  const returnsWithCashier = await prisma.transactionReturn.findMany({
+    where: returnWhere,
+    select: { refundAmount: true, createdAt: true, createdBy: true },
+  });
+
+  // Collect unique user IDs
+  const cashierIds = [...new Set([
+    ...txWithCashier.filter((t) => t.createdBy).map((t) => t.createdBy),
+    ...returnsWithCashier.filter((r) => r.createdBy).map((r) => r.createdBy),
+  ])];
+  const cashierList = cashierIds.length > 0
+    ? await prisma.user.findMany({ where: { id: { in: cashierIds } }, select: { id: true, fullName: true } })
+    : [];
+  const cashierMap = new Map(cashierList.map((u) => [u.id, u.fullName]));
+
+  // Group by cashier + date
+  const byCashierDay = {};
+  txWithCashier.forEach((t) => {
+    const day = format(t.createdAt, 'yyyy-MM-dd');
+    const key = `${t.createdBy || 'unknown'}_${day}`;
+    if (!byCashierDay[key]) {
+      byCashierDay[key] = { cashierId: t.createdBy, date: day, cashTotal: 0, bonTotal: 0, returnTotal: 0, count: 0 };
+    }
+    const amount = Number(t.total);
+    if (t.type === 'CASH') byCashierDay[key].cashTotal += amount;
+    else if (t.type === 'BON') byCashierDay[key].bonTotal += amount;
+    byCashierDay[key].count += 1;
+  });
+  returnsWithCashier.forEach((r) => {
+    const day = format(r.createdAt, 'yyyy-MM-dd');
+    const key = `${r.createdBy || 'unknown'}_${day}`;
+    if (!byCashierDay[key]) {
+      byCashierDay[key] = { cashierId: r.createdBy, date: day, cashTotal: 0, bonTotal: 0, returnTotal: 0, count: 0 };
+    }
+    byCashierDay[key].returnTotal += Number(r.refundAmount);
+  });
+
+  const perCashier = Object.values(byCashierDay)
+    .map((row) => ({
+      cashierName: cashierMap.get(row.cashierId) || '-',
+      date: row.date,
+      cashTotal: row.cashTotal,
+      bonTotal: row.bonTotal,
+      returnTotal: row.returnTotal,
+      netTotal: row.cashTotal + row.bonTotal - row.returnTotal,
+      transactionCount: row.count,
+    }))
+    .sort((a, b) => b.date.localeCompare(a.date) || a.cashierName.localeCompare(b.cashierName));
 
   return {
     summary: {
@@ -153,7 +180,7 @@ const getFinancialReport = async ({ startDate, endDate, type } = {}) => {
       totalReturn,
       netRevenue: cashTotal + bonTotal - totalReturn,
     },
-    perUnit,
+    perCashier,
   };
 };
 
