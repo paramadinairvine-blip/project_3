@@ -472,24 +472,20 @@ const getByUnitLembaga = async (unitLembagaId, { startDate, endDate, page = 1, l
  */
 const sendBonNotification = async (transaction) => {
   const admins = await prisma.user.findMany({
-    where: { role: 'ADMIN', isActive: true },
-    select: { id: true, fullName: true, phone: true },
+    where: { role: 'ADMIN', isActive: true, phone: { not: null } },
+    select: { id: true },
   });
 
-  for (const admin of admins) {
-    if (!admin.phone) continue;
-
-    // Create in-app notification
-    await prisma.notification.create({
-      data: {
+  if (admins.length > 0) {
+    await prisma.notification.createMany({
+      data: admins.map((admin) => ({
         userId: admin.id,
         title: 'Transaksi BON Baru',
         message: `Transaksi BON ${transaction.transactionNumber} sebesar Rp ${Number(transaction.total).toLocaleString('id-ID')} oleh ${transaction.customerName || 'pelanggan'}.`,
         type: 'TRANSACTION_BON',
         status: 'PENDING',
-      },
+      })),
     });
-
   }
 };
 

@@ -122,25 +122,25 @@ model User {
   updatedAt DateTime @updatedAt
 
   // Relations - items created/updated by this user
-  createdProducts         Product[]          @relation("ProductCreatedBy")
-  updatedProducts         Product[]          @relation("ProductUpdatedBy")
-  createdTransactions     Transaction[]      @relation("TransactionCreatedBy")
-  updatedTransactions     Transaction[]      @relation("TransactionUpdatedBy")
-  createdPurchaseOrders   PurchaseOrder[]    @relation("POCreatedBy")
-  updatedPurchaseOrders   PurchaseOrder[]    @relation("POUpdatedBy")
-  createdProjects         Project[]          @relation("ProjectCreatedBy")
-  updatedProjects         Project[]          @relation("ProjectUpdatedBy")
-  createdStockMovements   StockMovement[]    @relation("MovementCreatedBy")
-  createdStockOpnames     StockOpname[]      @relation("OpnameCreatedBy")
-  updatedStockOpnames     StockOpname[]      @relation("OpnameUpdatedBy")
-  createdSuppliers        Supplier[]         @relation("SupplierCreatedBy")
-  updatedSuppliers        Supplier[]         @relation("SupplierUpdatedBy")
-  createdCategories       Category[]         @relation("CategoryCreatedBy")
-  updatedCategories       Category[]         @relation("CategoryUpdatedBy")
-  auditLogs               AuditLog[]
-  notifications           Notification[]
-  refreshTokens           RefreshToken[]
-  priceChanges            PriceHistory[]     @relation("PriceChangedBy")
+  createdProducts       Product[]       @relation("ProductCreatedBy")
+  updatedProducts       Product[]       @relation("ProductUpdatedBy")
+  createdTransactions   Transaction[]   @relation("TransactionCreatedBy")
+  updatedTransactions   Transaction[]   @relation("TransactionUpdatedBy")
+  createdPurchaseOrders PurchaseOrder[] @relation("POCreatedBy")
+  updatedPurchaseOrders PurchaseOrder[] @relation("POUpdatedBy")
+  createdProjects       Project[]       @relation("ProjectCreatedBy")
+  updatedProjects       Project[]       @relation("ProjectUpdatedBy")
+  createdStockMovements StockMovement[] @relation("MovementCreatedBy")
+  createdStockOpnames   StockOpname[]   @relation("OpnameCreatedBy")
+  updatedStockOpnames   StockOpname[]   @relation("OpnameUpdatedBy")
+  createdSuppliers      Supplier[]      @relation("SupplierCreatedBy")
+  updatedSuppliers      Supplier[]      @relation("SupplierUpdatedBy")
+  createdCategories     Category[]      @relation("CategoryCreatedBy")
+  updatedCategories     Category[]      @relation("CategoryUpdatedBy")
+  auditLogs             AuditLog[]
+  notifications         Notification[]
+  refreshTokens         RefreshToken[]
+  priceChanges          PriceHistory[]  @relation("PriceChangedBy")
 
   @@map("users")
 }
@@ -191,46 +191,50 @@ model Supplier {
 }
 
 model Product {
-  id           String   @id @default(uuid())
-  name         String
-  sku          String   @unique
-  barcode      String?  @unique
-  description  String?
-  categoryId   String?
-  supplierId   String?
-  brandId      String?
-  unitId       String?
-  unit         String   @default("pcs")
-  buyPrice     Decimal  @default(0) @db.Decimal(15, 2)
-  sellPrice    Decimal  @default(0) @db.Decimal(15, 2)
-  stock        Int      @default(0)
-  minStock     Int      @default(0)
-  maxStock     Int?
-  image        String?
-  isActive     Boolean  @default(true)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-  createdBy    String?
-  updatedBy    String?
+  id          String   @id @default(uuid())
+  name        String
+  sku         String   @unique
+  barcode     String?  @unique
+  description String?
+  categoryId  String?
+  supplierId  String?
+  brandId     String?
+  unitId      String?
+  unit        String   @default("pcs")
+  buyPrice    Decimal  @default(0) @db.Decimal(15, 2)
+  sellPrice   Decimal  @default(0) @db.Decimal(15, 2)
+  stock       Int      @default(0)
+  minStock    Int      @default(0)
+  maxStock    Int?
+  image       String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  createdBy   String?
+  updatedBy   String?
 
   // Relations
-  category          Category?          @relation(fields: [categoryId], references: [id])
-  supplier          Supplier?          @relation(fields: [supplierId], references: [id])
-  brand             Brand?             @relation(fields: [brandId], references: [id])
-  unitOfMeasure     UnitOfMeasure?     @relation(fields: [unitId], references: [id])
-  creator           User?              @relation("ProductCreatedBy", fields: [createdBy], references: [id])
-  updater           User?              @relation("ProductUpdatedBy", fields: [updatedBy], references: [id])
-  transactionItems  TransactionItem[]
-  stockMovements    StockMovement[]
+  category           Category?           @relation(fields: [categoryId], references: [id])
+  supplier           Supplier?           @relation(fields: [supplierId], references: [id])
+  brand              Brand?              @relation(fields: [brandId], references: [id])
+  unitOfMeasure      UnitOfMeasure?      @relation(fields: [unitId], references: [id])
+  creator            User?               @relation("ProductCreatedBy", fields: [createdBy], references: [id])
+  updater            User?               @relation("ProductUpdatedBy", fields: [updatedBy], references: [id])
+  transactionItems   TransactionItem[]
+  stockMovements     StockMovement[]
   purchaseOrderItems PurchaseOrderItem[]
-  opnameItems       StockOpnameItem[]
-  productUnits      ProductUnit[]
-  variants          ProductVariant[]
-  priceHistories    PriceHistory[]
-  projectMaterials  ProjectMaterial[]
+  opnameItems        StockOpnameItem[]
+  productUnits       ProductUnit[]
+  variants           ProductVariant[]
+  priceHistories     PriceHistory[]
+  projectMaterials   ProjectMaterial[]
 
   @@index([sku])
   @@index([barcode])
+  @@index([categoryId])
+  @@index([brandId])
+  @@index([supplierId])
+  @@index([isActive])
   @@map("products")
 }
 
@@ -316,6 +320,10 @@ model Transaction {
   items       TransactionItem[]
 
   @@index([transactionNumber])
+  @@index([unitLembagaId])
+  @@index([createdAt])
+  @@index([status])
+  @@index([projectId])
   @@map("transactions")
 }
 
@@ -337,7 +345,7 @@ model TransactionItem {
 }
 
 model StockMovement {
-  id            String        @id @default(uuid())
+  id            String         @id @default(uuid())
   productId     String
   type          MovementType
   quantity      Int
@@ -346,29 +354,31 @@ model StockMovement {
   referenceType ReferenceType?
   referenceId   String?
   notes         String?
-  createdAt     DateTime      @default(now())
+  createdAt     DateTime       @default(now())
   createdBy     String?
 
   // Relations
   product Product @relation(fields: [productId], references: [id])
   creator User?   @relation("MovementCreatedBy", fields: [createdBy], references: [id])
 
+  @@index([productId])
+  @@index([createdAt])
   @@map("stock_movements")
 }
 
 model PurchaseOrder {
-  id         String   @id @default(uuid())
-  poNumber   String   @unique
-  supplierId String
-  status     POStatus @default(DRAFT)
-  notes      String?
-  totalAmount Decimal  @default(0) @db.Decimal(15, 2)
-  orderDate  DateTime @default(now())
-  receivedAt DateTime?
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
-  createdBy  String?
-  updatedBy  String?
+  id          String    @id @default(uuid())
+  poNumber    String    @unique
+  supplierId  String
+  status      POStatus  @default(DRAFT)
+  notes       String?
+  totalAmount Decimal   @default(0) @db.Decimal(15, 2)
+  orderDate   DateTime  @default(now())
+  receivedAt  DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  createdBy   String?
+  updatedBy   String?
 
   // Relations
   supplier Supplier            @relation(fields: [supplierId], references: [id])
@@ -377,6 +387,9 @@ model PurchaseOrder {
   items    PurchaseOrderItem[]
 
   @@index([poNumber])
+  @@index([supplierId])
+  @@index([status])
+  @@index([createdAt])
   @@map("purchase_orders")
 }
 
@@ -410,11 +423,11 @@ model Project {
   createdBy   String?
   updatedBy   String?
 
-  isActive    Boolean       @default(true)
+  isActive Boolean @default(true)
 
   // Relations
-  creator      User?              @relation("ProjectCreatedBy", fields: [createdBy], references: [id])
-  updater      User?              @relation("ProjectUpdatedBy", fields: [updatedBy], references: [id])
+  creator      User?             @relation("ProjectCreatedBy", fields: [createdBy], references: [id])
+  updater      User?             @relation("ProjectUpdatedBy", fields: [updatedBy], references: [id])
   transactions Transaction[]
   materials    ProjectMaterial[]
 
@@ -422,15 +435,15 @@ model Project {
 }
 
 model ProjectMaterial {
-  id            String   @id @default(uuid())
-  projectId     String
-  productId     String
-  estimatedQty  Int      @default(0)
-  usedQty       Int      @default(0)
-  unitPrice     Decimal  @default(0) @db.Decimal(15, 2)
-  notes         String?
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  id           String   @id @default(uuid())
+  projectId    String
+  productId    String
+  estimatedQty Int      @default(0)
+  usedQty      Int      @default(0)
+  unitPrice    Decimal  @default(0) @db.Decimal(15, 2)
+  notes        String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
   project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
   product Product @relation(fields: [productId], references: [id])
@@ -440,14 +453,14 @@ model ProjectMaterial {
 }
 
 model StockOpname {
-  id           String      @id @default(uuid())
-  opnameNumber String      @unique
+  id           String       @id @default(uuid())
+  opnameNumber String       @unique
   status       OpnameStatus @default(DRAFT)
   notes        String?
-  opnameDate   DateTime    @default(now())
+  opnameDate   DateTime     @default(now())
   completedAt  DateTime?
-  createdAt    DateTime    @default(now())
-  updatedAt    DateTime    @updatedAt
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
   createdBy    String?
   updatedBy    String?
 
@@ -461,13 +474,13 @@ model StockOpname {
 }
 
 model StockOpnameItem {
-  id           String @id @default(uuid())
+  id            String  @id @default(uuid())
   stockOpnameId String
-  productId    String
-  systemStock  Int
-  actualStock  Int
-  difference   Int
-  notes        String?
+  productId     String
+  systemStock   Int
+  actualStock   Int
+  difference    Int
+  notes         String?
 
   // Relations
   stockOpname StockOpname @relation(fields: [stockOpnameId], references: [id], onDelete: Cascade)
@@ -477,16 +490,16 @@ model StockOpnameItem {
 }
 
 model AuditLog {
-  id         String   @id @default(uuid())
-  userId     String?
-  action     String
-  entity     String
-  entityId   String?
-  oldData    Json?
-  newData    Json?
-  ipAddress  String?
-  userAgent  String?
-  createdAt  DateTime @default(now())
+  id        String   @id @default(uuid())
+  userId    String?
+  action    String
+  entity    String
+  entityId  String?
+  oldData   Json?
+  newData   Json?
+  ipAddress String?
+  userAgent String?
+  createdAt DateTime @default(now())
 
   // Relations
   user User? @relation(fields: [userId], references: [id])
@@ -522,5 +535,7 @@ model Notification {
   // Relations
   user User @relation(fields: [userId], references: [id])
 
+  @@index([userId])
+  @@index([readAt])
   @@map("notifications")
 }
