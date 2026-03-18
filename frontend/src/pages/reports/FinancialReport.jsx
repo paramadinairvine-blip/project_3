@@ -6,7 +6,7 @@ import {
   HiPrinter, HiDocumentDownload, HiTable, HiRefresh,
 } from 'react-icons/hi';
 import { reportAPI } from '../../api/endpoints';
-import { Card, Button, Select, Loading, Table, Skeleton, DateRangePicker } from '../../components/common';
+import { Card, Button, Select, Loading, Table, Skeleton } from '../../components/common';
 import { formatRupiah } from '../../utils/formatCurrency';
 import { formatTanggal } from '../../utils/formatDate';
 import { TRANSACTION_TYPE_LABELS, STORE_INFO } from '../../utils/constants';
@@ -44,22 +44,18 @@ export default function FinancialReport() {
   // Default: today
   const now = new Date();
   const today = now.toISOString().slice(0, 10);
-  const firstDay = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().slice(0, 10);
 
-  const [startDate, setStartDate] = useState(firstDay);
-  const [endDate, setEndDate] = useState(today);
+  const [selectedDate, setSelectedDate] = useState(today);
   const [typeFilter, setTypeFilter] = useState('');
 
   const { data, isLoading } = useQuery({
-    queryKey: ['report-financial', { startDate, endDate, type: typeFilter }],
+    queryKey: ['report-financial', { date: selectedDate, type: typeFilter }],
     queryFn: async () => {
       const params = {};
-      if (startDate) {
-        const s = new Date(startDate + 'T00:00:00+07:00');
+      if (selectedDate) {
+        const s = new Date(selectedDate + 'T00:00:00+07:00');
+        const e = new Date(selectedDate + 'T23:59:59.999+07:00');
         params.startDate = s.toISOString();
-      }
-      if (endDate) {
-        const e = new Date(endDate + 'T23:59:59.999+07:00');
         params.endDate = e.toISOString();
       }
       if (typeFilter) params.type = typeFilter;
@@ -129,7 +125,7 @@ export default function FinancialReport() {
   ];
 
   // ─── Exports ────────────────────────────────────────
-  const periodLabel = `${formatTanggal(startDate)} — ${formatTanggal(endDate)}`;
+  const periodLabel = formatTanggal(selectedDate);
 
   const handleExportPDF = () => {
     const headers = ['Kasir', 'Tanggal', 'Tunai (Rp)', 'Overbooking TU (Rp)', 'Retur (Rp)', 'Total Bersih (Rp)', 'Jml Trx'];
@@ -176,10 +172,11 @@ export default function FinancialReport() {
       <div className="flex flex-wrap items-end gap-4">
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">Tanggal</label>
-          <DateRangePicker
-            dateFrom={startDate}
-            dateTo={endDate}
-            onChange={(from, to) => { setStartDate(from); setEndDate(to); }}
+          <input
+            type="date"
+            value={selectedDate}
+            onChange={(e) => setSelectedDate(e.target.value)}
+            className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
           />
         </div>
         <div className="w-48">
@@ -235,7 +232,7 @@ export default function FinancialReport() {
           <div style={{ textAlign: 'center', marginBottom: '16px' }}>
             <h2 style={{ margin: '0 0 4px 0', fontSize: '16px' }}>{STORE_INFO.NAME}</h2>
             <h3 style={{ margin: '0 0 4px 0', fontSize: '14px' }}>Rekap Pendapatan Kasir</h3>
-            <p style={{ margin: 0, fontSize: '10px', color: '#666' }}>Periode: {periodLabel}</p>
+            <p style={{ margin: 0, fontSize: '10px', color: '#666' }}>Tanggal: {periodLabel}</p>
           </div>
 
           {/* Summary */}
