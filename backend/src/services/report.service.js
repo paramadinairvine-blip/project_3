@@ -98,6 +98,16 @@ const getFinancialReport = async ({ startDate, endDate, type } = {}) => {
     select: { type: true, total: true, unitLembagaId: true },
   });
 
+  // 2b-2. Total retur dalam periode yang sama
+  const returnWhere = {};
+  if (hasDateFilter) returnWhere.createdAt = dateFilter;
+
+  const returnAgg = await prisma.transactionReturn.aggregate({
+    where: returnWhere,
+    _sum: { refundAmount: true },
+  });
+  const totalReturn = Number(returnAgg._sum.refundAmount || 0);
+
   // Summary totals by type
   const cashTotal = transactions
     .filter((t) => t.type === 'CASH')
@@ -140,6 +150,8 @@ const getFinancialReport = async ({ startDate, endDate, type } = {}) => {
       totalPurchase: Number(purchaseAgg._sum.totalAmount || 0),
       cashTotal,
       bonTotal,
+      totalReturn,
+      netRevenue: cashTotal + bonTotal - totalReturn,
     },
     perUnit,
   };
@@ -163,15 +175,28 @@ const getTrendReport = async ({ startDate, endDate, groupBy = 'month' } = {}) =>
     select: { total: true, createdAt: true, type: true },
   });
 
+  // 3a-2. Retur dalam periode
+  const trendReturns = await prisma.transactionReturn.findMany({
+    where: { createdAt: { gte: start, lte: end } },
+    select: { refundAmount: true, createdAt: true },
+  });
+
   const monthlyMap = {};
   transactions.forEach((t) => {
     const key = format(t.createdAt, 'yyyy-MM');
-    if (!monthlyMap[key]) monthlyMap[key] = { month: key, total: 0, count: 0 };
+    if (!monthlyMap[key]) monthlyMap[key] = { month: key, total: 0, returnTotal: 0, count: 0 };
     monthlyMap[key].total += Number(t.total);
     monthlyMap[key].count += 1;
   });
+  trendReturns.forEach((r) => {
+    const key = format(r.createdAt, 'yyyy-MM');
+    if (!monthlyMap[key]) monthlyMap[key] = { month: key, total: 0, returnTotal: 0, count: 0 };
+    monthlyMap[key].returnTotal += Number(r.refundAmount);
+  });
 
-  const monthlyTrend = Object.values(monthlyMap).sort((a, b) => a.month.localeCompare(b.month));
+  const monthlyTrend = Object.values(monthlyMap)
+    .map((m) => ({ ...m, netTotal: m.total - m.returnTotal }))
+    .sort((a, b) => a.month.localeCompare(b.month));
 
   // 3b. Top 10 most issued products
   const topProducts = await prisma.transactionItem.groupBy({
@@ -245,8 +270,14 @@ const getTrendReport = async ({ startDate, endDate, groupBy = 'month' } = {}) =>
     select: { total: true },
   });
 
-  const currentTotal = transactions.reduce((s, t) => s + Number(t.total), 0);
-  const previousTotal = prevTransactions.reduce((s, t) => s + Number(t.total), 0);
+  const currentReturnTotal = trendReturns.reduce((s, r) => s + Number(r.refundAmount), 0);
+  const currentTotal = transactions.reduce((s, t) => s + Number(t.total), 0) - currentReturnTotal;
+
+  const prevReturns = await prisma.transactionReturn.aggregate({
+    where: { createdAt: { gte: prevStart, lte: prevEnd } },
+    _sum: { refundAmount: true },
+  });
+  const previousTotal = prevTransactions.reduce((s, t) => s + Number(t.total), 0) - Number(prevReturns._sum.refundAmount || 0);
   const changePercent = previousTotal > 0
     ? Math.round(((currentTotal - previousTotal) / previousTotal) * 100)
     : 0;
@@ -345,15 +376,28 @@ const getDashboardSummary = async ({ startDate, endDate } = {}) => {
   // Low stock
   const lowStock = lowStockProducts.filter((p) => p.stock < p.minStock);
 
-  // Monthly transaction summary
-  const monthlyTotal = monthlyTransactions.reduce((s, t) => s + Number(t.total), 0);
+  // Monthly retur
+  const monthlyReturnAgg = await prisma.transactionReturn.aggregate({
+    where: { createdAt: { gte: monthStart, lte: monthEnd } },
+    _sum: { refundAmount: true },
+    _count: { id: true },
+  });
+  const monthlyReturnTotal = Number(monthlyReturnAgg._sum.refundAmount || 0);
 
-  // 6-month chart data
+  // Monthly transaction summary
+  const monthlyTotal = monthlyTransactions.reduce((s, t) => s + Number(t.total), 0) - monthlyReturnTotal;
+
+  // 6-month chart data (with retur deduction)
+  const sixMonthReturns = await prisma.transactionReturn.findMany({
+    where: { createdAt: { gte: subMonths(monthStart, 5) } },
+    select: { refundAmount: true, createdAt: true },
+  });
+
   const chartMap = {};
   for (let i = 5; i >= 0; i--) {
     const m = subMonths(monthStart, i);
     const key = format(m, 'yyyy-MM');
-    chartMap[key] = { month: key, label: format(m, 'MMM yyyy'), total: 0, count: 0 };
+    chartMap[key] = { month: key, label: format(m, 'MMM yyyy'), total: 0, returnTotal: 0, count: 0 };
   }
   sixMonthTransactions.forEach((t) => {
     const key = format(t.createdAt, 'yyyy-MM');
@@ -362,7 +406,16 @@ const getDashboardSummary = async ({ startDate, endDate } = {}) => {
       chartMap[key].count += 1;
     }
   });
-  const transactionChart = Object.values(chartMap);
+  sixMonthReturns.forEach((r) => {
+    const key = format(r.createdAt, 'yyyy-MM');
+    if (chartMap[key]) {
+      chartMap[key].returnTotal += Number(r.refundAmount);
+    }
+  });
+  const transactionChart = Object.values(chartMap).map((m) => ({
+    ...m,
+    netTotal: m.total - m.returnTotal,
+  }));
 
   // Top 5 products (by transaction quantity this month)
   const monthItems = await prisma.transactionItem.groupBy({
@@ -400,6 +453,8 @@ const getDashboardSummary = async ({ startDate, endDate } = {}) => {
     monthlyTransaction: {
       total: monthlyTotal,
       count: monthlyTransactions.length,
+      returnTotal: monthlyReturnTotal,
+      returnCount: monthlyReturnAgg._count.id,
     },
     lowStockCount: lowStock.length,
     lowStockItems: lowStock.slice(0, 10), // Top 10 most critical
