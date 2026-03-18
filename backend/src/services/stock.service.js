@@ -384,7 +384,7 @@ const completeOpname = async (opnameId, userId) => {
       if (item.difference !== 0) {
         // Lock the product row to prevent race conditions
         const [product] = await tx.$queryRawUnsafe(
-          `SELECT * FROM "Product" WHERE id = $1 FOR UPDATE`,
+          `SELECT * FROM "products" WHERE id = $1 FOR UPDATE`,
           item.productId
         );
 
