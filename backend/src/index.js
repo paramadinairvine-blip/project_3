@@ -109,21 +109,6 @@ app.listen(PORT, async () => {
   console.log(`Server running on port ${PORT}`);
   console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
 
-  // One-time DB fixes on startup
-  try {
-    const prisma = require('./lib/prisma');
-
-    // Fix PENDING BON transactions
-    const result = await prisma.transaction.updateMany({
-      where: { type: 'BON', status: 'PENDING' },
-      data: { status: 'COMPLETED', paidAt: new Date() },
-    });
-    if (result.count > 0) {
-      console.log(`Fixed ${result.count} PENDING BON transactions to COMPLETED`);
-    }
-  } catch (err) {
-    console.log('DB fix skipped:', err.message);
-  }
 });
 
 module.exports = app;
