@@ -21,6 +21,12 @@ export const transactionAPI = {
   create: (data) => api.post('/transactions', data),
 };
 
+// ==================== Return ====================
+export const returnAPI = {
+  create: (data) => api.post('/returns', data),
+  getByTransaction: (transactionId) => api.get(`/returns/transaction/${transactionId}`),
+};
+
 // ==================== Stock ====================
 export const stockAPI = {
   getAll: (params) => api.get('/stock', { params }),

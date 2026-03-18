@@ -39,6 +39,7 @@ enum ReferenceType {
   TRANSACTION
   OPNAME
   MANUAL
+  RETURN
 }
 
 enum POStatus {
@@ -122,25 +123,26 @@ model User {
   updatedAt DateTime @updatedAt
 
   // Relations - items created/updated by this user
-  createdProducts       Product[]       @relation("ProductCreatedBy")
-  updatedProducts       Product[]       @relation("ProductUpdatedBy")
-  createdTransactions   Transaction[]   @relation("TransactionCreatedBy")
-  updatedTransactions   Transaction[]   @relation("TransactionUpdatedBy")
-  createdPurchaseOrders PurchaseOrder[] @relation("POCreatedBy")
-  updatedPurchaseOrders PurchaseOrder[] @relation("POUpdatedBy")
-  createdProjects       Project[]       @relation("ProjectCreatedBy")
-  updatedProjects       Project[]       @relation("ProjectUpdatedBy")
-  createdStockMovements StockMovement[] @relation("MovementCreatedBy")
-  createdStockOpnames   StockOpname[]   @relation("OpnameCreatedBy")
-  updatedStockOpnames   StockOpname[]   @relation("OpnameUpdatedBy")
-  createdSuppliers      Supplier[]      @relation("SupplierCreatedBy")
-  updatedSuppliers      Supplier[]      @relation("SupplierUpdatedBy")
-  createdCategories     Category[]      @relation("CategoryCreatedBy")
-  updatedCategories     Category[]      @relation("CategoryUpdatedBy")
+  createdProducts       Product[]           @relation("ProductCreatedBy")
+  updatedProducts       Product[]           @relation("ProductUpdatedBy")
+  createdTransactions   Transaction[]       @relation("TransactionCreatedBy")
+  updatedTransactions   Transaction[]       @relation("TransactionUpdatedBy")
+  createdPurchaseOrders PurchaseOrder[]     @relation("POCreatedBy")
+  updatedPurchaseOrders PurchaseOrder[]     @relation("POUpdatedBy")
+  createdProjects       Project[]           @relation("ProjectCreatedBy")
+  updatedProjects       Project[]           @relation("ProjectUpdatedBy")
+  createdStockMovements StockMovement[]     @relation("MovementCreatedBy")
+  createdStockOpnames   StockOpname[]       @relation("OpnameCreatedBy")
+  updatedStockOpnames   StockOpname[]       @relation("OpnameUpdatedBy")
+  createdSuppliers      Supplier[]          @relation("SupplierCreatedBy")
+  updatedSuppliers      Supplier[]          @relation("SupplierUpdatedBy")
+  createdCategories     Category[]          @relation("CategoryCreatedBy")
+  updatedCategories     Category[]          @relation("CategoryUpdatedBy")
   auditLogs             AuditLog[]
   notifications         Notification[]
   refreshTokens         RefreshToken[]
-  priceChanges          PriceHistory[]  @relation("PriceChangedBy")
+  priceChanges          PriceHistory[]      @relation("PriceChangedBy")
+  createdReturns        TransactionReturn[] @relation("ReturnCreatedBy")
 
   @@map("users")
 }
@@ -214,12 +216,12 @@ model Product {
   updatedBy   String?
 
   // Relations
-  category           Category?           @relation(fields: [categoryId], references: [id])
-  supplier           Supplier?           @relation(fields: [supplierId], references: [id])
-  brand              Brand?              @relation(fields: [brandId], references: [id])
-  unitOfMeasure      UnitOfMeasure?      @relation(fields: [unitId], references: [id])
-  creator            User?               @relation("ProductCreatedBy", fields: [createdBy], references: [id])
-  updater            User?               @relation("ProductUpdatedBy", fields: [updatedBy], references: [id])
+  category           Category?               @relation(fields: [categoryId], references: [id])
+  supplier           Supplier?               @relation(fields: [supplierId], references: [id])
+  brand              Brand?                  @relation(fields: [brandId], references: [id])
+  unitOfMeasure      UnitOfMeasure?          @relation(fields: [unitId], references: [id])
+  creator            User?                   @relation("ProductCreatedBy", fields: [createdBy], references: [id])
+  updater            User?                   @relation("ProductUpdatedBy", fields: [updatedBy], references: [id])
   transactionItems   TransactionItem[]
   stockMovements     StockMovement[]
   purchaseOrderItems PurchaseOrderItem[]
@@ -228,6 +230,7 @@ model Product {
   variants           ProductVariant[]
   priceHistories     PriceHistory[]
   projectMaterials   ProjectMaterial[]
+  returnItems        TransactionReturnItem[]
 
   @@index([sku])
   @@index([barcode])
@@ -313,11 +316,12 @@ model Transaction {
   updatedBy         String?
 
   // Relations
-  creator     User?             @relation("TransactionCreatedBy", fields: [createdBy], references: [id])
-  updater     User?             @relation("TransactionUpdatedBy", fields: [updatedBy], references: [id])
-  project     Project?          @relation(fields: [projectId], references: [id])
-  unitLembaga UnitLembaga?      @relation(fields: [unitLembagaId], references: [id])
+  creator     User?               @relation("TransactionCreatedBy", fields: [createdBy], references: [id])
+  updater     User?               @relation("TransactionUpdatedBy", fields: [updatedBy], references: [id])
+  project     Project?            @relation(fields: [projectId], references: [id])
+  unitLembaga UnitLembaga?        @relation(fields: [unitLembagaId], references: [id])
   items       TransactionItem[]
+  returns     TransactionReturn[]
 
   @@index([transactionNumber])
   @@index([unitLembagaId])
@@ -338,8 +342,9 @@ model TransactionItem {
   subtotal      Decimal @db.Decimal(15, 2)
 
   // Relations
-  transaction Transaction @relation(fields: [transactionId], references: [id], onDelete: Cascade)
-  product     Product     @relation(fields: [productId], references: [id])
+  transaction Transaction             @relation(fields: [transactionId], references: [id], onDelete: Cascade)
+  product     Product                 @relation(fields: [productId], references: [id])
+  returnItems TransactionReturnItem[]
 
   @@map("transaction_items")
 }
@@ -519,6 +524,43 @@ model RefreshToken {
 
   @@index([token])
   @@map("refresh_tokens")
+}
+
+model TransactionReturn {
+  id            String   @id @default(uuid())
+  returnNumber  String   @unique
+  transactionId String
+  reason        String?
+  refundAmount  Decimal  @default(0) @db.Decimal(15, 2)
+  createdAt     DateTime @default(now())
+  createdBy     String?
+
+  // Relations
+  transaction Transaction             @relation(fields: [transactionId], references: [id])
+  creator     User?                   @relation("ReturnCreatedBy", fields: [createdBy], references: [id])
+  items       TransactionReturnItem[]
+
+  @@index([transactionId])
+  @@index([createdAt])
+  @@map("transaction_returns")
+}
+
+model TransactionReturnItem {
+  id                  String  @id @default(uuid())
+  transactionReturnId String
+  transactionItemId   String
+  productId           String
+  quantity            Int
+  baseQty             Int     @default(0)
+  price               Decimal @db.Decimal(15, 2)
+  subtotal            Decimal @db.Decimal(15, 2)
+
+  // Relations
+  transactionReturn TransactionReturn @relation(fields: [transactionReturnId], references: [id], onDelete: Cascade)
+  transactionItem   TransactionItem   @relation(fields: [transactionItemId], references: [id])
+  product           Product           @relation(fields: [productId], references: [id])
+
+  @@map("transaction_return_items")
 }
 
 model Notification {
