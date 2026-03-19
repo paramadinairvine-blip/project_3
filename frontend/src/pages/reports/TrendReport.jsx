@@ -9,7 +9,7 @@ import { HiPrinter, HiDocumentDownload, HiTable } from 'react-icons/hi';
 import { reportAPI } from '../../api/endpoints';
 import { Card, Button, Loading, Skeleton, CalendarPicker } from '../../components/common';
 import TrendChart from '../../components/charts/TrendChart';
-import { formatRupiah } from '../../utils/formatCurrency';
+import { formatRupiah, formatNumber } from '../../utils/formatCurrency';
 import { formatTanggal } from '../../utils/formatDate';
 import { exportTableToPDF } from '../../utils/exportPDF';
 import { exportToExcel } from '../../utils/exportExcel';
@@ -76,7 +76,7 @@ export default function TrendReport() {
   // ─── Exports ────────────────────────────────────────
   const handleExportPDF = () => {
     const headers = ['Bulan', 'Jumlah Transaksi', 'Total Pengeluaran (Rp)'];
-    const rows = monthlyTrend.map((r) => [r.label || r.month, r.count || 0, r.total || 0]);
+    const rows = monthlyTrend.map((r) => [r.label || r.month, r.count || 0, formatNumber(r.total || 0)]);
     exportTableToPDF('Laporan Tren Pengeluaran', headers, rows, 'laporan-tren.pdf', {
       subtitle: `Periode: ${periodLabel}`,
       columnStyles: ['left', 'right', 'right'],
@@ -86,11 +86,11 @@ export default function TrendReport() {
   const handleExportExcel = () => {
     // Multiple sections in one sheet
     const headers = ['Bulan', 'Jumlah Transaksi', 'Total Pengeluaran (Rp)'];
-    const rows = monthlyTrend.map((r) => [r.label || r.month, r.count || 0, r.total || 0]);
+    const rows = monthlyTrend.map((r) => [r.label || r.month, r.count || 0, formatNumber(r.total || 0)]);
 
     // Add top products section
     const topHeaders = ['Produk', 'Total Qty', 'Total Nilai (Rp)'];
-    const topRows = topProducts.map((r) => [r.name || r.productName, r.totalQty || r.quantity || 0, r.totalValue || 0]);
+    const topRows = topProducts.map((r) => [r.name || r.productName, r.totalQty || r.quantity || 0, formatNumber(r.totalValue || 0)]);
 
     // Combine
     const allRows = [

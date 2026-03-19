@@ -7,7 +7,7 @@ import {
 } from 'react-icons/hi';
 import { reportAPI } from '../../api/endpoints';
 import { Card, Button, Skeleton, CalendarPicker } from '../../components/common';
-import { formatRupiah } from '../../utils/formatCurrency';
+import { formatRupiah, formatNumber } from '../../utils/formatCurrency';
 import { formatTanggal } from '../../utils/formatDate';
 import { STORE_INFO } from '../../utils/constants';
 import { exportTableToPDF } from '../../utils/exportPDF';
@@ -90,9 +90,9 @@ export default function ProfitLossReport() {
   const handleExportPDF = () => {
     const headers = ['Kategori', 'HPP (Rp)', '% dari Total HPP'];
     const rows = hppByCategory.map((c) => [
-      c.categoryName, c.totalHPP, `${c.percentage}%`,
+      c.categoryName, formatNumber(c.totalHPP), `${c.percentage}%`,
     ]);
-    rows.push(['TOTAL', summary.totalHPP || 0, '100%']);
+    rows.push(['TOTAL', formatNumber(summary.totalHPP || 0), '100%']);
     exportTableToPDF('Laporan Laba Rugi', headers, rows, 'laba-rugi.pdf', {
       subtitle: `Periode: ${periodLabel}`,
       columnStyles: ['left', 'right', 'right'],
@@ -102,18 +102,18 @@ export default function ProfitLossReport() {
   const handleExportExcel = () => {
     const headers = ['Komponen', 'Nilai (Rp)'];
     const rows = [
-      ['Penjualan Tunai', summary.cashRevenue || 0],
-      ['Penjualan Bon', summary.bonRevenue || 0],
-      ['Retur Penjualan', -(summary.totalReturn || 0)],
-      ['Pendapatan Bersih', summary.netRevenue || 0],
+      ['Penjualan Tunai', formatNumber(summary.cashRevenue || 0)],
+      ['Penjualan Bon', formatNumber(summary.bonRevenue || 0)],
+      ['Retur Penjualan', formatNumber(-(summary.totalReturn || 0))],
+      ['Pendapatan Bersih', formatNumber(summary.netRevenue || 0)],
       [''],
-      ['Harga Pokok Penjualan (HPP)', -(summary.totalHPP || 0)],
+      ['Harga Pokok Penjualan (HPP)', formatNumber(-(summary.totalHPP || 0))],
       [''],
-      ['LABA KOTOR', summary.grossProfit || 0],
+      ['LABA KOTOR', formatNumber(summary.grossProfit || 0)],
       ['Margin Laba Kotor (%)', `${summary.grossMarginPercent || 0}%`],
       [''],
       ['--- HPP per Kategori ---'],
-      ...hppByCategory.map((c) => [c.categoryName, c.totalHPP]),
+      ...hppByCategory.map((c) => [c.categoryName, formatNumber(c.totalHPP)]),
     ];
     exportToExcel('Laba Rugi', headers, rows, 'laba-rugi.xlsx');
   };

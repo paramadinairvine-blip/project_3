@@ -7,7 +7,7 @@ import {
 } from 'react-icons/hi';
 import { reportAPI, categoryAPI } from '../../api/endpoints';
 import { Card, Badge, Button, Select, Loading, Table, Skeleton } from '../../components/common';
-import { formatRupiah } from '../../utils/formatCurrency';
+import { formatRupiah, formatNumber } from '../../utils/formatCurrency';
 import { exportTableToPDF } from '../../utils/exportPDF';
 import { exportToExcel } from '../../utils/exportExcel';
 import { STORE_INFO } from '../../utils/constants';
@@ -124,7 +124,7 @@ export default function StockReport() {
       r.unitOfMeasure?.abbreviation || r.unit || '-',
       r.minStock,
       getStatusText(r),
-      r.stockValue || (r.stock * (r.buyPrice || 0)),
+      formatNumber(r.stockValue || (r.stock * (r.buyPrice || 0))),
     ]);
     return { headers, rows };
   };
