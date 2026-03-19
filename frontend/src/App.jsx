@@ -41,6 +41,7 @@ const StockReport = lazy(() => import('./pages/reports/StockReport'));
 const LowStockReport = lazy(() => import('./pages/reports/LowStockReport'));
 const FinancialReport = lazy(() => import('./pages/reports/FinancialReport'));
 const TrendReport = lazy(() => import('./pages/reports/TrendReport'));
+const ProfitLossReport = lazy(() => import('./pages/reports/ProfitLossReport'));
 
 const UserList = lazy(() => import('./pages/users/UserList'));
 const UserForm = lazy(() => import('./pages/users/UserForm'));
@@ -155,6 +156,11 @@ function App() {
           <Route path="laporan/keuangan" element={
             <ProtectedRoute allowedRoles={[ROLES.ADMIN, ROLES.VIEWER]}>
               <FinancialReport />
+            </ProtectedRoute>
+          } />
+          <Route path="laporan/laba-rugi" element={
+            <ProtectedRoute allowedRoles={[ROLES.ADMIN, ROLES.VIEWER]}>
+              <ProfitLossReport />
             </ProtectedRoute>
           } />
           <Route path="laporan/tren" element={

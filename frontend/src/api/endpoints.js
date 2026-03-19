@@ -109,6 +109,7 @@ export const reportAPI = {
   getStock: (params) => api.get('/reports/stock', { params }),
   getFinancial: (params) => api.get('/reports/financial', { params }),
   getTrend: (params) => api.get('/reports/trend', { params }),
+  getLabaRugi: (params) => api.get('/reports/laba-rugi', { params }),
 };
 
 // ==================== Notification ====================

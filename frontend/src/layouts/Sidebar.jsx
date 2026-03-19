@@ -48,6 +48,7 @@ const menuItems = [
       { label: 'Laporan Stok', code: 'LS', path: '/laporan/stok' },
       { label: 'Stok Rendah', code: 'SR', path: '/laporan/stok-rendah' },
       { label: 'Laporan Keuangan', code: 'LK', path: '/laporan/keuangan', roles: [ROLES.ADMIN, ROLES.VIEWER] },
+      { label: 'Laba Rugi', code: 'LR', path: '/laporan/laba-rugi', roles: [ROLES.ADMIN, ROLES.VIEWER] },
       { label: 'Laporan Tren', code: 'LT', path: '/laporan/tren', roles: [ROLES.ADMIN, ROLES.VIEWER] },
     ],
   },

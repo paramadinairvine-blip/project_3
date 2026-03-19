@@ -323,7 +323,154 @@ const getTrendReport = async ({ startDate, endDate, groupBy = 'month' } = {}) =>
   };
 };
 
-// ─── 4. Dashboard Summary ───────────────────────────────────────────
+// ─── 4. Profit & Loss (Laba Rugi) Report ─────────────────────────────
+
+/**
+ * Laporan Laba Rugi: Pendapatan - HPP = Laba Kotor.
+ */
+const getLabaRugiReport = async ({ startDate, endDate } = {}) => {
+  const dateFilter = {};
+  if (startDate) {
+    dateFilter.gte = startDate.includes('T') ? new Date(startDate) : new Date(startDate + 'T00:00:00+07:00');
+  }
+  if (endDate) {
+    dateFilter.lte = endDate.includes('T') ? new Date(endDate) : new Date(endDate + 'T23:59:59.999+07:00');
+  }
+  const hasDateFilter = Object.keys(dateFilter).length > 0;
+
+  // ── A. PENDAPATAN ──────────────────────────────────────
+  const txWhere = { status: { not: 'CANCELLED' } };
+  if (hasDateFilter) txWhere.createdAt = dateFilter;
+
+  const transactions = await prisma.transaction.findMany({
+    where: txWhere,
+    select: { type: true, total: true },
+  });
+
+  const cashRevenue = transactions
+    .filter((t) => t.type === 'CASH')
+    .reduce((s, t) => s + Number(t.total), 0);
+  const bonRevenue = transactions
+    .filter((t) => t.type === 'BON')
+    .reduce((s, t) => s + Number(t.total), 0);
+
+  // Retur
+  const returnWhere = {};
+  if (hasDateFilter) returnWhere.createdAt = dateFilter;
+
+  const returnAgg = await prisma.transactionReturn.aggregate({
+    where: returnWhere,
+    _sum: { refundAmount: true },
+  });
+  const totalReturn = Number(returnAgg._sum.refundAmount || 0);
+  const netRevenue = cashRevenue + bonRevenue - totalReturn;
+
+  // ── B. HPP (Harga Pokok Penjualan) ────────────────────
+  // Query semua TransactionItem dari transaksi yang tidak cancelled, beserta buyPrice dari Product
+  const txItemWhere = { transaction: { status: { not: 'CANCELLED' } } };
+  if (hasDateFilter) txItemWhere.transaction.createdAt = dateFilter;
+
+  const txItems = await prisma.transactionItem.findMany({
+    where: txItemWhere,
+    select: {
+      quantity: true,
+      subtotal: true,
+      product: {
+        select: {
+          id: true,
+          name: true,
+          buyPrice: true,
+          sellPrice: true,
+          category: { select: { id: true, name: true } },
+        },
+      },
+    },
+  });
+
+  // Hitung total HPP
+  let totalHPP = 0;
+  const categoryHPPMap = {};
+  const productMarginMap = {};
+
+  txItems.forEach((item) => {
+    const buyPrice = Number(item.product.buyPrice);
+    const hpp = item.quantity * buyPrice;
+    totalHPP += hpp;
+
+    // HPP per kategori
+    const catId = item.product.category?.id || 'uncategorized';
+    const catName = item.product.category?.name || 'Tanpa Kategori';
+    if (!categoryHPPMap[catId]) {
+      categoryHPPMap[catId] = { categoryName: catName, totalHPP: 0, totalRevenue: 0 };
+    }
+    categoryHPPMap[catId].totalHPP += hpp;
+    categoryHPPMap[catId].totalRevenue += Number(item.subtotal);
+
+    // Per-product margin aggregation
+    const prodId = item.product.id;
+    if (!productMarginMap[prodId]) {
+      productMarginMap[prodId] = {
+        productName: item.product.name,
+        buyPrice,
+        sellPrice: Number(item.product.sellPrice),
+        totalQty: 0,
+        totalRevenue: 0,
+        totalHPP: 0,
+      };
+    }
+    productMarginMap[prodId].totalQty += item.quantity;
+    productMarginMap[prodId].totalRevenue += Number(item.subtotal);
+    productMarginMap[prodId].totalHPP += hpp;
+  });
+
+  const grossProfit = netRevenue - totalHPP;
+  const grossMarginPercent = netRevenue > 0
+    ? Math.round((grossProfit / netRevenue) * 10000) / 100
+    : 0;
+
+  // ── C. HPP per Kategori ────────────────────────────────
+  const hppByCategory = Object.values(categoryHPPMap)
+    .map((cat) => ({
+      ...cat,
+      percentage: totalHPP > 0 ? Math.round((cat.totalHPP / totalHPP) * 10000) / 100 : 0,
+    }))
+    .sort((a, b) => b.totalHPP - a.totalHPP);
+
+  // ── D. Top Margin & Low Margin Products ────────────────
+  const allProducts = Object.values(productMarginMap).map((p) => ({
+    ...p,
+    grossProfit: p.totalRevenue - p.totalHPP,
+    marginPercent: p.totalRevenue > 0
+      ? Math.round(((p.totalRevenue - p.totalHPP) / p.totalRevenue) * 10000) / 100
+      : 0,
+  }));
+
+  const topMarginProducts = [...allProducts]
+    .sort((a, b) => b.marginPercent - a.marginPercent)
+    .slice(0, 5);
+
+  const lowMarginProducts = [...allProducts]
+    .filter((p) => p.totalQty > 0)
+    .sort((a, b) => a.marginPercent - b.marginPercent)
+    .slice(0, 5);
+
+  return {
+    summary: {
+      cashRevenue,
+      bonRevenue,
+      totalReturn,
+      netRevenue,
+      totalHPP,
+      grossProfit,
+      grossMarginPercent,
+    },
+    hppByCategory,
+    topMarginProducts,
+    lowMarginProducts,
+  };
+};
+
+// ─── 5. Dashboard Summary ───────────────────────────────────────────
 
 /**
  * Aggregated data for the main dashboard.
@@ -498,5 +645,6 @@ module.exports = {
   getStockReport,
   getFinancialReport,
   getTrendReport,
+  getLabaRugiReport,
   getDashboardSummary,
 };

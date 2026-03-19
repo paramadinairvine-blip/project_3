@@ -58,4 +58,19 @@ const getTrendReport = async (req, res) => {
   }
 };
 
-module.exports = { getDashboard, getStockReport, getFinancialReport, getTrendReport };
+const getLabaRugi = async (req, res) => {
+  try {
+    const { startDate, endDate } = req.query;
+
+    const report = await reportService.getLabaRugiReport({
+      startDate,
+      endDate,
+    });
+
+    return successResponse(res, report, 'Laporan laba rugi berhasil diambil');
+  } catch (err) {
+    return errorResponse(res, err.message, err.status || 500);
+  }
+};
+
+module.exports = { getDashboard, getStockReport, getFinancialReport, getTrendReport, getLabaRugi };
