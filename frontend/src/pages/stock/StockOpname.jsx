@@ -57,9 +57,18 @@ function ActiveOpnameDetail({ opnameId, onBack }) {
 
   const handleActualStockSave = (item) => {
     const raw = localActualStock[item.id];
-    if (raw === undefined) return;
+    if (raw === undefined || raw === '') return;
     const actualStock = parseInt(raw, 10);
-    if (isNaN(actualStock) || actualStock < 0) return;
+    if (isNaN(actualStock)) {
+      toast.error('Input harus berupa angka');
+      setLocalActualStock((prev) => ({ ...prev, [item.id]: '' }));
+      return;
+    }
+    if (actualStock < 0) {
+      toast.error('Jumlah stok tidak boleh negatif');
+      setLocalActualStock((prev) => ({ ...prev, [item.id]: '' }));
+      return;
+    }
     updateItemMutation.mutate({
       itemId: item.id,
       data: { actualStock, notes: item.notes || null },
@@ -70,8 +79,8 @@ function ActiveOpnameDetail({ opnameId, onBack }) {
     setShowScanner(false);
     const items = opname?.items || [];
     const found = items.filter(
-      (item) => (item.product?.barcode || '').toLowerCase() === barcodeValue.toLowerCase() ||
-                (item.product?.sku || '').toLowerCase() === barcodeValue.toLowerCase()
+      (item) => (item.product?.barcode || '').trim().toLowerCase() === barcodeValue.trim().toLowerCase() ||
+                (item.product?.sku || '').trim().toLowerCase() === barcodeValue.trim().toLowerCase()
     );
     if (found.length > 0) {
       setBarcodeSearch(barcodeValue);
@@ -88,8 +97,8 @@ function ActiveOpnameDetail({ opnameId, onBack }) {
     if (!barcodeSearch.trim()) return;
     const items = opname?.items || [];
     const found = items.filter(
-      (item) => (item.product?.barcode || '').toLowerCase().includes(barcodeSearch.toLowerCase()) ||
-                (item.product?.sku || '').toLowerCase().includes(barcodeSearch.toLowerCase())
+      (item) => (item.product?.barcode || '').trim().toLowerCase().includes(barcodeSearch.trim().toLowerCase()) ||
+                (item.product?.sku || '').trim().toLowerCase().includes(barcodeSearch.trim().toLowerCase())
     );
     if (found.length > 0) {
       found.forEach((f) => {
