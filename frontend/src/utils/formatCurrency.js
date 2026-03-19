@@ -10,6 +10,18 @@ export const formatRupiah = (number) => {
 };
 
 /**
+ * Format number with thousand separators (dots) without "Rp" prefix.
+ * formatNumber(1234567) → "1.234.567"
+ * Useful for PDF/Excel exports where column header already contains "(Rp)".
+ */
+export const formatNumber = (number) => {
+  if (number === null || number === undefined) return '0';
+  const num = typeof number === 'string' ? parseFloat(number) : number;
+  if (isNaN(num)) return '0';
+  return num.toLocaleString('id-ID', { maximumFractionDigits: 0 });
+};
+
+/**
  * Parse Indonesian Rupiah string back to number.
  * parseRupiah("Rp 1.234.567") → 1234567
  */

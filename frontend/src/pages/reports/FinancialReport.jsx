@@ -7,7 +7,7 @@ import {
 } from 'react-icons/hi';
 import { reportAPI } from '../../api/endpoints';
 import { Card, Button, Select, Loading, Table, Skeleton, CalendarPicker } from '../../components/common';
-import { formatRupiah } from '../../utils/formatCurrency';
+import { formatRupiah, formatNumber } from '../../utils/formatCurrency';
 import { formatTanggal } from '../../utils/formatDate';
 import { TRANSACTION_TYPE_LABELS, STORE_INFO } from '../../utils/constants';
 import { exportTableToPDF } from '../../utils/exportPDF';
@@ -130,7 +130,7 @@ export default function FinancialReport() {
   const handleExportPDF = () => {
     const headers = ['Kasir', 'Tanggal', 'Tunai (Rp)', 'Overbooking TU (Rp)', 'Retur (Rp)', 'Total Bersih (Rp)', 'Jml Trx'];
     const rows = perCashier.map((r) => [
-      r.cashierName, formatDate(r.date), r.cashTotal, r.bonTotal, r.returnTotal, r.netTotal, r.transactionCount,
+      r.cashierName, formatDate(r.date), formatNumber(r.cashTotal), formatNumber(r.bonTotal), formatNumber(r.returnTotal), formatNumber(r.netTotal), r.transactionCount,
     ]);
     exportTableToPDF('Rekap Pendapatan Kasir', headers, rows, 'rekap-kasir.pdf', {
       subtitle: `Periode: ${periodLabel}`,
@@ -141,7 +141,7 @@ export default function FinancialReport() {
   const handleExportExcel = () => {
     const headers = ['Kasir', 'Tanggal', 'Tunai (Rp)', 'Overbooking TU (Rp)', 'Retur (Rp)', 'Total Bersih (Rp)', 'Jml Trx'];
     const rows = perCashier.map((r) => [
-      r.cashierName, formatDate(r.date), r.cashTotal, r.bonTotal, r.returnTotal, r.netTotal, r.transactionCount,
+      r.cashierName, formatDate(r.date), formatNumber(r.cashTotal), formatNumber(r.bonTotal), formatNumber(r.returnTotal), formatNumber(r.netTotal), r.transactionCount,
     ]);
     exportToExcel('Rekap Kasir', headers, rows, 'rekap-kasir.xlsx');
   };
