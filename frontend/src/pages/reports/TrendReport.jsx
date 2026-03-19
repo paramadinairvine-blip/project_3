@@ -7,7 +7,7 @@ import {
 } from 'recharts';
 import { HiPrinter, HiDocumentDownload, HiTable } from 'react-icons/hi';
 import { reportAPI } from '../../api/endpoints';
-import { Card, Button, Input, Loading, Skeleton } from '../../components/common';
+import { Card, Button, Loading, Skeleton, CalendarPicker } from '../../components/common';
 import TrendChart from '../../components/charts/TrendChart';
 import { formatRupiah } from '../../utils/formatCurrency';
 import { formatTanggal } from '../../utils/formatDate';
@@ -121,20 +121,15 @@ export default function TrendReport() {
 
       {/* Filters */}
       <div className="flex flex-wrap items-end gap-4">
-        <Input
-          label="Tanggal Mulai"
-          type="date"
-          value={startDate}
-          onChange={(e) => setStartDate(e.target.value)}
-          className="w-44"
-        />
-        <Input
-          label="Tanggal Selesai"
-          type="date"
-          value={endDate}
-          onChange={(e) => setEndDate(e.target.value)}
-          className="w-44"
-        />
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Periode</label>
+          <CalendarPicker
+            mode="range"
+            dateFrom={startDate}
+            dateTo={endDate}
+            onChange={(from, to) => { setStartDate(from); setEndDate(to); }}
+          />
+        </div>
       </div>
 
       {isLoading ? (

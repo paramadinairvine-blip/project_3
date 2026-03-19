@@ -4,7 +4,7 @@ import { HiEye, HiRewind, HiTable } from 'react-icons/hi';
 import toast from 'react-hot-toast';
 import { auditLogAPI, userAPI } from '../../api/endpoints';
 import { getErrorMessage } from '../../utils/handleError';
-import { Table, Badge, Button, Select, Input, Pagination, Modal, Loading } from '../../components/common';
+import { Table, Badge, Button, Select, Pagination, Modal, Loading, CalendarPicker } from '../../components/common';
 import { formatTanggalWaktu } from '../../utils/formatDate';
 import { exportToExcel } from '../../utils/exportExcel';
 
@@ -351,20 +351,15 @@ export default function AuditLog() {
             placeholder="Semua"
           />
         </div>
-        <Input
-          label="Dari Tanggal"
-          type="date"
-          value={startDate}
-          onChange={(e) => { setStartDate(e.target.value); setPage(1); }}
-          className="w-40"
-        />
-        <Input
-          label="Sampai Tanggal"
-          type="date"
-          value={endDate}
-          onChange={(e) => { setEndDate(e.target.value); setPage(1); }}
-          className="w-40"
-        />
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Tanggal</label>
+          <CalendarPicker
+            mode="range"
+            dateFrom={startDate}
+            dateTo={endDate}
+            onChange={(from, to) => { setStartDate(from); setEndDate(to); setPage(1); }}
+          />
+        </div>
       </div>
 
       {/* Table */}

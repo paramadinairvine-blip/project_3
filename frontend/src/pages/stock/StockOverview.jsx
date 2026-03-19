@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { HiEye, HiFilter } from 'react-icons/hi';
 import toast from 'react-hot-toast';
 import { stockAPI, categoryAPI } from '../../api/endpoints';
-import { Table, Badge, Pagination, Modal, Loading, DateRangePicker } from '../../components/common';
+import { Table, Badge, Pagination, Modal, Loading, CalendarPicker } from '../../components/common';
 import { formatTanggalWaktu } from '../../utils/formatDate';
 import { MOVEMENT_TYPE_LABELS, MOVEMENT_TYPE_COLORS } from '../../utils/constants';
 import useBarcodeScanner from '../../hooks/useBarcodeScanner';
@@ -205,7 +205,8 @@ export default function StockOverview() {
       {/* Filter Bar */}
       <div className="flex flex-col lg:flex-row items-stretch lg:items-center gap-3">
         {/* Date Range */}
-        <DateRangePicker
+        <CalendarPicker
+          mode="range"
           dateFrom={dateFrom}
           dateTo={dateTo}
           onChange={(from, to) => { setDateFrom(from); setDateTo(to); }}

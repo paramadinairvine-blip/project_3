@@ -6,7 +6,7 @@ import {
   HiPrinter, HiDocumentDownload, HiTable, HiRefresh,
 } from 'react-icons/hi';
 import { reportAPI } from '../../api/endpoints';
-import { Card, Button, Select, Loading, Table, Skeleton } from '../../components/common';
+import { Card, Button, Select, Loading, Table, Skeleton, CalendarPicker } from '../../components/common';
 import { formatRupiah } from '../../utils/formatCurrency';
 import { formatTanggal } from '../../utils/formatDate';
 import { TRANSACTION_TYPE_LABELS, STORE_INFO } from '../../utils/constants';
@@ -172,11 +172,10 @@ export default function FinancialReport() {
       <div className="flex flex-wrap items-end gap-4">
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">Tanggal</label>
-          <input
-            type="date"
+          <CalendarPicker
+            mode="single"
             value={selectedDate}
-            onChange={(e) => setSelectedDate(e.target.value)}
-            className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+            onChange={setSelectedDate}
           />
         </div>
         <div className="w-48">

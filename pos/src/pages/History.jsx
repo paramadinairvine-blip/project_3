@@ -9,7 +9,7 @@ import { Loading, EmptyState } from '../components/common';
 import ReceiptPrint from '../components/receipt/ReceiptPrint';
 import ReturModal from '../components/ReturModal';
 import { printReceipt, isRectaConfigured } from '../utils/printerService';
-import DualCalendar from '../components/common/DualCalendar';
+import CalendarPicker from '../components/common/CalendarPicker';
 
 export default function History() {
   const [search, setSearch] = useState('');
@@ -119,12 +119,11 @@ export default function History() {
     <div className="h-[calc(100vh-3.5rem)] flex flex-col overflow-hidden bg-gray-50">
       {/* Date Filter Bar */}
       <div className="px-4 pt-4 pb-2">
-        <DualCalendar
-          startDate={filterStart}
-          endDate={filterEnd}
-          onApply={handleDateApply}
-          onReset={handleDateReset}
-          isCustomFilter={!!(filterStart && filterEnd)}
+        <CalendarPicker
+          mode="range"
+          dateFrom={filterStart}
+          dateTo={filterEnd}
+          onChange={handleDateApply}
         />
       </div>
 

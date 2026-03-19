@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { HiEye, HiSearch } from 'react-icons/hi';
 import { transactionAPI } from '../../api/endpoints';
-import { Table, Badge, Pagination } from '../../components/common';
+import { Table, Badge, Pagination, CalendarPicker } from '../../components/common';
 import { formatRupiah } from '../../utils/formatCurrency';
 import { formatTanggalWaktu } from '../../utils/formatDate';
 import {
@@ -135,12 +135,11 @@ export default function TransactionList() {
           onKeyDown={handleKeyDown}
           className="px-4 py-2.5 border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent w-full sm:w-56"
         />
-        <input
-          type="date"
+        <CalendarPicker
+          mode="single"
           value={date}
-          onChange={(e) => setDate(e.target.value)}
-          onKeyDown={handleKeyDown}
-          className="px-4 py-2.5 border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent w-full sm:w-44 text-gray-500"
+          onChange={setDate}
+          placeholder="Pilih tanggal"
         />
         <input
           type="text"
