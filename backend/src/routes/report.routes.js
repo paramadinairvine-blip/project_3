@@ -13,5 +13,6 @@ router.get('/dashboard', reportController.getDashboard);
 router.get('/stock', reportController.getStockReport);
 router.get('/financial', reportController.getFinancialReport);
 router.get('/trend', reportController.getTrendReport);
+router.get('/laba-rugi', reportController.getLabaRugi);
 
 module.exports = router;
