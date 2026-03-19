@@ -5,7 +5,7 @@ import { reportAPI, transactionAPI } from '../api/endpoints';
 import { formatRupiah } from '../utils/formatCurrency';
 import { formatTanggalPanjang } from '../utils/formatDate';
 import { Loading } from '../components/common';
-import DualCalendar from '../components/common/DualCalendar';
+import CalendarPicker from '../components/common/CalendarPicker';
 
 // Helper: format date to YYYY-MM-DD for input[type="date"]
 const toDateString = (date) => {
@@ -110,12 +110,11 @@ export default function Dashboard() {
         </div>
 
         {/* Date Filter */}
-        <DualCalendar
-          startDate={appliedStart}
-          endDate={appliedEnd}
-          onApply={handleApply}
-          onReset={handleReset}
-          isCustomFilter={isCustomFilter}
+        <CalendarPicker
+          mode="range"
+          dateFrom={appliedStart}
+          dateTo={appliedEnd}
+          onChange={handleApply}
         />
 
         {isLoading ? (

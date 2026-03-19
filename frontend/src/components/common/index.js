@@ -13,3 +13,4 @@ export { default as Breadcrumb } from './Breadcrumb';
 export { default as EmptyState } from './EmptyState';
 export { default as Skeleton } from './Skeleton';
 export { default as DateRangePicker } from './DateRangePicker';
+export { default as CalendarPicker } from './CalendarPicker';

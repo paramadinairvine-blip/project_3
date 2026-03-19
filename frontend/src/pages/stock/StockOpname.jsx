@@ -4,7 +4,7 @@ import { HiPlus, HiEye, HiCheck, HiQrcode, HiFilter, HiSearch, HiCamera } from '
 import toast from 'react-hot-toast';
 import { stockAPI } from '../../api/endpoints';
 import { getErrorMessage } from '../../utils/handleError';
-import { Table, Badge, Button, Modal, Loading, Card, Input, DateRangePicker } from '../../components/common';
+import { Table, Badge, Button, Modal, Loading, Card, Input, CalendarPicker } from '../../components/common';
 import BarcodeScanner from '../../components/BarcodeScanner';
 import { formatTanggalWaktu } from '../../utils/formatDate';
 import { OPNAME_STATUS_LABELS, OPNAME_STATUS_COLORS } from '../../utils/constants';
@@ -559,7 +559,8 @@ export default function StockOpname() {
       {/* Filter Bar */}
       <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3">
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-          <DateRangePicker
+          <CalendarPicker
+            mode="range"
             dateFrom={dateFrom}
             dateTo={dateTo}
             onChange={(from, to) => { setDateFrom(from); setDateTo(to); }}
