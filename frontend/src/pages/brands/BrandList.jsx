@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { HiPlus, HiPencil, HiTrash } from 'react-icons/hi';
+import { HiPlus, HiPencil, HiTrash, HiCube, HiExternalLink } from 'react-icons/hi';
 import toast from 'react-hot-toast';
+import { useNavigate } from 'react-router-dom';
 import { brandAPI } from '../../api/endpoints';
 import { getErrorMessage } from '../../utils/handleError';
 import { Table, Badge, Button, SearchBar, Pagination, Modal, Breadcrumb } from '../../components/common';
@@ -10,6 +11,7 @@ import useAuth from '../../hooks/useAuth';
 
 export default function BrandList() {
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
   const { isAdmin, isKasir } = useAuth();
   const canEdit = isAdmin || isKasir;
 
@@ -18,6 +20,7 @@ export default function BrandList() {
   const [formOpen, setFormOpen] = useState(false);
   const [editTarget, setEditTarget] = useState(null);
   const [deleteTarget, setDeleteTarget] = useState(null);
+  const [productsBrand, setProductsBrand] = useState(null);
 
   const { data, isLoading } = useQuery({
     queryKey: ['brands', { page, search }],
@@ -59,6 +62,15 @@ export default function BrandList() {
     setEditTarget(null);
   };
 
+  const handleShowProducts = async (brand) => {
+    try {
+      const { data: res } = await brandAPI.getById(brand.id);
+      setProductsBrand(res.data || res);
+    } catch {
+      toast.error('Gagal memuat produk brand');
+    }
+  };
+
   const columns = [
     {
       key: 'name',
@@ -69,10 +81,16 @@ export default function BrandList() {
     {
       key: '_count',
       header: 'Jumlah Produk',
-      render: (v) => (
-        <Badge variant="info" size="sm">
-          {v?.products || 0} produk
-        </Badge>
+      render: (v, row) => (
+        <button
+          onClick={(e) => { e.stopPropagation(); if (v?.products > 0) handleShowProducts(row); }}
+          className={`transition-transform ${v?.products > 0 ? 'cursor-pointer hover:scale-105' : 'cursor-default'}`}
+          title={v?.products > 0 ? 'Klik untuk lihat daftar produk' : undefined}
+        >
+          <Badge variant="info" size="sm">
+            {v?.products || 0} produk
+          </Badge>
+        </button>
       ),
     },
     {
@@ -191,6 +209,55 @@ export default function BrandList() {
             </span>
           )}
         </p>
+      </Modal>
+
+      {/* Products by Brand Modal */}
+      <Modal
+        isOpen={!!productsBrand}
+        onClose={() => setProductsBrand(null)}
+        title={`Produk Brand "${productsBrand?.name || ''}"`}
+        size="lg"
+        footer={
+          <Button variant="outline" onClick={() => setProductsBrand(null)}>Tutup</Button>
+        }
+      >
+        {productsBrand?.products?.length > 0 ? (
+          <div className="divide-y divide-gray-100">
+            {productsBrand.products.map((product) => (
+              <div
+                key={product.id}
+                className="flex items-center justify-between py-3 px-1 hover:bg-gray-50 rounded-lg transition-colors"
+              >
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="flex-shrink-0 w-9 h-9 bg-blue-50 rounded-lg flex items-center justify-center">
+                    <HiCube className="w-5 h-5 text-blue-500" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium text-gray-900 truncate">{product.name}</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3 flex-shrink-0">
+                  <div className="text-right">
+                    <p className="text-sm font-semibold text-gray-900">{product.stock?.toLocaleString('id-ID') ?? 0}</p>
+                    <p className="text-xs text-gray-500">stok</p>
+                  </div>
+                  <Badge variant={product.isActive ? 'success' : 'danger'} size="sm">
+                    {product.isActive ? 'Aktif' : 'Non-Aktif'}
+                  </Badge>
+                  <button
+                    onClick={() => navigate(`/produk/${product.id}`)}
+                    className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                    title="Lihat detail produk"
+                  >
+                    <HiExternalLink className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p className="text-sm text-gray-500 text-center py-8">Belum ada produk untuk brand ini.</p>
+        )}
       </Modal>
     </div>
   );
