@@ -75,6 +75,48 @@ function StatusTimeline({ status, createdAt, updatedAt }) {
   );
 }
 
+/**
+ * Helper: get unit display name for a PO item
+ */
+const getItemUnitName = (item) => {
+  if (item.unit?.name) return item.unit.name;
+  if (item.product?.unitOfMeasure?.name) return item.product.unitOfMeasure.name;
+  if (item.product?.unit) return item.product.unit;
+  return 'Pcs';
+};
+
+/**
+ * Helper: get conversion factor for a PO item
+ */
+const getItemConversionFactor = (item) => {
+  if (!item.unitId || !item.product) return 1;
+
+  // Jika unitId PO = unitId base product, factor = 1
+  if (item.unitId === item.product.unitId) return 1;
+
+  // Cari di productUnits
+  const pu = (item.product.productUnits || []).find(
+    (pu) => pu.unit?.id === item.unitId
+  );
+  if (pu) return Number(pu.conversionFactor) || 1;
+
+  // Fallback: hitung dari baseQty / quantity
+  if (item.baseQty && item.quantity && item.quantity > 0) {
+    return Math.round(item.baseQty / item.quantity);
+  }
+
+  return 1;
+};
+
+/**
+ * Helper: get base unit name
+ */
+const getBaseUnitName = (item) => {
+  if (item.product?.unitOfMeasure?.name) return item.product.unitOfMeasure.name;
+  if (item.product?.unit) return item.product.unit;
+  return 'Pcs';
+};
+
 export default function PurchaseOrderDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -189,12 +231,39 @@ export default function PurchaseOrderDetail() {
     {
       key: 'unit',
       header: 'Satuan',
-      render: (_, row) => <span className="text-gray-600">{row.unit?.name || row.product?.unit || '-'}</span>,
+      render: (_, row) => {
+        const unitName = getItemUnitName(row);
+        const factor = getItemConversionFactor(row);
+        const baseUnit = getBaseUnitName(row);
+        return (
+          <div>
+            <span className="text-gray-600">{unitName}</span>
+            {factor > 1 && (
+              <span className="text-xs text-blue-500 ml-1">
+                ({'\u00d7'}{factor} {baseUnit})
+              </span>
+            )}
+          </div>
+        );
+      },
     },
     {
       key: 'quantity',
       header: 'Dipesan',
-      render: (v) => <span className="font-medium">{v}</span>,
+      render: (v, row) => {
+        const factor = getItemConversionFactor(row);
+        const baseUnit = getBaseUnitName(row);
+        return (
+          <div>
+            <span className="font-medium">{v}</span>
+            {factor > 1 && (
+              <span className="text-xs text-gray-400 ml-1">
+                = {v * factor} {baseUnit}
+              </span>
+            )}
+          </div>
+        );
+      },
     },
     ...(['RECEIVED', 'PARTIALLY_RECEIVED'].includes(po.status) ? [{
       key: 'receivedQty',
@@ -202,11 +271,20 @@ export default function PurchaseOrderDetail() {
       render: (v, row) => {
         const qty = v ?? 0;
         const isShort = qty < row.quantity;
+        const factor = getItemConversionFactor(row);
+        const baseUnit = getBaseUnitName(row);
         return (
-          <span className={`font-medium ${isShort ? 'text-amber-600' : 'text-green-600'}`}>
-            {qty} / {row.quantity}
-            {isShort && <span className="text-xs text-amber-500 ml-1">(sisa {row.quantity - qty})</span>}
-          </span>
+          <div>
+            <span className={`font-medium ${isShort ? 'text-amber-600' : 'text-green-600'}`}>
+              {qty} / {row.quantity}
+              {isShort && <span className="text-xs text-amber-500 ml-1">(sisa {row.quantity - qty})</span>}
+            </span>
+            {factor > 1 && (
+              <div className="text-xs text-gray-400">
+                = {(row.receivedBaseQty || qty * factor)} / {row.baseQty || row.quantity * factor} {baseUnit}
+              </div>
+            )}
+          </div>
         );
       },
     }] : []),
@@ -372,7 +450,7 @@ export default function PurchaseOrderDetail() {
         <p className="text-sm text-gray-600">{modalCfg.message}</p>
       </Modal>
 
-      {/* Receive Modal — tabel input qty per item */}
+      {/* Receive Modal — tabel input qty per item dengan info konversi */}
       <Modal
         isOpen={actionModal === 'receive'}
         onClose={() => setActionModal(null)}
@@ -410,10 +488,22 @@ export default function PurchaseOrderDetail() {
               {(po?.items || []).map((item) => {
                 const remaining = item.quantity - (item.receivedQty || 0);
                 const isFullyReceived = remaining <= 0;
+                const factor = getItemConversionFactor(item);
+                const unitName = getItemUnitName(item);
+                const baseUnit = getBaseUnitName(item);
+                const batchQty = parseInt(receivedQtys[item.id]) || 0;
+
                 return (
                   <tr key={item.id} className={`border-b border-gray-100 ${isFullyReceived ? 'bg-green-50' : ''}`}>
-                    <td className="px-4 py-2.5 font-medium text-gray-900">{item.product?.name || '-'}</td>
-                    <td className="px-4 py-2.5 text-gray-600">{item.unit?.name || item.product?.unit || '-'}</td>
+                    <td className="px-4 py-2.5">
+                      <p className="font-medium text-gray-900">{item.product?.name || '-'}</p>
+                      {factor > 1 && (
+                        <p className="text-xs text-blue-500 mt-0.5">
+                          1 {unitName} = {factor} {baseUnit}
+                        </p>
+                      )}
+                    </td>
+                    <td className="px-4 py-2.5 text-gray-600">{unitName}</td>
                     <td className="px-4 py-2.5 text-right text-gray-600">{item.quantity}</td>
                     {po?.status === 'PARTIALLY_RECEIVED' && (
                       <td className="px-4 py-2.5 text-right text-gray-600">
@@ -426,14 +516,21 @@ export default function PurchaseOrderDetail() {
                       {isFullyReceived ? (
                         <span className="text-green-600 text-xs font-medium">Lengkap</span>
                       ) : (
-                        <input
-                          type="number"
-                          min="0"
-                          max={remaining}
-                          value={receivedQtys[item.id] ?? remaining}
-                          onChange={(e) => setReceivedQtys((prev) => ({ ...prev, [item.id]: e.target.value }))}
-                          className="w-20 rounded border-gray-300 text-sm py-1.5 px-2 text-right focus:border-blue-500 focus:ring-blue-500"
-                        />
+                        <div>
+                          <input
+                            type="number"
+                            min="0"
+                            max={remaining}
+                            value={receivedQtys[item.id] ?? remaining}
+                            onChange={(e) => setReceivedQtys((prev) => ({ ...prev, [item.id]: e.target.value }))}
+                            className="w-20 rounded border-gray-300 text-sm py-1.5 px-2 text-right focus:border-blue-500 focus:ring-blue-500"
+                          />
+                          {factor > 1 && batchQty > 0 && (
+                            <p className="text-xs text-gray-400 mt-1">
+                              = {batchQty * factor} {baseUnit}
+                            </p>
+                          )}
+                        </div>
                       )}
                     </td>
                   </tr>
