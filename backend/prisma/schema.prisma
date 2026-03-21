@@ -91,8 +91,9 @@ model UnitOfMeasure {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
-  products     Product[]
-  productUnits ProductUnit[]
+  products           Product[]
+  productUnits       ProductUnit[]
+  purchaseOrderItems PurchaseOrderItem[]
 
   @@map("unit_of_measures")
 }
@@ -402,14 +403,18 @@ model PurchaseOrderItem {
   id              String  @id @default(uuid())
   purchaseOrderId String
   productId       String
-  quantity        Int
-  receivedQty     Int     @default(0)
+  unitId          String? // Satuan yang dipilih saat PO (bisa kardus, sak, dll)
+  quantity        Int // Qty dalam satuan yang dipilih (misal 5 kardus)
+  baseQty         Int     @default(0) // Qty terkonversi ke satuan dasar (misal 120 pcs)
+  receivedQty     Int     @default(0) // Qty diterima dalam satuan PO
+  receivedBaseQty Int     @default(0) // Qty diterima terkonversi ke satuan dasar
   price           Decimal @db.Decimal(15, 2)
   subtotal        Decimal @db.Decimal(15, 2)
 
   // Relations
   purchaseOrder PurchaseOrder @relation(fields: [purchaseOrderId], references: [id], onDelete: Cascade)
   product       Product       @relation(fields: [productId], references: [id])
+  unit          UnitOfMeasure? @relation(fields: [unitId], references: [id])
 
   @@map("purchase_order_items")
 }

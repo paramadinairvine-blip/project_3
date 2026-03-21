@@ -10,13 +10,54 @@ const poIncludes = {
   items: {
     include: {
       product: {
-        select: { id: true, name: true, sku: true, barcode: true, unit: true, buyPrice: true },
+        select: {
+          id: true, name: true, sku: true, barcode: true,
+          unit: true, buyPrice: true, unitId: true,
+          unitOfMeasure: { select: { id: true, name: true, abbreviation: true } },
+          productUnits: {
+            include: { unit: { select: { id: true, name: true, abbreviation: true } } },
+          },
+        },
       },
+      unit: { select: { id: true, name: true, abbreviation: true } },
     },
   },
   supplier: { select: { id: true, name: true, contactName: true, phone: true } },
   creator: { select: { id: true, fullName: true, email: true } },
   updater: { select: { id: true, fullName: true } },
+};
+
+/**
+ * Convert quantity to base-unit quantity using ProductUnit conversion factor.
+ * Returns { baseQty, conversionFactor }.
+ */
+const convertToBaseQty = async (tx, productId, unitId, quantity) => {
+  if (!unitId) return { baseQty: quantity, conversionFactor: 1 };
+
+  const product = await tx.product.findUnique({
+    where: { id: productId },
+    select: { unitId: true },
+  });
+
+  // Jika tidak ada product atau unitId sama = sudah base unit
+  if (!product || !product.unitId || product.unitId === unitId) {
+    return { baseQty: quantity, conversionFactor: 1 };
+  }
+
+  const pu = await tx.productUnit.findUnique({
+    where: { productId_unitId: { productId, unitId } },
+  });
+
+  if (pu) {
+    const factor = Number(pu.conversionFactor);
+    if (!factor || factor <= 0) {
+      throw new AppError(`Conversion factor untuk produk tidak valid (${factor}). Periksa konfigurasi satuan.`, 400);
+    }
+    return { baseQty: Math.round(quantity * factor), conversionFactor: factor };
+  }
+
+  // Tidak ditemukan ProductUnit, anggap 1:1
+  return { baseQty: quantity, conversionFactor: 1 };
 };
 
 /**
@@ -100,7 +141,7 @@ const getById = async (id) => {
  * data shape:
  * {
  *   supplierId, notes?,
- *   items: [{ productId, quantity, price }]
+ *   items: [{ productId, unitId?, quantity, price }]
  * }
  */
 const create = async (data, userId) => {
@@ -109,13 +150,23 @@ const create = async (data, userId) => {
   const po = await prisma.$transaction(async (tx) => {
     const poNumber = await generatePONumber(tx);
 
-    // Calculate totals
+    // Calculate totals & convert to base qty
     let totalAmount = 0;
-    const processedItems = items.map((item) => {
+    const processedItems = [];
+
+    for (const item of items) {
       const subtotal = item.quantity * item.price;
       totalAmount += subtotal;
-      return { ...item, subtotal };
-    });
+
+      const { baseQty } = await convertToBaseQty(tx, item.productId, item.unitId, item.quantity);
+
+      processedItems.push({
+        ...item,
+        subtotal,
+        baseQty,
+        unitId: item.unitId || null,
+      });
+    }
 
     const created = await tx.purchaseOrder.create({
       data: {
@@ -134,7 +185,9 @@ const create = async (data, userId) => {
         data: {
           purchaseOrderId: created.id,
           productId: item.productId,
+          unitId: item.unitId,
           quantity: item.quantity,
+          baseQty: item.baseQty,
           price: item.price,
           subtotal: item.subtotal,
         },
@@ -190,11 +243,16 @@ const update = async (id, data, userId) => {
       for (const item of items) {
         const subtotal = item.quantity * item.price;
         totalAmount += subtotal;
+
+        const { baseQty } = await convertToBaseQty(tx, item.productId, item.unitId, item.quantity);
+
         await tx.purchaseOrderItem.create({
           data: {
             purchaseOrderId: id,
             productId: item.productId,
+            unitId: item.unitId || null,
             quantity: item.quantity,
+            baseQty,
             price: item.price,
             subtotal,
           },
@@ -259,15 +317,25 @@ const send = async (id, userId) => {
  * [{ itemId, receivedQty }]
  *
  * Steps:
- *   1. Change status to RECEIVED
- *   2. Add stock for each item (StockMovement IN)
+ *   1. Update receivedQty & receivedBaseQty per item
+ *   2. Add stock in BASE UNIT (converted) via StockMovement IN
  *   3. Update buy price if PO price differs → record PriceHistory
- *   4. Create in-app notification
+ *   4. Change status to PARTIALLY_RECEIVED or RECEIVED
+ *   5. Create in-app notification
  */
 const receive = async (id, receivedItems, userId) => {
   const existing = await prisma.purchaseOrder.findUnique({
     where: { id },
-    include: { items: { include: { product: true } }, supplier: true },
+    include: {
+      items: {
+        include: {
+          product: {
+            select: { id: true, stock: true, buyPrice: true, sellPrice: true, unitId: true },
+          },
+        },
+      },
+      supplier: true,
+    },
   });
 
   if (!existing) throw new AppError('Purchase order tidak ditemukan', 404);
@@ -293,7 +361,7 @@ const receive = async (id, receivedItems, userId) => {
     let allFullyReceived = true;
 
     for (const item of existing.items) {
-      // For this batch: how many are being received now
+      // For this batch: how many are being received now (in PO unit)
       const batchQty = receivedMap.get(item.id) ?? 0;
 
       // Skip items with 0 qty in this batch
@@ -303,45 +371,56 @@ const receive = async (id, receivedItems, userId) => {
         continue;
       }
 
-      // Calculate new total receivedQty (accumulated)
+      // Calculate new total receivedQty (accumulated, in PO unit)
       const newReceivedQty = item.receivedQty + batchQty;
       const cappedReceivedQty = Math.min(newReceivedQty, item.quantity);
 
-      // Actual qty to add to stock (don't exceed ordered qty)
+      // Actual qty to add (in PO unit)
       const actualAddQty = cappedReceivedQty - item.receivedQty;
       if (actualAddQty <= 0) {
         // Already fully received for this item
         continue;
       }
 
-      // Update PO item receivedQty
+      // *** KONVERSI KE BASE UNIT ***
+      const { baseQty: addBaseQty } = await convertToBaseQty(
+        tx, item.productId, item.unitId, actualAddQty
+      );
+
+      // Hitung receivedBaseQty baru
+      const newReceivedBaseQty = (item.receivedBaseQty || 0) + addBaseQty;
+
+      // Update PO item receivedQty & receivedBaseQty
       await tx.purchaseOrderItem.update({
         where: { id: item.id },
-        data: { receivedQty: cappedReceivedQty },
+        data: {
+          receivedQty: cappedReceivedQty,
+          receivedBaseQty: newReceivedBaseQty,
+        },
       });
 
       if (cappedReceivedQty < item.quantity) {
         allFullyReceived = false;
       }
 
-      // Add stock (StockMovement IN)
+      // Add stock in BASE UNIT (StockMovement IN)
       const product = await tx.product.findUnique({ where: { id: item.productId } });
       if (!product) {
         throw new AppError(`Produk ${item.productId} tidak ditemukan`, 400);
       }
       const previousStock = product.stock;
-      const newStock = previousStock + actualAddQty;
+      const newStock = previousStock + addBaseQty; // ← Pakai base qty!
 
       await tx.stockMovement.create({
         data: {
           productId: item.productId,
           type: 'IN',
-          quantity: actualAddQty,
+          quantity: addBaseQty, // ← Simpan dalam base unit
           previousStock,
           newStock,
           referenceType: 'PO',
           referenceId: id,
-          notes: `Penerimaan PO ${existing.poNumber} (batch)`,
+          notes: `Penerimaan PO ${existing.poNumber} — ${actualAddQty} ${item.unitId ? 'unit' : 'pcs'} (=${addBaseQty} base)`,
           createdBy: userId,
         },
       });
