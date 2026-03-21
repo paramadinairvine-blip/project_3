@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { HiPlus, HiPencil, HiTrash, HiChevronDown, HiChevronRight } from 'react-icons/hi';
+import { HiPlus, HiPencil, HiTrash, HiChevronDown, HiChevronRight, HiCube, HiExternalLink } from 'react-icons/hi';
+import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { categoryAPI } from '../../api/endpoints';
 import { getErrorMessage } from '../../utils/handleError';
@@ -8,7 +9,7 @@ import { Button, Badge, Modal, Loading } from '../../components/common';
 import CategoryForm from './CategoryForm';
 import useAuth from '../../hooks/useAuth';
 
-function CategoryNode({ category, level = 0, onEdit, onDelete, onAddChild, canEdit }) {
+function CategoryNode({ category, level = 0, onEdit, onDelete, onAddChild, onShowProducts, canEdit }) {
   const [expanded, setExpanded] = useState(true);
   const hasChildren = category.children?.length > 0;
 
@@ -39,9 +40,15 @@ function CategoryNode({ category, level = 0, onEdit, onDelete, onAddChild, canEd
           <span className="font-medium text-gray-900 truncate">{category.name}</span>
 
           {category._count?.products > 0 && (
-            <Badge variant="info" size="sm">
-              {category._count.products} produk
-            </Badge>
+            <button
+              onClick={() => onShowProducts(category)}
+              className="cursor-pointer hover:opacity-80 transition-opacity"
+              title="Klik untuk lihat produk"
+            >
+              <Badge variant="info" size="sm">
+                {category._count.products} produk
+              </Badge>
+            </button>
           )}
 
           {!category.isActive && (
@@ -89,6 +96,7 @@ function CategoryNode({ category, level = 0, onEdit, onDelete, onAddChild, canEd
               onEdit={onEdit}
               onDelete={onDelete}
               onAddChild={onAddChild}
+              onShowProducts={onShowProducts}
               canEdit={canEdit}
             />
           ))}
@@ -100,6 +108,7 @@ function CategoryNode({ category, level = 0, onEdit, onDelete, onAddChild, canEd
 
 export default function CategoryList() {
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
   const { isAdmin, isKasir } = useAuth();
   const canEdit = isAdmin || isKasir;
 
@@ -107,6 +116,7 @@ export default function CategoryList() {
   const [editTarget, setEditTarget] = useState(null);
   const [parentTarget, setParentTarget] = useState(null);
   const [deleteTarget, setDeleteTarget] = useState(null);
+  const [productsCategory, setProductsCategory] = useState(null);
 
   const { data: categories, isLoading } = useQuery({
     queryKey: ['categories'],
@@ -150,6 +160,15 @@ export default function CategoryList() {
     setParentTarget(null);
   };
 
+  const handleShowProducts = async (category) => {
+    try {
+      const { data: res } = await categoryAPI.getById(category.id);
+      setProductsCategory(res.data || res);
+    } catch {
+      toast.error('Gagal memuat produk kategori');
+    }
+  };
+
   if (isLoading) return <Loading text="Memuat kategori..." />;
 
   return (
@@ -178,6 +197,7 @@ export default function CategoryList() {
                 onEdit={handleEdit}
                 onDelete={setDeleteTarget}
                 onAddChild={handleAddChild}
+                onShowProducts={handleShowProducts}
                 canEdit={canEdit}
               />
             ))}
@@ -227,6 +247,43 @@ export default function CategoryList() {
             </span>
           )}
         </p>
+      </Modal>
+
+      {/* Products Modal */}
+      <Modal
+        isOpen={!!productsCategory}
+        onClose={() => setProductsCategory(null)}
+        title={`Produk — ${productsCategory?.name || ''}`}
+        size="lg"
+      >
+        {productsCategory?.products?.length > 0 ? (
+          <div className="divide-y divide-gray-100 max-h-96 overflow-y-auto">
+            {productsCategory.products.map((product) => (
+              <div key={product.id} className="flex items-center justify-between px-2 py-3 hover:bg-gray-50 rounded-lg transition-colors">
+                <div className="flex items-center gap-3 min-w-0 flex-1">
+                  <div className="w-9 h-9 bg-blue-50 rounded-lg flex items-center justify-center flex-shrink-0">
+                    <HiCube className="w-5 h-5 text-blue-500" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="font-medium text-gray-900 truncate">{product.name}</p>
+                    <p className="text-xs text-gray-400">Stok: {(product.stock ?? 0).toLocaleString('id-ID')}</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 flex-shrink-0 ml-3">
+                  <button
+                    onClick={() => navigate(`/produk/${product.id}`)}
+                    className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                    title="Lihat detail produk"
+                  >
+                    <HiExternalLink className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p className="text-center text-gray-400 py-8 text-sm">Belum ada produk untuk kategori ini</p>
+        )}
       </Modal>
     </div>
   );

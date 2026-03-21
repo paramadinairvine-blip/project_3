@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { HiPlus, HiPencil, HiTrash, HiCube, HiExternalLink } from 'react-icons/hi';
-import toast from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
+import toast from 'react-hot-toast';
 import { brandAPI } from '../../api/endpoints';
 import { getErrorMessage } from '../../utils/handleError';
 import { Table, Badge, Button, SearchBar, Pagination, Modal, Breadcrumb } from '../../components/common';
@@ -222,25 +222,22 @@ export default function BrandList() {
         }
       >
         {productsBrand?.products?.length > 0 ? (
-          <div className="divide-y divide-gray-100">
+          <div className="divide-y divide-gray-100 max-h-96 overflow-y-auto">
             {productsBrand.products.map((product) => (
               <div
                 key={product.id}
                 className="flex items-center justify-between py-3 px-1 hover:bg-gray-50 rounded-lg transition-colors"
               >
-                <div className="flex items-center gap-3 min-w-0">
+                <div className="flex items-center gap-3 min-w-0 flex-1">
                   <div className="flex-shrink-0 w-9 h-9 bg-blue-50 rounded-lg flex items-center justify-center">
                     <HiCube className="w-5 h-5 text-blue-500" />
                   </div>
                   <div className="min-w-0">
                     <p className="text-sm font-medium text-gray-900 truncate">{product.name}</p>
+                    <p className="text-xs text-gray-400">Stok: {(product.stock ?? 0).toLocaleString('id-ID')}</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-3 flex-shrink-0">
-                  <div className="text-right">
-                    <p className="text-sm font-semibold text-gray-900">{product.stock?.toLocaleString('id-ID') ?? 0}</p>
-                    <p className="text-xs text-gray-500">stok</p>
-                  </div>
                   <Badge variant={product.isActive ? 'success' : 'danger'} size="sm">
                     {product.isActive ? 'Aktif' : 'Non-Aktif'}
                   </Badge>
