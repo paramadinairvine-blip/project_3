@@ -51,7 +51,7 @@ export default function UnitPickerModal({ product, onSelect, onClose }) {
             <div>
               <h3 className="text-lg font-bold">{product.name}</h3>
               <p className="text-sm text-white/60 mt-1">
-                {product.category?.name || ''}{product.sku ? ` · SKU: ${product.sku}` : ''}
+                {product.category?.name || ''}
               </p>
             </div>
             <button
