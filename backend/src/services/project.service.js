@@ -28,9 +28,12 @@ const projectIncludes = {
 /**
  * List projects with pagination and optional status filter.
  */
-const getAll = async ({ page = 1, limit = DEFAULT_PAGE_SIZE, status } = {}) => {
+const getAll = async ({ page = 1, limit = DEFAULT_PAGE_SIZE, status, search } = {}) => {
   const where = { isActive: true };
   if (status) where.status = status;
+  if (search) {
+    where.name = { contains: search, mode: 'insensitive' };
+  }
 
   const skip = (page - 1) * limit;
 

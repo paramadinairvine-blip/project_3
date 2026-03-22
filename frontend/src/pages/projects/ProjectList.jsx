@@ -1,13 +1,15 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
-import { HiPlus, HiPencil, HiTrash, HiEye } from 'react-icons/hi';
+import { HiPlus, HiPencil, HiTrash, HiEye, HiSearch, HiDocumentDownload, HiTable } from 'react-icons/hi';
 import toast from 'react-hot-toast';
 import { projectAPI } from '../../api/endpoints';
 import { getErrorMessage } from '../../utils/handleError';
 import { Badge, Button, Modal, Loading } from '../../components/common';
-import { formatRupiah } from '../../utils/formatCurrency';
+import { formatRupiah, formatNumber } from '../../utils/formatCurrency';
 import { formatTanggal } from '../../utils/formatDate';
+import { exportTableToPDF } from '../../utils/exportPDF';
+import { exportToExcel } from '../../utils/exportExcel';
 import { PROJECT_STATUS, PROJECT_STATUS_LABELS, PROJECT_STATUS_COLORS } from '../../utils/constants';
 import useAuth from '../../hooks/useAuth';
 
@@ -123,17 +125,28 @@ export default function ProjectList() {
   const canEdit = isAdmin || isKasir;
 
   const [statusFilter, setStatusFilter] = useState('');
+  const [search, setSearch] = useState('');
+  const [appliedSearch, setAppliedSearch] = useState('');
   const [deleteTarget, setDeleteTarget] = useState(null);
 
   const { data, isLoading } = useQuery({
-    queryKey: ['projects', { status: statusFilter }],
+    queryKey: ['projects', { status: statusFilter, search: appliedSearch }],
     queryFn: async () => {
       const params = { limit: 50 };
       if (statusFilter) params.status = statusFilter;
+      if (appliedSearch) params.search = appliedSearch;
       const { data: res } = await projectAPI.getAll(params);
       return res;
     },
   });
+
+  const handleSearch = () => {
+    setAppliedSearch(search);
+  };
+
+  const handleSearchKeyDown = (e) => {
+    if (e.key === 'Enter') handleSearch();
+  };
 
   const deleteMutation = useMutation({
     mutationFn: (id) => projectAPI.remove(id),
@@ -147,6 +160,38 @@ export default function ProjectList() {
 
   const projects = data?.data || [];
 
+  // ─── Export helpers ─────────────────────────────────
+  const getExportData = () => {
+    const headers = ['Nama Proyek', 'Status', 'Tanggal Mulai', 'Budget (Rp)', 'Terpakai (Rp)', 'Sisa (Rp)', 'Progress'];
+    const rows = projects.map((p) => {
+      const actualSpent = (p.materials || []).reduce((sum, m) => sum + (parseFloat(m.usedQty) || 0) * (parseFloat(m.unitPrice) || 0), 0);
+      return [
+        p.name,
+        PROJECT_STATUS_LABELS[p.status] || p.status,
+        formatTanggal(p.startDate),
+        formatNumber(p.budget),
+        formatNumber(actualSpent),
+        formatNumber(Number(p.budget) - actualSpent),
+        `${p.progressPercent || 0}%`,
+      ];
+    });
+    return { headers, rows };
+  };
+
+  const handleExportPDF = () => {
+    const { headers, rows } = getExportData();
+    const subtitle = statusFilter ? `Status: ${PROJECT_STATUS_LABELS[statusFilter]}` : '';
+    exportTableToPDF('Daftar Proyek', headers, rows, 'daftar-proyek.pdf', {
+      subtitle,
+      columnStyles: ['left', 'center', 'center', 'right', 'right', 'right', 'center'],
+    });
+  };
+
+  const handleExportExcel = () => {
+    const { headers, rows } = getExportData();
+    exportToExcel('Daftar Proyek', headers, rows, 'daftar-proyek.xlsx');
+  };
+
   if (isLoading) return <Loading text="Memuat daftar proyek..." />;
 
   return (
@@ -157,28 +202,45 @@ export default function ProjectList() {
           <h1 className="text-2xl font-bold text-gray-900">Daftar Proyek</h1>
           <p className="text-sm text-gray-500 mt-1">Kelola proyek dan kebutuhan material</p>
         </div>
-        {canEdit && (
-          <Button icon={HiPlus} onClick={() => navigate('/proyek/tambah')}>
-            Tambah Proyek
-          </Button>
-        )}
+        <div className="flex gap-2 flex-wrap">
+          <Button variant="outline" size="sm" icon={HiDocumentDownload} onClick={handleExportPDF}>PDF</Button>
+          <Button variant="outline" size="sm" icon={HiTable} onClick={handleExportExcel}>Excel</Button>
+          {canEdit && (
+            <Button icon={HiPlus} onClick={() => navigate('/proyek/tambah')}>
+              Tambah Proyek
+            </Button>
+          )}
+        </div>
       </div>
 
-      {/* Status Tabs */}
-      <div className="flex flex-wrap gap-2">
-        {STATUS_TABS.map((tab) => (
-          <button
-            key={tab.key}
-            onClick={() => setStatusFilter(tab.key)}
-            className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
-              statusFilter === tab.key
-                ? 'bg-blue-600 text-white'
-                : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'
-            }`}
-          >
-            {tab.label}
-          </button>
-        ))}
+      {/* Search + Status Tabs */}
+      <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+        <div className="relative flex-1 max-w-xs">
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            onKeyDown={handleSearchKeyDown}
+            placeholder="Cari nama proyek..."
+            className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+          />
+          <HiSearch className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+        </div>
+        <div className="flex flex-wrap gap-2">
+          {STATUS_TABS.map((tab) => (
+            <button
+              key={tab.key}
+              onClick={() => setStatusFilter(tab.key)}
+              className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
+                statusFilter === tab.key
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'
+              }`}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* Project Cards Grid */}

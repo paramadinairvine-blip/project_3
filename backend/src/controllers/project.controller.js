@@ -4,12 +4,13 @@ const { DEFAULT_PAGE_SIZE } = require('../utils/constants');
 
 const getAll = async (req, res) => {
   try {
-    const { page, limit, status } = req.query;
+    const { page, limit, status, search } = req.query;
 
     const result = await projectService.getAll({
       page: parseInt(page) || 1,
       limit: parseInt(limit) || DEFAULT_PAGE_SIZE,
       status,
+      search,
     });
 
     return paginatedResponse(
