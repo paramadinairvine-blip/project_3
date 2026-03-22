@@ -239,11 +239,11 @@ const create = async (data, userId) => {
         throw new AppError(`Produk tidak ditemukan: ${item.productId}`, 404);
       }
 
-      // Convert quantity to base unit
+      // Convert quantity to base unit if a non-base unit is selected
       let qty = item.quantity;
-      if (item.unitId && product.unitId && product.unitId !== item.unitId) {
+      if (item.unitId) {
         const pu = product.productUnits.find(
-          (u) => u.productId === item.productId && u.unitId === item.unitId
+          (u) => u.unitId === item.unitId && !u.isBaseUnit
         );
         if (pu) qty = Math.round(item.quantity * Number(pu.conversionFactor));
       }
