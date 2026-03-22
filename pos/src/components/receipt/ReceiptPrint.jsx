@@ -86,7 +86,7 @@ export default function ReceiptPrint({ transaction, paidAmount, change, onClose 
                     <p style={{ fontWeight: 'bold' }}>{item.product?.name || '-'}</p>
                     <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                       <span>
-                        {item.quantity} {item.product?.unit || 'pcs'} x {formatRupiah(itemPrice)}
+                        {item.quantity} {item.unit?.abbreviation || item.product?.unitOfMeasure?.abbreviation || item.product?.unit || 'pcs'} x {formatRupiah(itemPrice)}
                       </span>
                       <span>{formatRupiah(total)}</span>
                     </div>

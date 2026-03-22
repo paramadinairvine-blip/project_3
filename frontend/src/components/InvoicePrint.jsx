@@ -132,7 +132,8 @@ export default function InvoicePrint({ transaction, onClose }) {
               </thead>
               <tbody>
                 {items.map((item, idx) => {
-                  const itemTotal = item.totalPrice || (item.quantity * item.unitPrice);
+                  const itemPrice = item.price || item.unitPrice || 0;
+                  const itemTotal = item.subtotal || (item.quantity * itemPrice);
                   return (
                     <tr key={idx}>
                       <td style={{ border: '1px solid #d1d5db', padding: '6px 8px', textAlign: 'center' }}>{idx + 1}</td>
@@ -142,9 +143,9 @@ export default function InvoicePrint({ transaction, onClose }) {
                       </td>
                       <td style={{ border: '1px solid #d1d5db', padding: '6px 8px', textAlign: 'center' }}>{item.quantity}</td>
                       <td style={{ border: '1px solid #d1d5db', padding: '6px 8px', textAlign: 'center' }}>
-                        {item.unit?.name || item.product?.unit || 'pcs'}
+                        {item.unit?.abbreviation || item.unit?.name || item.product?.unit || 'pcs'}
                       </td>
-                      <td style={{ border: '1px solid #d1d5db', padding: '6px 8px', textAlign: 'right' }}>{formatRupiah(item.unitPrice)}</td>
+                      <td style={{ border: '1px solid #d1d5db', padding: '6px 8px', textAlign: 'right' }}>{formatRupiah(itemPrice)}</td>
                       <td style={{ border: '1px solid #d1d5db', padding: '6px 8px', textAlign: 'right' }}>{formatRupiah(itemTotal)}</td>
                     </tr>
                   );

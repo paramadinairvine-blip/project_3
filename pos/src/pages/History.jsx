@@ -240,11 +240,12 @@ export default function History() {
                         {(trx.items || []).map((item, i) => {
                           const name = item.product?.name || '-';
                           const qty = item.quantity;
+                          const unit = item.unit?.abbreviation || item.product?.unitOfMeasure?.abbreviation || item.product?.unit || 'pcs';
                           const price = parseFloat(item.price || 0);
                           const sub = parseFloat(item.subtotal || qty * price);
                           return (
                             <li key={i} className="text-gray-600 text-xs">
-                              • {name} ({qty} PCS x {formatRupiah(price)} = {formatRupiah(sub)})
+                              • {name} ({qty} {unit} x {formatRupiah(price)} = {formatRupiah(sub)})
                             </li>
                           );
                         })}

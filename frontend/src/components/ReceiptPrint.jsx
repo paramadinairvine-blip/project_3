@@ -55,13 +55,14 @@ export default function ReceiptPrint({ transaction, onClose }) {
             {/* Items */}
             <div style={{ marginBottom: '8px' }}>
               {items.map((item, idx) => {
-                const total = item.totalPrice || (item.quantity * item.unitPrice);
+                const itemPrice = item.price || item.unitPrice || 0;
+                const total = item.subtotal || (item.quantity * itemPrice);
                 return (
                   <div key={idx} style={{ marginBottom: '4px' }}>
                     <p style={{ fontWeight: 'bold' }}>{item.product?.name || '-'}</p>
                     <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                       <span>
-                        {item.quantity} {item.unit?.name || item.product?.unit || 'pcs'} x {formatRupiah(item.unitPrice)}
+                        {item.quantity} {item.unit?.abbreviation || item.unit?.name || item.product?.unit || 'pcs'} x {formatRupiah(itemPrice)}
                       </span>
                       <span>{formatRupiah(total)}</span>
                     </div>

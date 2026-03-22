@@ -89,7 +89,7 @@ export default function DeliveryNotePrint({ transaction, onClose }) {
                     </td>
                     <td style={{ border: '1px solid #d1d5db', padding: '6px 8px', textAlign: 'center' }}>{item.quantity}</td>
                     <td style={{ border: '1px solid #d1d5db', padding: '6px 8px', textAlign: 'center' }}>
-                      {item.unit?.name || item.product?.unit || 'pcs'}
+                      {item.unit?.abbreviation || item.unit?.name || item.product?.unit || 'pcs'}
                     </td>
                     <td style={{ border: '1px solid #d1d5db', padding: '6px 8px' }}>{item.notes || '-'}</td>
                   </tr>

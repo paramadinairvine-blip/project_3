@@ -204,7 +204,7 @@ export async function printReceipt(transaction, paidAmount, change) {
     for (const item of items) {
       const name = item.product?.name || '-';
       const qty = item.quantity || 0;
-      const unit = item.product?.unit || 'pcs';
+      const unit = item.unit?.abbreviation || item.product?.unitOfMeasure?.abbreviation || item.product?.unit || 'pcs';
       const price = item.price || item.unitPrice || 0;
       const subtotal = item.subtotal || (qty * price);
 

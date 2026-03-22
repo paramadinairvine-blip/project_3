@@ -108,7 +108,7 @@ export default function ReturModal({ transaction, onClose }) {
                   <div className="flex-1 min-w-0">
                     <p className="font-medium text-gray-900 text-sm truncate">{item.product?.name || '-'}</p>
                     <p className="text-xs text-gray-500">
-                      {formatRupiah(price)} / {item.product?.unit || 'pcs'}
+                      {formatRupiah(price)} / {item.unit?.abbreviation || item.product?.unitOfMeasure?.abbreviation || item.product?.unit || 'pcs'}
                       {alreadyReturned > 0 && (
                         <span className="text-orange-500 ml-2">({alreadyReturned} sudah diretur)</span>
                       )}
