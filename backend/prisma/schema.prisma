@@ -94,6 +94,7 @@ model UnitOfMeasure {
   products           Product[]
   productUnits       ProductUnit[]
   purchaseOrderItems PurchaseOrderItem[]
+  transactionItems   TransactionItem[]
 
   @@map("unit_of_measures")
 }
@@ -336,6 +337,7 @@ model TransactionItem {
   id            String  @id @default(uuid())
   transactionId String
   productId     String
+  unitId        String? // Unit yang dipilih saat transaksi (null = unit dasar produk)
   quantity      Int
   baseQty       Int     @default(0) // Quantity dalam satuan dasar (setelah konversi)
   price         Decimal @db.Decimal(15, 2)
@@ -345,6 +347,7 @@ model TransactionItem {
   // Relations
   transaction Transaction             @relation(fields: [transactionId], references: [id], onDelete: Cascade)
   product     Product                 @relation(fields: [productId], references: [id])
+  unit        UnitOfMeasure?          @relation(fields: [unitId], references: [id])
   returnItems TransactionReturnItem[]
 
   @@map("transaction_items")

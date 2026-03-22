@@ -67,7 +67,7 @@ export default function TransactionDetail() {
     {
       key: 'unit',
       header: 'Satuan',
-      render: (_, row) => <span className="text-gray-600">{row.unit?.name || row.product?.unit || '-'}</span>,
+      render: (_, row) => <span className="text-gray-600">{row.unit?.abbreviation || row.unit?.name || row.product?.unitOfMeasure?.abbreviation || row.product?.unit || '-'}</span>,
     },
     {
       key: 'quantity',
@@ -75,16 +75,16 @@ export default function TransactionDetail() {
       render: (v) => <span className="font-medium">{v}</span>,
     },
     {
-      key: 'unitPrice',
+      key: 'price',
       header: 'Harga Satuan',
       render: (v) => formatRupiah(v),
     },
     {
-      key: 'totalPrice',
+      key: 'subtotal',
       header: 'Total',
       render: (v, row) => (
         <span className="font-medium text-gray-900">
-          {formatRupiah(v || (row.quantity * row.unitPrice))}
+          {formatRupiah(v || (row.quantity * row.price))}
         </span>
       ),
     },
@@ -155,7 +155,7 @@ export default function TransactionDetail() {
             </div>
             <div className="flex justify-between">
               <span className="text-sm text-gray-500">Total</span>
-              <span className="text-sm font-bold text-blue-600">{formatRupiah(trx.totalAmount)}</span>
+              <span className="text-sm font-bold text-blue-600">{formatRupiah(trx.total)}</span>
             </div>
             {trx.notes && (
               <div className="pt-3 border-t border-gray-100">
@@ -187,7 +187,7 @@ export default function TransactionDetail() {
           <div className="px-6 py-4 bg-gray-50 border-t border-gray-200 flex justify-end">
             <div className="text-right">
               <p className="text-sm text-gray-500">Total Keseluruhan</p>
-              <p className="text-xl font-bold text-blue-600">{formatRupiah(trx.totalAmount)}</p>
+              <p className="text-xl font-bold text-blue-600">{formatRupiah(trx.total)}</p>
             </div>
           </div>
         )}

@@ -10,8 +10,9 @@ const transactionIncludes = {
   items: {
     include: {
       product: {
-        select: { id: true, name: true, sku: true, barcode: true, unit: true },
+        select: { id: true, name: true, sku: true, barcode: true, unit: true, unitOfMeasure: { select: { id: true, name: true, abbreviation: true } } },
       },
+      unit: { select: { id: true, name: true, abbreviation: true } },
     },
   },
   creator: { select: { id: true, fullName: true, email: true } },
@@ -293,6 +294,7 @@ const create = async (data, userId) => {
       data: processedItems.map((item) => ({
         transactionId: created.id,
         productId: item.productId,
+        unitId: item.unitId || null,
         quantity: item.quantity,
         baseQty: item.baseQty,
         price: item.price,
