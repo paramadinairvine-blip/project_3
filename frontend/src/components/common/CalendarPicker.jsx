@@ -106,14 +106,23 @@ export default function CalendarPicker({
     }
   }, [dateFrom, dateTo, mode]);
 
-  // Close on click outside
+  // Close on click outside — reset picking state and restore previous dates
   useEffect(() => {
     const handler = (e) => {
-      if (ref.current && !ref.current.contains(e.target)) setOpen(false);
+      if (ref.current && !ref.current.contains(e.target)) {
+        setOpen(false);
+        setPicking('start');
+        setHoverDate(null);
+        // Restore to last committed values
+        if (mode === 'range') {
+          setStartDate(dateFrom ? new Date(dateFrom) : null);
+          setEndDate(dateTo ? new Date(dateTo) : null);
+        }
+      }
     };
     document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
-  }, []);
+  }, [dateFrom, dateTo, mode]);
 
   const prevMonth = () => {
     setViewMonth((prev) => prev.month === 0 ? { year: prev.year - 1, month: 11 } : { ...prev, month: prev.month - 1 });
