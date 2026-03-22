@@ -85,6 +85,59 @@ const createLog = async ({ userId, action, tableName, recordId, oldData, newData
  * @param {string}  [params.endDate]
  * @returns {Promise<{ data: object[], total: number, page: number, limit: number }>}
  */
+/**
+ * Generate a human-readable description from an audit log entry.
+ */
+const ENTITY_LABELS = {
+  users: 'pengguna',
+  categories: 'kategori',
+  products: 'produk',
+  suppliers: 'supplier',
+  transactions: 'transaksi',
+  transaction_items: 'item transaksi',
+  purchase_orders: 'purchase order',
+  purchase_order_items: 'item PO',
+  stock_movements: 'pergerakan stok',
+  stock_opnames: 'stock opname',
+  stock_opname_items: 'item opname',
+  projects: 'proyek',
+  project_materials: 'material proyek',
+  brands: 'brand',
+  unit_of_measures: 'satuan',
+  unit_lembaga: 'unit lembaga',
+  notifications: 'notifikasi',
+  transaction_returns: 'retur transaksi',
+  transaction_return_items: 'item retur',
+};
+
+const ACTION_VERBS = {
+  CREATE: 'Menambah',
+  UPDATE: 'Mengubah',
+  DELETE: 'Menghapus',
+  ROLLBACK: 'Rollback',
+  LOGIN: 'Login ke sistem',
+  LOGOUT: 'Logout dari sistem',
+};
+
+const generateDescription = (log) => {
+  if (log.action === 'LOGIN') return 'Login ke sistem';
+  if (log.action === 'LOGOUT') return 'Logout dari sistem';
+
+  const verb = ACTION_VERBS[log.action] || log.action;
+  const entityLabel = ENTITY_LABELS[log.entity] || log.entity;
+
+  // Try to get a recognizable name from newData or oldData
+  const data = log.newData || log.oldData || {};
+  const name = data.name || data.fullName || data.invoiceNumber
+    || data.poNumber || data.opnameNumber || data.sku || '';
+
+  if (name) {
+    return `${verb} ${entityLabel} "${name}"`;
+  }
+
+  return `${verb} ${entityLabel}`;
+};
+
 const getLogs = async ({ page = 1, limit = DEFAULT_PAGE_SIZE, userId, tableName, action, startDate, endDate } = {}) => {
   const where = {};
 
@@ -103,7 +156,9 @@ const getLogs = async ({ page = 1, limit = DEFAULT_PAGE_SIZE, userId, tableName,
       where.createdAt.gte = new Date(startDate);
     }
     if (endDate) {
-      where.createdAt.lte = new Date(endDate);
+      const end = new Date(endDate);
+      end.setHours(23, 59, 59, 999);
+      where.createdAt.lte = end;
     }
   }
 
@@ -124,7 +179,14 @@ const getLogs = async ({ page = 1, limit = DEFAULT_PAGE_SIZE, userId, tableName,
     prisma.auditLog.count({ where }),
   ]);
 
-  return { data, total, page, limit };
+  // Enrich with readable description and module label
+  const enriched = data.map((log) => ({
+    ...log,
+    module: ENTITY_LABELS[log.entity] || log.entity || '-',
+    description: generateDescription(log),
+  }));
+
+  return { data: enriched, total, page, limit };
 };
 
 /**

@@ -18,23 +18,25 @@ const ACTION_COLORS = {
 };
 
 const ACTION_OPTIONS = [
-  { value: 'CREATE', label: 'Create' },
-  { value: 'UPDATE', label: 'Update' },
-  { value: 'DELETE', label: 'Delete' },
+  { value: 'CREATE', label: 'Tambah' },
+  { value: 'UPDATE', label: 'Ubah' },
+  { value: 'DELETE', label: 'Hapus' },
   { value: 'ROLLBACK', label: 'Rollback' },
   { value: 'LOGIN', label: 'Login' },
 ];
 
 const MODULE_OPTIONS = [
-  { value: 'User', label: 'User' },
-  { value: 'Product', label: 'Product' },
-  { value: 'Category', label: 'Category' },
-  { value: 'Supplier', label: 'Supplier' },
-  { value: 'Transaction', label: 'Transaction' },
-  { value: 'PurchaseOrder', label: 'Purchase Order' },
-  { value: 'StockMovement', label: 'Stock Movement' },
-  { value: 'Project', label: 'Project' },
-  { value: 'StockOpname', label: 'Stock Opname' },
+  { value: 'users', label: 'Pengguna' },
+  { value: 'products', label: 'Produk' },
+  { value: 'categories', label: 'Kategori' },
+  { value: 'suppliers', label: 'Supplier' },
+  { value: 'transactions', label: 'Transaksi' },
+  { value: 'purchase_orders', label: 'Purchase Order' },
+  { value: 'stock_movements', label: 'Pergerakan Stok' },
+  { value: 'projects', label: 'Proyek' },
+  { value: 'stock_opnames', label: 'Stock Opname' },
+  { value: 'brands', label: 'Brand' },
+  { value: 'transaction_returns', label: 'Retur' },
 ];
 
 // ─── Diff Viewer ──────────────────────────────────────
@@ -246,13 +248,10 @@ export default function AuditLog() {
   const pagination = data?.pagination || {};
 
   const handleExportExcel = () => {
-    const headers = ['Tanggal', 'User', 'Aksi', 'Modul', 'Record ID', 'Deskripsi'];
+    const headers = ['Tanggal', 'User', 'Aktivitas'];
     const rows = logs.map((l) => [
       formatTanggalWaktu(l.createdAt),
       l.user?.fullName || '-',
-      l.action,
-      l.tableName || l.module || '-',
-      l.recordId || '-',
       l.description || '-',
     ]);
     exportToExcel('Audit Log', headers, rows, 'audit-log.xlsx');
@@ -261,40 +260,35 @@ export default function AuditLog() {
   const columns = [
     {
       key: 'createdAt',
-      header: 'Tanggal & Waktu',
+      header: 'Tanggal',
       sortable: true,
-      render: (v) => <span className="text-gray-600 text-xs">{formatTanggalWaktu(v)}</span>,
+      width: '160px',
+      render: (v) => <span className="text-gray-600 text-sm">{formatTanggalWaktu(v)}</span>,
     },
     {
       key: 'user',
       header: 'User',
+      width: '150px',
       render: (_, row) => (
-        <span className="text-gray-700 text-sm">{row.user?.fullName || '-'}</span>
+        <span className="text-gray-700 text-sm font-medium">{row.user?.fullName || '-'}</span>
       ),
-    },
-    {
-      key: 'action',
-      header: 'Aksi',
-      render: (v) => (
-        <Badge colorClass={ACTION_COLORS[v] || 'bg-gray-100 text-gray-800'} size="sm">
-          {v}
-        </Badge>
-      ),
-    },
-    {
-      key: 'tableName',
-      header: 'Modul',
-      render: (v, row) => <span className="text-gray-600 text-sm">{v || row.module || '-'}</span>,
     },
     {
       key: 'description',
-      header: 'Deskripsi',
-      render: (v) => <span className="text-gray-500 text-xs line-clamp-1">{v || '-'}</span>,
+      header: 'Aktivitas',
+      render: (_, row) => (
+        <div className="flex items-center gap-2">
+          <Badge colorClass={ACTION_COLORS[row.action] || 'bg-gray-100 text-gray-800'} size="sm">
+            {row.action}
+          </Badge>
+          <span className="text-gray-700 text-sm">{row.description || '-'}</span>
+        </div>
+      ),
     },
     {
       key: 'actions',
-      header: 'Aksi',
-      width: '60px',
+      header: '',
+      width: '50px',
       render: (_, row) => (
         <button
           onClick={(e) => { e.stopPropagation(); setDetailId(row.id); }}
