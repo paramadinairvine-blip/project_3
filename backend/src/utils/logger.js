@@ -1,9 +1,10 @@
 const pino = require('pino');
 
-const isDev = process.env.NODE_ENV !== 'production';
+const isTest = process.env.NODE_ENV === 'test';
+const isDev = process.env.NODE_ENV !== 'production' && !isTest;
 
 const logger = pino({
-  level: process.env.LOG_LEVEL || (isDev ? 'debug' : 'info'),
+  level: isTest ? 'silent' : (process.env.LOG_LEVEL || (isDev ? 'debug' : 'info')),
   ...(isDev && {
     transport: {
       target: 'pino-pretty',

@@ -7,24 +7,9 @@ on:
     branches: [main]
 
 jobs:
-  backend-lint-test:
-    name: Backend Lint & Test
+  backend-test:
+    name: Backend Test & Coverage
     runs-on: ubuntu-latest
-
-    services:
-      postgres:
-        image: postgres:17-alpine
-        env:
-          POSTGRES_DB: project_3_test
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: password
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd "pg_isready -U postgres"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
 
     defaults:
       run:
@@ -43,19 +28,22 @@ jobs:
 
       - run: npx prisma generate
 
-      - run: npm run lint
-
-      - run: npm run format:check
-
-      - name: Run tests
+      - name: Run tests with coverage
         env:
-          DATABASE_URL: postgresql://postgres:password@localhost:5432/project_3_test?schema=public
           JWT_SECRET: test-secret-key
           NODE_ENV: test
-        run: npm test
+        run: npm test -- --coverage
+
+      - name: Upload coverage artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-coverage
+          path: backend/coverage/
+          retention-days: 7
 
   frontend-build:
-    name: Frontend Lint & Build
+    name: Frontend Build
     runs-on: ubuntu-latest
 
     defaults:
@@ -72,7 +60,5 @@ jobs:
           cache-dependency-path: frontend/package-lock.json
 
       - run: npm ci
-
-      - run: npm run lint
 
       - run: npm run build

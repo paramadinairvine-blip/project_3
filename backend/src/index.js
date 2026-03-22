@@ -105,10 +105,12 @@ if (fs.existsSync(indexHtml)) {
   console.log('Run "cd frontend && npm run build" to build the frontend.');
 }
 
-app.listen(PORT, async () => {
-  console.log(`Server running on port ${PORT}`);
-  console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
-
-});
+// Only start server when not in test mode (supertest handles it)
+if (process.env.NODE_ENV !== 'test') {
+  app.listen(PORT, async () => {
+    console.log(`Server running on port ${PORT}`);
+    console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
+  });
+}
 
 module.exports = app;

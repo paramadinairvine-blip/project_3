@@ -7,11 +7,13 @@ import useCartStore from '../stores/cartStore';
 import ProductSearch from '../components/pos/ProductSearch';
 import ProductGrid from '../components/pos/ProductGrid';
 import Cart from '../components/pos/Cart';
+import UnitPickerModal from '../components/pos/UnitPickerModal';
 import useBarcodeScanner from '../hooks/useBarcodeScanner';
 
 export default function Cashier() {
   const [searchQuery, setSearchQuery] = useState('');
   const [showMobileCart, setShowMobileCart] = useState(false);
+  const [unitPickerProduct, setUnitPickerProduct] = useState(null);
   const addItem = useCartStore((s) => s.addItem);
   const items = useCartStore((s) => s.items);
   const itemCount = items.reduce((sum, i) => sum + i.quantity, 0);
@@ -28,9 +30,26 @@ export default function Cashier() {
 
   const products = productsData || [];
 
+  const hasMultipleUnits = (product) => {
+    const extraUnits = (product.productUnits || []).filter((pu) => pu.unitId !== product.unitId);
+    return extraUnits.length > 0;
+  };
+
   const handleAddToCart = (product) => {
+    if (hasMultipleUnits(product)) {
+      setUnitPickerProduct(product);
+      return;
+    }
     addItem(product);
     toast.success(`${product.name} ditambahkan`, { duration: 1500, position: 'bottom-center' });
+  };
+
+  const handleUnitSelected = (unitInfo) => {
+    if (unitPickerProduct) {
+      addItem(unitPickerProduct, unitInfo);
+      toast.success(`${unitPickerProduct.name} (${unitInfo.unitName}) ditambahkan`, { duration: 1500, position: 'bottom-center' });
+      setUnitPickerProduct(null);
+    }
   };
 
   // USB Barcode Scanner — auto-detect rapid keystrokes + Enter
@@ -98,6 +117,15 @@ export default function Cashier() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Unit Picker Modal */}
+      {unitPickerProduct && (
+        <UnitPickerModal
+          product={unitPickerProduct}
+          onSelect={handleUnitSelected}
+          onClose={() => setUnitPickerProduct(null)}
+        />
       )}
     </div>
   );

@@ -22,7 +22,7 @@ export default function CartItem({ item, onUpdateQty, onRemove }) {
       {/* Quantity controls */}
       <div className="flex items-center gap-1">
         <button
-          onClick={() => item.quantity > 1 ? onUpdateQty(item.productId, item.quantity - 1) : onRemove(item.productId)}
+          onClick={() => item.quantity > 1 ? onUpdateQty(item.cartKey, item.quantity - 1) : onRemove(item.cartKey)}
           className="w-7 h-7 flex items-center justify-center rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-600 transition-colors"
         >
           {item.quantity <= 1 ? <HiTrash className="w-3.5 h-3.5 text-red-500" /> : <HiMinus className="w-3.5 h-3.5" />}
@@ -32,7 +32,7 @@ export default function CartItem({ item, onUpdateQty, onRemove }) {
           value={item.quantity}
           onChange={(e) => {
             const val = parseInt(e.target.value) || 1;
-            onUpdateQty(item.productId, Math.max(1, val));
+            onUpdateQty(item.cartKey, Math.max(1, val));
           }}
           className={`w-10 h-7 text-center text-sm font-medium border rounded-lg outline-none ${
             isOverStock ? 'border-red-300 text-red-600' : 'border-gray-200'
@@ -40,7 +40,7 @@ export default function CartItem({ item, onUpdateQty, onRemove }) {
           min="1"
         />
         <button
-          onClick={() => onUpdateQty(item.productId, item.quantity + 1)}
+          onClick={() => onUpdateQty(item.cartKey, item.quantity + 1)}
           className="w-7 h-7 flex items-center justify-center rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-600 transition-colors"
         >
           <HiPlus className="w-3.5 h-3.5" />
@@ -54,7 +54,7 @@ export default function CartItem({ item, onUpdateQty, onRemove }) {
 
       {/* Delete */}
       <button
-        onClick={() => onRemove(item.productId)}
+        onClick={() => onRemove(item.cartKey)}
         className="p-1 text-gray-400 hover:text-red-500 transition-colors flex-shrink-0"
       >
         <HiTrash className="w-4 h-4" />

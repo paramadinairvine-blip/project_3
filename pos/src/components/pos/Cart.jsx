@@ -81,7 +81,7 @@ export default function Cart() {
       <div className="flex-1 overflow-y-auto px-4">
         {items.map((item) => (
           <CartItem
-            key={item.productId}
+            key={item.cartKey}
             item={item}
             onUpdateQty={updateQuantity}
             onRemove={removeItem}

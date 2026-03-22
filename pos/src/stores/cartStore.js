@@ -10,14 +10,20 @@ const useCartStore = create((set, get) => ({
   paymentType: 'CASH',
   paidAmount: 0,
 
-  addItem: (product) => {
+  addItem: (product, unitInfo) => {
     const { items } = get();
-    const existing = items.find((i) => i.productId === product.id);
+    const unitId = unitInfo?.unitId ?? product.unitId ?? null;
+    const unitName = unitInfo?.unitName ?? product.unitOfMeasure?.abbreviation ?? product.unit ?? 'pcs';
+    const unitPrice = unitInfo?.unitPrice ?? parseFloat(product.sellPrice) ?? 0;
+
+    // Match by productId + unitId to allow same product with different units
+    const cartKey = `${product.id}_${unitId || 'base'}`;
+    const existing = items.find((i) => i.cartKey === cartKey);
 
     if (existing) {
       set({
         items: items.map((i) =>
-          i.productId === product.id
+          i.cartKey === cartKey
             ? { ...i, quantity: i.quantity + 1 }
             : i
         ),
@@ -27,35 +33,36 @@ const useCartStore = create((set, get) => ({
         items: [
           ...items,
           {
+            cartKey,
             productId: product.id,
             product,
             quantity: 1,
-            unitPrice: parseFloat(product.sellPrice) || 0,
-            unitId: product.unitId || null,
-            unitName: product.unitOfMeasure?.abbreviation || product.unit || 'pcs',
+            unitPrice,
+            unitId,
+            unitName,
           },
         ],
       });
     }
   },
 
-  removeItem: (productId) => {
-    set({ items: get().items.filter((i) => i.productId !== productId) });
+  removeItem: (cartKey) => {
+    set({ items: get().items.filter((i) => i.cartKey !== cartKey) });
   },
 
-  updateQuantity: (productId, quantity) => {
+  updateQuantity: (cartKey, quantity) => {
     if (quantity < 1) return;
     set({
       items: get().items.map((i) =>
-        i.productId === productId ? { ...i, quantity } : i
+        i.cartKey === cartKey ? { ...i, quantity } : i
       ),
     });
   },
 
-  updateUnitPrice: (productId, unitPrice) => {
+  updateUnitPrice: (cartKey, unitPrice) => {
     set({
       items: get().items.map((i) =>
-        i.productId === productId ? { ...i, unitPrice } : i
+        i.cartKey === cartKey ? { ...i, unitPrice } : i
       ),
     });
   },
