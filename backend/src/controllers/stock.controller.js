@@ -6,12 +6,16 @@ const { DEFAULT_PAGE_SIZE } = require('../utils/constants');
 
 const getAllStock = async (req, res) => {
   try {
-    const { page, limit, categoryId, lowStock } = req.query;
+    const { page, limit, categoryId, search, barcode, dateFrom, dateTo, lowStock } = req.query;
 
     const result = await stockService.getAllStock({
       page: parseInt(page) || 1,
       limit: parseInt(limit) || DEFAULT_PAGE_SIZE,
       categoryId,
+      search,
+      barcode,
+      dateFrom,
+      dateTo,
       lowStock: lowStock === 'true',
     });
 

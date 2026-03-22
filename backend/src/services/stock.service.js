@@ -46,28 +46,50 @@ const getCurrentStock = async (productId, variantId = null) => {
  * List all product stock with pagination.
  * Optionally filter to only low-stock items (stock < minStock).
  */
-const getAllStock = async ({ page = 1, limit = DEFAULT_PAGE_SIZE, categoryId, lowStock = false } = {}) => {
+const getAllStock = async ({ page = 1, limit = DEFAULT_PAGE_SIZE, categoryId, search, barcode, dateFrom, dateTo, lowStock = false } = {}) => {
   const where = { isActive: true };
 
   if (categoryId) {
     where.categoryId = categoryId;
   }
 
-  // For lowStock we need a raw condition: stock < minStock
-  // Prisma doesn't support field-to-field comparison directly,
-  // so we fetch and filter in-app, or use rawFilter trick.
+  if (search) {
+    where.OR = [
+      { name: { contains: search, mode: 'insensitive' } },
+      { sku: { contains: search, mode: 'insensitive' } },
+    ];
+  }
+
+  if (barcode) {
+    where.barcode = { contains: barcode, mode: 'insensitive' };
+  }
+
+  if (dateFrom || dateTo) {
+    const movementWhere = {};
+    if (dateFrom) movementWhere.gte = new Date(dateFrom);
+    if (dateTo) {
+      const end = new Date(dateTo);
+      end.setHours(23, 59, 59, 999);
+      movementWhere.lte = end;
+    }
+    where.stockMovements = {
+      some: { createdAt: movementWhere },
+    };
+  }
+
   const skip = (page - 1) * limit;
 
+  const include = {
+    category: { select: { id: true, name: true } },
+    brand: { select: { id: true, name: true } },
+    unitOfMeasure: { select: { id: true, name: true, abbreviation: true } },
+    variants: { select: { id: true, name: true, sku: true, stock: true } },
+  };
+
   if (lowStock) {
-    // Fetch all active products and filter in-memory (Prisma lacks field-to-field comparison)
     const products = await prisma.product.findMany({
       where,
-      include: {
-        category: { select: { id: true, name: true } },
-        brand: { select: { id: true, name: true } },
-        unitOfMeasure: { select: { id: true, name: true, abbreviation: true } },
-        variants: { select: { id: true, name: true, sku: true, stock: true } },
-      },
+      include,
       orderBy: { stock: 'asc' },
     });
 
@@ -81,12 +103,7 @@ const getAllStock = async ({ page = 1, limit = DEFAULT_PAGE_SIZE, categoryId, lo
   const [data, total] = await Promise.all([
     prisma.product.findMany({
       where,
-      include: {
-        category: { select: { id: true, name: true } },
-        brand: { select: { id: true, name: true } },
-        unitOfMeasure: { select: { id: true, name: true, abbreviation: true } },
-        variants: { select: { id: true, name: true, sku: true, stock: true } },
-      },
+      include,
       orderBy: { name: 'asc' },
       skip,
       take: limit,
