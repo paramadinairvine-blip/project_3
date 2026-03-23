@@ -184,12 +184,15 @@ export default function Checkout() {
                   <div className="flex items-center border-2 border-cyan-400 rounded-xl overflow-hidden focus-within:ring-2 focus-within:ring-cyan-300">
                     <span className="px-4 py-3 text-gray-500 text-sm font-medium bg-gray-50 border-r border-gray-200">Rp.</span>
                     <input
-                      type="number"
-                      value={paidAmount || ''}
-                      onChange={(e) => setPaidAmount(parseInt(e.target.value) || 0)}
+                      type="text"
+                      inputMode="numeric"
+                      value={paidAmount ? paidAmount.toLocaleString('id-ID') : ''}
+                      onChange={(e) => {
+                        const raw = e.target.value.replace(/\D/g, '');
+                        setPaidAmount(parseInt(raw) || 0);
+                      }}
                       className="flex-1 px-4 py-3 text-lg font-bold text-right outline-none"
                       placeholder="0"
-                      min="0"
                     />
                   </div>
                 </div>
