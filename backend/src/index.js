@@ -8,6 +8,7 @@ require('dotenv').config();
 
 const { errorHandler } = require('./middlewares/errorHandler');
 const routes = require('./routes');
+const { startDailyReportJob } = require('./jobs/dailyReport.job');
 
 const app = express();
 app.set('trust proxy', 1);
@@ -110,6 +111,9 @@ if (process.env.NODE_ENV !== 'test') {
   app.listen(PORT, async () => {
     console.log(`Server running on port ${PORT}`);
     console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
+
+    // Start scheduled jobs
+    startDailyReportJob();
   });
 }
 

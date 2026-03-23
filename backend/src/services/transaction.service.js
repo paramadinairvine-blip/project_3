@@ -2,6 +2,7 @@ const prisma = require('../lib/prisma');
 const { format } = require('date-fns');
 const { DEFAULT_PAGE_SIZE } = require('../utils/constants');
 const { createLog, ACTION_TYPES } = require('./auditLog.service');
+const { sendTransactionNotification } = require('./telegram.service');
 const AppError = require('../utils/AppError');
 
 // ─── helpers ────────────────────────────────────────────────────────
@@ -363,6 +364,9 @@ const create = async (data, userId) => {
   if (data.type === 'BON') {
     sendBonNotification(transaction).catch(() => {});
   }
+
+  // Send Telegram notification (fire-and-forget)
+  sendTransactionNotification(transaction).catch(() => {});
 
   return transaction;
 };
