@@ -116,11 +116,9 @@ const sendDailyReport = async () => {
   const formatCurrency = (val) =>
     `Rp ${Number(val).toLocaleString('id-ID')}`;
 
-  // Get today's date range in WIB (UTC+7)
+  // Get today's date range in WIB (Asia/Jakarta, UTC+7)
   const now = new Date();
-  const wibOffset = 7 * 60 * 60 * 1000;
-  const nowWIB = new Date(now.getTime() + wibOffset);
-  const todayStr = nowWIB.toISOString().slice(0, 10); // YYYY-MM-DD
+  const todayStr = now.toLocaleDateString('sv-SE', { timeZone: 'Asia/Jakarta' }); // YYYY-MM-DD
   const startOfDay = new Date(`${todayStr}T00:00:00+07:00`);
   const endOfDay = new Date(`${todayStr}T23:59:59.999+07:00`);
 

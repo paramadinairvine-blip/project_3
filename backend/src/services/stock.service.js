@@ -400,10 +400,7 @@ const completeOpname = async (opnameId, userId) => {
     for (const item of opname.items) {
       if (item.difference !== 0) {
         // Lock the product row to prevent race conditions
-        const [product] = await tx.$queryRawUnsafe(
-          `SELECT * FROM "products" WHERE id = $1 FOR UPDATE`,
-          item.productId
-        );
+        const [product] = await tx.$queryRaw`SELECT * FROM "products" WHERE id = ${item.productId} FOR UPDATE`;
 
         if (!product) continue;
 

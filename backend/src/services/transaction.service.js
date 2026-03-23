@@ -1,9 +1,11 @@
 const prisma = require('../lib/prisma');
+const { Prisma } = require('@prisma/client');
 const { format } = require('date-fns');
 const { DEFAULT_PAGE_SIZE } = require('../utils/constants');
 const { createLog, ACTION_TYPES } = require('./auditLog.service');
 const { sendTransactionNotification } = require('./telegram.service');
 const AppError = require('../utils/AppError');
+const logger = require('../utils/logger');
 
 // ─── helpers ────────────────────────────────────────────────────────
 
@@ -212,12 +214,7 @@ const create = async (data, userId) => {
     const productIds = [...new Set(items.map((i) => i.productId))];
 
     // Step 1a: Lock product rows (FOR UPDATE not allowed with GROUP BY)
-    await tx.$queryRawUnsafe(
-      `SELECT id FROM "products"
-       WHERE id IN (${productIds.map((_, i) => `$${i + 1}`).join(', ')})
-       FOR UPDATE`,
-      ...productIds
-    );
+    await tx.$queryRaw`SELECT id FROM "products" WHERE id IN (${Prisma.join(productIds)}) FOR UPDATE`;
 
     // Step 1b: Fetch products with units (rows are now locked)
     const products = await tx.product.findMany({
@@ -233,6 +230,11 @@ const create = async (data, userId) => {
     // ── 2. Validate stock & calculate totals ──
     let subtotal = 0;
     const processedItems = [];
+    // Track remaining stock per product for duplicate product validation
+    const remainingStock = {};
+    for (const p of products) {
+      remainingStock[p.id] = p.stock;
+    }
 
     for (const item of items) {
       const product = productMap[item.productId];
@@ -249,9 +251,10 @@ const create = async (data, userId) => {
         if (pu) qty = Math.round(item.quantity * Number(pu.conversionFactor));
       }
 
-      if (product.stock - qty < 0) {
-        throw new AppError(`Stok ${product.name} tidak mencukupi (tersisa ${product.stock})`, 400);
+      if (remainingStock[item.productId] - qty < 0) {
+        throw new AppError(`Stok ${product.name} tidak mencukupi (tersisa ${remainingStock[item.productId]})`, 400);
       }
+      remainingStock[item.productId] -= qty;
 
       const itemDiscount = item.discount || 0;
       const itemSubtotal = item.quantity * item.price - itemDiscount;
@@ -362,11 +365,11 @@ const create = async (data, userId) => {
 
   // If BON, create in-app notification for admins (fire-and-forget)
   if (data.type === 'BON') {
-    sendBonNotification(transaction).catch(() => {});
+    sendBonNotification(transaction).catch((err) => logger.error('BON notification failed:', err.message));
   }
 
   // Send Telegram notification (fire-and-forget)
-  sendTransactionNotification(transaction).catch(() => {});
+  sendTransactionNotification(transaction).catch((err) => logger.error('Telegram notification failed:', err.message));
 
   return transaction;
 };

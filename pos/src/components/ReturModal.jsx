@@ -71,7 +71,8 @@ export default function ReturModal({ transaction, onClose }) {
   };
 
   const totalRefund = (transaction.items || []).reduce((sum, item) => {
-    const qty = quantities[item.id] || 0;
+    const itemKey = item.transactionItemId || item.id;
+    const qty = quantities[itemKey] || 0;
     return sum + qty * Number(item.price || 0);
   }, 0);
 
@@ -95,15 +96,16 @@ export default function ReturModal({ transaction, onClose }) {
         {/* Items */}
         <div className="space-y-2">
           {(transaction.items || []).map((item) => {
-            const alreadyReturned = returnedMap[item.id] || 0;
+            const itemKey = item.transactionItemId || item.id;
+            const alreadyReturned = returnedMap[itemKey] || 0;
             const maxReturnable = item.quantity - alreadyReturned;
-            const qty = quantities[item.id] || 0;
+            const qty = quantities[itemKey] || 0;
             const price = Number(item.price || 0);
 
             if (maxReturnable <= 0) return null;
 
             return (
-              <div key={item.id} className="bg-white border border-gray-200 rounded-lg p-3">
+              <div key={itemKey} className="bg-white border border-gray-200 rounded-lg p-3">
                 <div className="flex items-center justify-between">
                   <div className="flex-1 min-w-0">
                     <p className="font-medium text-gray-900 text-sm truncate">{item.product?.name || '-'}</p>
@@ -119,7 +121,7 @@ export default function ReturModal({ transaction, onClose }) {
                   {/* Qty Controls */}
                   <div className="flex items-center gap-2 ml-3">
                     <button
-                      onClick={() => updateQty(item.id, maxReturnable, -1)}
+                      onClick={() => updateQty(itemKey, maxReturnable, -1)}
                       disabled={qty <= 0}
                       className="w-8 h-8 flex items-center justify-center rounded-lg bg-gray-100 text-gray-600 hover:bg-gray-200 disabled:opacity-30"
                     >
@@ -129,7 +131,7 @@ export default function ReturModal({ transaction, onClose }) {
                       {qty}
                     </span>
                     <button
-                      onClick={() => updateQty(item.id, maxReturnable, 1)}
+                      onClick={() => updateQty(itemKey, maxReturnable, 1)}
                       disabled={qty >= maxReturnable}
                       className="w-8 h-8 flex items-center justify-center rounded-lg bg-green-100 text-green-600 hover:bg-green-200 disabled:opacity-30"
                     >

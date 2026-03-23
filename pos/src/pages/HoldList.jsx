@@ -25,12 +25,17 @@ export default function HoldList() {
 
     clearCart();
 
-    // Restore items
+    // Restore items with correct unit info and quantity
     hold.items.forEach((item) => {
-      // Add item first
-      addItem(item.product);
-      // Then set correct quantity
-      useCartStore.getState().updateQuantity(item.productId, item.quantity);
+      const unitInfo = item.unitId ? {
+        unitId: item.unitId,
+        unitName: item.unitName,
+        unitPrice: item.unitPrice,
+      } : null;
+      addItem(item.product, unitInfo);
+      // Set correct quantity using cartKey
+      const cartKey = item.cartKey || `${item.productId}_${item.unitId || 'base'}`;
+      useCartStore.getState().updateQuantity(cartKey, item.quantity);
     });
 
     // Restore other data

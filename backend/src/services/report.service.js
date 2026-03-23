@@ -37,7 +37,7 @@ const getStockReport = async ({ categoryId, lowStockOnly = false } = {}) => {
     maxStock: p.maxStock,
     buyPrice: Number(p.buyPrice),
     sellPrice: Number(p.sellPrice),
-    stockValue: p.stock * Number(p.buyPrice),
+    stockValue: Math.round(p.stock * Number(p.buyPrice)),
     isLowStock: p.stock < p.minStock,
     isOverStock: p.maxStock ? p.stock > p.maxStock : false,
   }));
@@ -47,7 +47,7 @@ const getStockReport = async ({ categoryId, lowStockOnly = false } = {}) => {
   }
 
   const totalItems = items.length;
-  const totalStockValue = items.reduce((s, i) => s + i.stockValue, 0);
+  const totalStockValue = Math.round(items.reduce((s, i) => s + i.stockValue, 0));
   const lowStockCount = items.filter((i) => i.isLowStock).length;
 
   return {
@@ -109,12 +109,12 @@ const getFinancialReport = async ({ startDate, endDate, type } = {}) => {
   const totalReturn = Number(returnAgg._sum.refundAmount || 0);
 
   // Summary totals by type
-  const cashTotal = transactions
+  const cashTotal = Math.round(transactions
     .filter((t) => t.type === 'CASH')
-    .reduce((s, t) => s + Number(t.total), 0);
-  const bonTotal = transactions
+    .reduce((s, t) => s + Number(t.total), 0));
+  const bonTotal = Math.round(transactions
     .filter((t) => t.type === 'BON')
-    .reduce((s, t) => s + Number(t.total), 0);
+    .reduce((s, t) => s + Number(t.total), 0));
 
   // 2c. Per-cashier daily breakdown
   const txWithCashier = await prisma.transaction.findMany({
@@ -167,7 +167,7 @@ const getFinancialReport = async ({ startDate, endDate, type } = {}) => {
       cashTotal: row.cashTotal,
       bonTotal: row.bonTotal,
       returnTotal: row.returnTotal,
-      netTotal: row.cashTotal + row.bonTotal - row.returnTotal,
+      netTotal: Math.round(row.cashTotal + row.bonTotal - row.returnTotal),
       transactionCount: row.count,
     }))
     .sort((a, b) => b.date.localeCompare(a.date) || a.cashierName.localeCompare(b.cashierName));
@@ -178,7 +178,7 @@ const getFinancialReport = async ({ startDate, endDate, type } = {}) => {
       cashTotal,
       bonTotal,
       totalReturn,
-      netRevenue: cashTotal + bonTotal - totalReturn,
+      netRevenue: Math.round(cashTotal + bonTotal - totalReturn),
     },
     perCashier,
   };
@@ -212,13 +212,13 @@ const getTrendReport = async ({ startDate, endDate, groupBy = 'month' } = {}) =>
   transactions.forEach((t) => {
     const key = format(t.createdAt, 'yyyy-MM');
     if (!monthlyMap[key]) monthlyMap[key] = { month: key, total: 0, returnTotal: 0, count: 0 };
-    monthlyMap[key].total += Number(t.total);
+    monthlyMap[key].total = Math.round(monthlyMap[key].total + Number(t.total));
     monthlyMap[key].count += 1;
   });
   trendReturns.forEach((r) => {
     const key = format(r.createdAt, 'yyyy-MM');
     if (!monthlyMap[key]) monthlyMap[key] = { month: key, total: 0, returnTotal: 0, count: 0 };
-    monthlyMap[key].returnTotal += Number(r.refundAmount);
+    monthlyMap[key].returnTotal = Math.round(monthlyMap[key].returnTotal + Number(r.refundAmount));
   });
 
   const monthlyTrend = Object.values(monthlyMap)
@@ -297,14 +297,14 @@ const getTrendReport = async ({ startDate, endDate, groupBy = 'month' } = {}) =>
     select: { total: true },
   });
 
-  const currentReturnTotal = trendReturns.reduce((s, r) => s + Number(r.refundAmount), 0);
-  const currentTotal = transactions.reduce((s, t) => s + Number(t.total), 0) - currentReturnTotal;
+  const currentReturnTotal = Math.round(trendReturns.reduce((s, r) => s + Number(r.refundAmount), 0));
+  const currentTotal = Math.round(transactions.reduce((s, t) => s + Number(t.total), 0) - currentReturnTotal);
 
   const prevReturns = await prisma.transactionReturn.aggregate({
     where: { createdAt: { gte: prevStart, lte: prevEnd } },
     _sum: { refundAmount: true },
   });
-  const previousTotal = prevTransactions.reduce((s, t) => s + Number(t.total), 0) - Number(prevReturns._sum.refundAmount || 0);
+  const previousTotal = Math.round(prevTransactions.reduce((s, t) => s + Number(t.total), 0) - Number(prevReturns._sum.refundAmount || 0));
   const changePercent = previousTotal > 0
     ? Math.round(((currentTotal - previousTotal) / previousTotal) * 100)
     : 0;
@@ -347,12 +347,12 @@ const getLabaRugiReport = async ({ startDate, endDate } = {}) => {
     select: { type: true, total: true },
   });
 
-  const cashRevenue = transactions
+  const cashRevenue = Math.round(transactions
     .filter((t) => t.type === 'CASH')
-    .reduce((s, t) => s + Number(t.total), 0);
-  const bonRevenue = transactions
+    .reduce((s, t) => s + Number(t.total), 0));
+  const bonRevenue = Math.round(transactions
     .filter((t) => t.type === 'BON')
-    .reduce((s, t) => s + Number(t.total), 0);
+    .reduce((s, t) => s + Number(t.total), 0));
 
   // Retur
   const returnWhere = {};
@@ -363,7 +363,7 @@ const getLabaRugiReport = async ({ startDate, endDate } = {}) => {
     _sum: { refundAmount: true },
   });
   const totalReturn = Number(returnAgg._sum.refundAmount || 0);
-  const netRevenue = cashRevenue + bonRevenue - totalReturn;
+  const netRevenue = Math.round(cashRevenue + bonRevenue - totalReturn);
 
   // ── B. HPP (Harga Pokok Penjualan) ────────────────────
   // Query semua TransactionItem dari transaksi yang tidak cancelled, beserta buyPrice dari Product
@@ -395,7 +395,7 @@ const getLabaRugiReport = async ({ startDate, endDate } = {}) => {
   txItems.forEach((item) => {
     const buyPrice = Number(item.product.buyPrice);
     const hpp = item.quantity * buyPrice;
-    totalHPP += hpp;
+    totalHPP = Math.round(totalHPP + hpp);
 
     // HPP per kategori
     const catId = item.product.category?.id || 'uncategorized';
@@ -403,8 +403,8 @@ const getLabaRugiReport = async ({ startDate, endDate } = {}) => {
     if (!categoryHPPMap[catId]) {
       categoryHPPMap[catId] = { categoryName: catName, totalHPP: 0, totalRevenue: 0 };
     }
-    categoryHPPMap[catId].totalHPP += hpp;
-    categoryHPPMap[catId].totalRevenue += Number(item.subtotal);
+    categoryHPPMap[catId].totalHPP = Math.round(categoryHPPMap[catId].totalHPP + hpp);
+    categoryHPPMap[catId].totalRevenue = Math.round(categoryHPPMap[catId].totalRevenue + Number(item.subtotal));
 
     // Per-product margin aggregation
     const prodId = item.product.id;
@@ -419,11 +419,11 @@ const getLabaRugiReport = async ({ startDate, endDate } = {}) => {
       };
     }
     productMarginMap[prodId].totalQty += item.quantity;
-    productMarginMap[prodId].totalRevenue += Number(item.subtotal);
-    productMarginMap[prodId].totalHPP += hpp;
+    productMarginMap[prodId].totalRevenue = Math.round(productMarginMap[prodId].totalRevenue + Number(item.subtotal));
+    productMarginMap[prodId].totalHPP = Math.round(productMarginMap[prodId].totalHPP + hpp);
   });
 
-  const grossProfit = netRevenue - totalHPP;
+  const grossProfit = Math.round(netRevenue - totalHPP);
   const grossMarginPercent = netRevenue > 0
     ? Math.round((grossProfit / netRevenue) * 10000) / 100
     : 0;
@@ -542,10 +542,10 @@ const getDashboardSummary = async ({ startDate, endDate } = {}) => {
   ]);
 
   // Calculate stock value
-  const totalStockValue = stockValueResult.reduce(
+  const totalStockValue = Math.round(stockValueResult.reduce(
     (s, p) => s + p.stock * Number(p.buyPrice),
     0
-  );
+  ));
 
   // Low stock
   const lowStock = lowStockProducts.filter((p) => p.stock < p.minStock);
@@ -559,7 +559,7 @@ const getDashboardSummary = async ({ startDate, endDate } = {}) => {
   const monthlyReturnTotal = Number(monthlyReturnAgg._sum.refundAmount || 0);
 
   // Monthly transaction summary
-  const monthlyTotal = monthlyTransactions.reduce((s, t) => s + Number(t.total), 0) - monthlyReturnTotal;
+  const monthlyTotal = Math.round(monthlyTransactions.reduce((s, t) => s + Number(t.total), 0) - monthlyReturnTotal);
 
   // 6-month chart data (with retur deduction)
   const sixMonthReturns = await prisma.transactionReturn.findMany({
@@ -576,14 +576,14 @@ const getDashboardSummary = async ({ startDate, endDate } = {}) => {
   sixMonthTransactions.forEach((t) => {
     const key = format(t.createdAt, 'yyyy-MM');
     if (chartMap[key]) {
-      chartMap[key].total += Number(t.total);
+      chartMap[key].total = Math.round(chartMap[key].total + Number(t.total));
       chartMap[key].count += 1;
     }
   });
   sixMonthReturns.forEach((r) => {
     const key = format(r.createdAt, 'yyyy-MM');
     if (chartMap[key]) {
-      chartMap[key].returnTotal += Number(r.refundAmount);
+      chartMap[key].returnTotal = Math.round(chartMap[key].returnTotal + Number(r.refundAmount));
     }
   });
   const transactionChart = Object.values(chartMap).map((m) => ({

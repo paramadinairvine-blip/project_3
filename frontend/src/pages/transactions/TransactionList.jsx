@@ -43,7 +43,7 @@ export default function TransactionList() {
       if (appliedFilters.date) {
         params.startDate = appliedFilters.date;
         // End of selected day
-        params.endDate = appliedFilters.date + 'T23:59:59';
+        params.endDate = appliedFilters.date + 'T23:59:59+07:00';
       }
       const { data: res } = await transactionAPI.getAll(params);
       return res;

@@ -80,7 +80,7 @@ const markAsRead = async (id, userId) => {
   });
 
   if (!notification) {
-    const { AppError } = require('../utils/AppError');
+    const AppError = require('../utils/AppError');
     throw new AppError('Notifikasi tidak ditemukan', 404);
   }
 

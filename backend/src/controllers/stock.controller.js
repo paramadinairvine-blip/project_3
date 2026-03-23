@@ -58,11 +58,14 @@ const adjustStock = async (req, res) => {
     if (!productId) return errorResponse(res, 'Product ID wajib diisi', 400);
     if (quantity === undefined || quantity === null) return errorResponse(res, 'Jumlah stok wajib diisi', 400);
 
+    const parsedQty = parseInt(quantity);
+    if (isNaN(parsedQty)) return errorResponse(res, 'Jumlah stok harus berupa angka', 400);
+
     const movement = await stockService.adjustStock({
       productId,
       variantId,
       unitId,
-      quantity: parseInt(quantity),
+      quantity: parsedQty,
       notes,
       userId: req.user.id,
     });

@@ -160,7 +160,7 @@ const create = async (data, userId) => {
       }
 
       // Calculate baseQty proportionally
-      const baseQty = originalItem.baseQty > 0
+      const baseQty = originalItem.baseQty > 0 && originalItem.quantity > 0
         ? Math.round(ri.quantity * (originalItem.baseQty / originalItem.quantity))
         : ri.quantity;
 
