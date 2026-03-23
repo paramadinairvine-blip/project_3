@@ -25,14 +25,11 @@ export default function ReceiptPrint({ transaction, paidAmount, change, onClose 
 
       if (result.success) {
         toast.success(result.message);
-      } else if (result.fallback) {
-        toast.error(result.message + ' — menggunakan browser print...');
-        handleBrowserPrint();
       } else {
         toast.error(result.message);
       }
     } else {
-      handleBrowserPrint();
+      toast.error('Konfigurasi Recta dulu di Printer Setting');
     }
   };
 
