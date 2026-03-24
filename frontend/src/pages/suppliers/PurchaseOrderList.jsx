@@ -129,11 +129,15 @@ export default function PurchaseOrderList() {
     {
       key: 'status',
       header: 'Status',
-      render: (v) => (
-        <Badge colorClass={PO_STATUS_COLORS[v]} size="sm">
-          {PO_STATUS_LABELS[v] || v}
-        </Badge>
-      ),
+      render: (v, row) => {
+        // PO dibatalkan tapi ada barang yang sudah diterima → "Sebagian Diterima" (oren)
+        const hasReceived = v === 'CANCELLED' && row.items?.some((i) => (i.receivedQty || 0) > 0);
+        return (
+          <Badge colorClass={hasReceived ? PO_STATUS_COLORS.PARTIALLY_RECEIVED : PO_STATUS_COLORS[v]} size="sm">
+            {hasReceived ? 'Sebagian Diterima' : (PO_STATUS_LABELS[v] || v)}
+          </Badge>
+        );
+      },
     },
     {
       key: 'actions',

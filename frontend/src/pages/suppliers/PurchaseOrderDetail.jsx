@@ -322,9 +322,14 @@ export default function PurchaseOrderDetail() {
           <div>
             <div className="flex items-center gap-3">
               <h1 className="text-2xl font-bold text-gray-900">{po.poNumber}</h1>
-              <Badge colorClass={PO_STATUS_COLORS[po.status]} size="sm">
-                {PO_STATUS_LABELS[po.status]}
-              </Badge>
+              {(() => {
+                const hasReceived = po.status === 'CANCELLED' && po.items?.some((i) => (i.receivedQty || 0) > 0);
+                return (
+                  <Badge colorClass={hasReceived ? PO_STATUS_COLORS.PARTIALLY_RECEIVED : PO_STATUS_COLORS[po.status]} size="sm">
+                    {hasReceived ? 'Sebagian Diterima' : PO_STATUS_LABELS[po.status]}
+                  </Badge>
+                );
+              })()}
             </div>
             <p className="text-sm text-gray-500">Dibuat {formatTanggalWaktu(po.createdAt)}</p>
           </div>
