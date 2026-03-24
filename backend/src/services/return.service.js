@@ -4,6 +4,11 @@ const { DEFAULT_PAGE_SIZE } = require('../utils/constants');
 const { createLog, ACTION_TYPES } = require('./auditLog.service');
 const AppError = require('../utils/AppError');
 
+const formatWIB = (date, fmt) => {
+  const wib = new Date(date.getTime() + 7 * 60 * 60 * 1000);
+  return format(wib, fmt);
+};
+
 // ─── helpers ────────────────────────────────────────────────────────
 
 const returnIncludes = {
@@ -20,7 +25,7 @@ const returnIncludes = {
 };
 
 const generateReturnNumber = async (tx) => {
-  const today = format(new Date(), 'yyyyMMdd');
+  const today = formatWIB(new Date(), 'yyyyMMdd');
   const prefix = `RTN-${today}-`;
 
   const last = await tx.transactionReturn.findFirst({

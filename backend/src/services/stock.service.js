@@ -4,6 +4,11 @@ const { createLog, ACTION_TYPES } = require('./auditLog.service');
 const { format } = require('date-fns');
 const AppError = require('../utils/AppError');
 
+const formatWIB = (date, fmt) => {
+  const wib = new Date(date.getTime() + 7 * 60 * 60 * 1000);
+  return format(wib, fmt);
+};
+
 /**
  * Get the current stock of a product (or a specific variant).
  * Stock is read directly from the Product / ProductVariant record
@@ -297,7 +302,7 @@ const getStockHistory = async (productId, { startDate, endDate, page = 1, limit 
  * Snapshots every active product's current system stock.
  */
 const createOpname = async (userId) => {
-  const opnameNumber = `OPN-${format(new Date(), 'yyyyMMdd-HHmmss')}`;
+  const opnameNumber = `OPN-${formatWIB(new Date(), 'yyyyMMdd-HHmmss')}`;
 
   const products = await prisma.product.findMany({
     where: { isActive: true },

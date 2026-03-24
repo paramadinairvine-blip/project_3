@@ -4,6 +4,11 @@ const { DEFAULT_PAGE_SIZE } = require('../utils/constants');
 const { createLog, ACTION_TYPES } = require('./auditLog.service');
 const AppError = require('../utils/AppError');
 
+const formatWIB = (date, fmt) => {
+  const wib = new Date(date.getTime() + 7 * 60 * 60 * 1000);
+  return format(wib, fmt);
+};
+
 // ─── helpers ────────────────────────────────────────────────────────
 
 const poIncludes = {
@@ -65,7 +70,7 @@ const convertToBaseQty = async (tx, productId, unitId, quantity) => {
  * Format: PO-YYYYMMDD-XXXX
  */
 const generatePONumber = async (tx) => {
-  const today = format(new Date(), 'yyyyMMdd');
+  const today = formatWIB(new Date(), 'yyyyMMdd');
   const prefix = `PO-${today}-`;
 
   const last = await tx.purchaseOrder.findFirst({

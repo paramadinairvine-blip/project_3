@@ -7,6 +7,12 @@ const { sendTransactionNotification } = require('./telegram.service');
 const AppError = require('../utils/AppError');
 const logger = require('../utils/logger');
 
+// Format tanggal dalam WIB (+07:00)
+const formatWIB = (date, fmt) => {
+  const wib = new Date(date.getTime() + 7 * 60 * 60 * 1000);
+  return format(wib, fmt);
+};
+
 // ─── helpers ────────────────────────────────────────────────────────
 
 const transactionIncludes = {
@@ -29,7 +35,7 @@ const transactionIncludes = {
  * Format: TRX-YYYYMMDD-XXXX (auto-increment per day).
  */
 const generateTransactionNumber = async (tx) => {
-  const today = format(new Date(), 'yyyyMMdd');
+  const today = formatWIB(new Date(), 'yyyyMMdd');
   const prefix = `TRX-${today}-`;
 
   const last = await tx.transaction.findFirst({

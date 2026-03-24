@@ -1,6 +1,11 @@
 const { format } = require('date-fns');
 const prisma = require('../lib/prisma');
 
+const formatWIB = (date, fmt) => {
+  const wib = new Date(date.getTime() + 7 * 60 * 60 * 1000);
+  return format(wib, fmt);
+};
+
 /**
  * Generate a unique barcode string.
  * Format: TMP-[KATEGORI_CODE]-[YYYYMMDD]-[RANDOM4DIGIT]
@@ -13,7 +18,7 @@ const prisma = require('../lib/prisma');
  */
 const generateBarcode = async (categoryCode = 'GEN') => {
   const code = categoryCode.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 5);
-  const datePart = format(new Date(), 'yyyyMMdd');
+  const datePart = formatWIB(new Date(), 'yyyyMMdd');
 
   for (let i = 0; i < 10; i++) {
     const random = String(Math.floor(1000 + Math.random() * 9000));
