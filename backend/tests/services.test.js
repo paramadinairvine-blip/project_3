@@ -3,6 +3,19 @@
  * These test the service functions in isolation using mocked Prisma client.
  */
 
+// Mock Prisma client before any service is imported
+jest.mock('../src/lib/prisma', () => ({
+  category: { findMany: jest.fn(), findUnique: jest.fn(), create: jest.fn(), update: jest.fn(), delete: jest.fn() },
+  brand: { findMany: jest.fn(), findUnique: jest.fn(), create: jest.fn(), update: jest.fn(), delete: jest.fn() },
+  supplier: { findMany: jest.fn(), findUnique: jest.fn(), create: jest.fn(), update: jest.fn(), delete: jest.fn() },
+  user: { findMany: jest.fn(), findUnique: jest.fn(), create: jest.fn(), update: jest.fn(), delete: jest.fn() },
+  unitOfMeasure: { findMany: jest.fn(), create: jest.fn(), update: jest.fn(), delete: jest.fn() },
+  unitLembaga: { findMany: jest.fn(), create: jest.fn(), update: jest.fn(), delete: jest.fn() },
+  product: { findMany: jest.fn(), count: jest.fn() },
+  notification: { findMany: jest.fn(), count: jest.fn(), create: jest.fn(), update: jest.fn() },
+  $transaction: jest.fn(),
+}));
+
 // ==================== Category Service Tests ====================
 
 describe('category.service', () => {
