@@ -363,6 +363,10 @@ const updateMaterialUsage = async (projectId, materialId, usedQty, userId) => {
 
   const oldUsedQty = material.usedQty;
 
+  if (usedQty < oldUsedQty) {
+    throw new AppError(`Penggunaan tidak boleh dikurangi (minimal ${oldUsedQty})`, 400);
+  }
+
   const updated = await prisma.projectMaterial.update({
     where: { id: materialId },
     data: { usedQty },

@@ -44,10 +44,12 @@ function UpdateUsageModal({ material, projectId, onClose }) {
     onError: (err) => toast.error(getErrorMessage(err, 'Gagal memperbarui')),
   });
 
+  const minQty = material.usedQty || 0;
+
   const handleSubmit = () => {
     const qty = parseFloat(usedQty);
-    if (isNaN(qty) || qty < 0) {
-      toast.error('Jumlah tidak valid');
+    if (isNaN(qty) || qty < minQty) {
+      toast.error(`Jumlah tidak boleh kurang dari ${minQty}`);
       return;
     }
     mutation.mutate({ usedQty: qty });
@@ -87,10 +89,14 @@ function UpdateUsageModal({ material, projectId, onClose }) {
         <Input
           label="Qty Terpakai (Total)"
           type="number"
-          min="0"
+          min={minQty}
           value={usedQty}
-          onChange={(e) => setUsedQty(e.target.value)}
-          helperText="Masukkan total kumulatif, bukan penambahan"
+          onChange={(e) => {
+            const val = parseInt(e.target.value, 10);
+            if (!isNaN(val) && val < minQty) return;
+            setUsedQty(e.target.value);
+          }}
+          helperText={`Minimal ${minQty} (tidak bisa dikurangi)`}
         />
       </div>
     </Modal>

@@ -101,6 +101,7 @@ export default function ProjectForm() {
             productId: m.productId || '',
             estimatedQty: m.estimatedQty?.toString() || '',
             usedQty: m.usedQty?.toString() || '0',
+            savedUsedQty: m.usedQty || 0,
             unitPrice: m.unitPrice?.toString() || '',
             notes: m.notes || '',
             product: m.product || null,
@@ -496,10 +497,15 @@ export default function ProjectForm() {
                           <td className="px-4 py-3">
                             <input
                               type="number"
-                              min="0"
+                              min={mat.savedUsedQty || 0}
                               step="1"
                               value={mat.usedQty}
-                              onChange={(e) => updateMaterial(idx, 'usedQty', e.target.value)}
+                              onChange={(e) => {
+                                const val = parseInt(e.target.value, 10);
+                                const minVal = mat.savedUsedQty || 0;
+                                if (!isNaN(val) && val < minVal) return;
+                                updateMaterial(idx, 'usedQty', e.target.value);
+                              }}
                               className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-500"
                               placeholder="0"
                             />
