@@ -161,7 +161,7 @@ export default function Dashboard() {
   const transactionTrend = d.charts?.transactionTrend || [];
   const salesChartData = transactionTrend.map((t) => ({
     label: t.label,
-    total: t.total,
+    total: t.netTotal ?? t.total,
     count: t.count,
   }));
 
