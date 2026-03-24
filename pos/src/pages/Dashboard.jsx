@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { HiCash, HiShoppingCart, HiCube, HiExclamation, HiRefresh, HiDatabase, HiClipboardList } from 'react-icons/hi';
-import { reportAPI, transactionAPI } from '../api/endpoints';
+import { reportAPI, transactionAPI, returnAPI } from '../api/endpoints';
 import { formatRupiah } from '../utils/formatCurrency';
 import { formatTanggalPanjang } from '../utils/formatDate';
 import { Loading } from '../components/common';
@@ -60,11 +60,23 @@ export default function Dashboard() {
     refetchInterval: 60000,
   });
 
-  const isLoading = dashLoading || txLoading;
+  const { data: returData, isLoading: returLoading, refetch: refetchRetur } = useQuery({
+    queryKey: ['dashboard-returns', appliedStart, appliedEnd],
+    queryFn: () => returnAPI.getAll({ startDate: startISO, endDate: endISO, limit: 500 }),
+    select: (res) => {
+      const list = res.data.data || [];
+      const totalRetur = list.reduce((sum, r) => sum + (parseFloat(r.refundAmount) || 0), 0);
+      return { totalRetur, count: list.length };
+    },
+    refetchInterval: 60000,
+  });
+
+  const isLoading = dashLoading || txLoading || returLoading;
 
   const refetch = () => {
     refetchDash();
     refetchTx();
+    refetchRetur();
   };
 
   const handleApply = (start, end) => {
@@ -86,9 +98,11 @@ export default function Dashboard() {
   // Transaction count & total from filtered transactions API
   const txCount = filteredTx?.count || 0;
   const txTotal = filteredTx?.total || 0;
+  const totalRetur = returData?.totalRetur || 0;
+  const netRevenue = txTotal - totalRetur;
 
   const transLabel = 'Transaksi';
-  const incomeLabel = 'Pendapatan';
+  const incomeLabel = 'Pendapatan Bersih';
   const topProductLabel = 'Produk Terlaris';
 
   return (
@@ -142,7 +156,10 @@ export default function Dashboard() {
                   </div>
                   <div>
                     <p className="text-xs text-gray-500">{incomeLabel}</p>
-                    <p className="text-lg font-bold text-gray-900">{formatRupiah(txTotal)}</p>
+                    <p className="text-lg font-bold text-gray-900">{formatRupiah(netRevenue)}</p>
+                    {totalRetur > 0 && (
+                      <p className="text-xs text-red-500">Retur: -{formatRupiah(totalRetur)}</p>
+                    )}
                   </div>
                 </div>
               </div>
