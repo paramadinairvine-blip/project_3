@@ -1,6 +1,12 @@
 const prisma = require('../lib/prisma');
 const { format, subMonths, startOfMonth, endOfMonth } = require('date-fns');
 
+// Format tanggal dalam WIB (+07:00) untuk grouping
+const formatWIB = (date, fmt) => {
+  const wib = new Date(date.getTime() + 7 * 60 * 60 * 1000);
+  return format(wib, fmt);
+};
+
 // ─── 1. Stock Report ────────────────────────────────────────────────
 
 /**
@@ -141,7 +147,7 @@ const getFinancialReport = async ({ startDate, endDate, type } = {}) => {
   // Group by cashier + date
   const byCashierDay = {};
   txWithCashier.forEach((t) => {
-    const day = format(t.createdAt, 'yyyy-MM-dd');
+    const day = formatWIB(t.createdAt, 'yyyy-MM-dd');
     const key = `${t.createdBy || 'unknown'}_${day}`;
     if (!byCashierDay[key]) {
       byCashierDay[key] = { cashierId: t.createdBy, date: day, cashTotal: 0, bonTotal: 0, returnTotal: 0, count: 0 };
@@ -152,7 +158,7 @@ const getFinancialReport = async ({ startDate, endDate, type } = {}) => {
     byCashierDay[key].count += 1;
   });
   returnsWithCashier.forEach((r) => {
-    const day = format(r.createdAt, 'yyyy-MM-dd');
+    const day = formatWIB(r.createdAt, 'yyyy-MM-dd');
     const key = `${r.createdBy || 'unknown'}_${day}`;
     if (!byCashierDay[key]) {
       byCashierDay[key] = { cashierId: r.createdBy, date: day, cashTotal: 0, bonTotal: 0, returnTotal: 0, count: 0 };
@@ -219,13 +225,13 @@ const getTrendReport = async ({ startDate, endDate, groupBy = 'month' } = {}) =>
 
   const monthlyMap = {};
   transactions.forEach((t) => {
-    const key = format(t.createdAt, 'yyyy-MM');
+    const key = formatWIB(t.createdAt, 'yyyy-MM');
     if (!monthlyMap[key]) monthlyMap[key] = { month: key, total: 0, returnTotal: 0, count: 0 };
     monthlyMap[key].total = Math.round(monthlyMap[key].total + Number(t.total));
     monthlyMap[key].count += 1;
   });
   trendReturns.forEach((r) => {
-    const key = format(r.createdAt, 'yyyy-MM');
+    const key = formatWIB(r.createdAt, 'yyyy-MM');
     if (!monthlyMap[key]) monthlyMap[key] = { month: key, total: 0, returnTotal: 0, count: 0 };
     monthlyMap[key].returnTotal = Math.round(monthlyMap[key].returnTotal + Number(r.refundAmount));
   });
@@ -583,14 +589,14 @@ const getDashboardSummary = async ({ startDate, endDate } = {}) => {
     chartMap[key] = { month: key, label: format(m, 'MMM yyyy'), total: 0, returnTotal: 0, count: 0 };
   }
   sixMonthTransactions.forEach((t) => {
-    const key = format(t.createdAt, 'yyyy-MM');
+    const key = formatWIB(t.createdAt, 'yyyy-MM');
     if (chartMap[key]) {
       chartMap[key].total = Math.round(chartMap[key].total + Number(t.total));
       chartMap[key].count += 1;
     }
   });
   sixMonthReturns.forEach((r) => {
-    const key = format(r.createdAt, 'yyyy-MM');
+    const key = formatWIB(r.createdAt, 'yyyy-MM');
     if (chartMap[key]) {
       chartMap[key].returnTotal = Math.round(chartMap[key].returnTotal + Number(r.refundAmount));
     }
