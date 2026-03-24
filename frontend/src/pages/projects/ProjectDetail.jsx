@@ -9,7 +9,8 @@ import { getErrorMessage } from '../../utils/handleError';
 import { Card, Badge, Button, Loading, Modal, Input } from '../../components/common';
 import { formatRupiah, formatNumber } from '../../utils/formatCurrency';
 import { formatTanggal, formatTanggalPanjang, formatTanggalWaktu } from '../../utils/formatDate';
-import { exportTableToPDF } from '../../utils/exportPDF';
+import { jsPDF } from 'jspdf';
+import autoTable from 'jspdf-autotable';
 import { PROJECT_STATUS_LABELS, PROJECT_STATUS_COLORS, STORE_INFO } from '../../utils/constants';
 import useAuth from '../../hooks/useAuth';
 
@@ -191,8 +192,58 @@ export default function ProjectDetail() {
 
   const handleExportPDF = () => {
     if (!project) return;
+    const doc = new jsPDF('p', 'mm', 'a4');
+    const pw = doc.internal.pageSize.getWidth();
     const mats = project.materials || [];
-    const headers = ['No', 'Material', 'Estimasi', 'Terpakai', 'Sisa', 'Harga', 'Subtotal Estimasi', 'Subtotal Aktual', 'Progress'];
+    const budgetEst = Number(project.budget) || 0;
+    const budgetAct = mats.reduce((sum, m) => sum + (parseFloat(m.usedQty) || 0) * (parseFloat(m.unitPrice) || 0), 0);
+
+    // ─── Header Toko ────────────────────────────
+    doc.setFontSize(16);
+    doc.setFont(undefined, 'bold');
+    doc.text(STORE_INFO.NAME, pw / 2, 15, { align: 'center' });
+    doc.setFontSize(9);
+    doc.setFont(undefined, 'normal');
+    doc.text(STORE_INFO.ADDRESS, pw / 2, 21, { align: 'center' });
+    doc.setDrawColor(0);
+    doc.setLineWidth(0.5);
+    doc.line(14, 24, pw - 14, 24);
+
+    // ─── Info Proyek (key-value) ────────────────
+    let y = 32;
+    const labelX = 14;
+    const colonX = 50;
+    const valueX = 54;
+    const lineHeight = 6;
+
+    const infoRows = [
+      ['Nama Proyek', project.name],
+      ['Status', PROJECT_STATUS_LABELS[project.status]],
+      ['Periode', `${formatTanggal(project.startDate)} — ${project.endDate ? formatTanggal(project.endDate) : '-'}`],
+      ['Budget', formatRupiah(budgetEst)],
+      ['Pengeluaran Aktual', formatRupiah(budgetAct)],
+      ['Sisa Budget', formatRupiah(budgetEst - budgetAct)],
+    ];
+
+    doc.setFontSize(10);
+    infoRows.forEach(([label, value]) => {
+      doc.setFont(undefined, 'bold');
+      doc.text(label, labelX, y);
+      doc.text(':', colonX, y);
+      doc.setFont(undefined, 'normal');
+      doc.text(value, valueX, y);
+      y += lineHeight;
+    });
+
+    // ─── Label Material ─────────────────────────
+    y += 4;
+    doc.setFontSize(11);
+    doc.setFont(undefined, 'bold');
+    doc.text('Material', 14, y);
+    y += 4;
+
+    // ─── Tabel Material ─────────────────────────
+    const headers = ['No', 'Material', 'Estimasi', 'Terpakai', 'Sisa', 'Harga', 'Sub. Estimasi', 'Sub. Aktual', 'Progress'];
     const rows = mats.map((m, i) => {
       const est = m.estimatedQty || 0;
       const used = m.usedQty || 0;
@@ -213,24 +264,45 @@ export default function ProjectDetail() {
       ];
     });
 
-    const budgetEst = Number(project.budget) || 0;
-    const budgetAct = mats.reduce((sum, m) => sum + (parseFloat(m.usedQty) || 0) * (parseFloat(m.unitPrice) || 0), 0);
-    const subtitle = [
-      `Status: ${PROJECT_STATUS_LABELS[project.status]}`,
-      `Periode: ${formatTanggal(project.startDate)} — ${project.endDate ? formatTanggal(project.endDate) : 'Belum ditentukan'}`,
-      `Budget: ${formatRupiah(budgetEst)} | Aktual: ${formatRupiah(budgetAct)} | Sisa: ${formatRupiah(budgetEst - budgetAct)}`,
-    ].join('  |  ');
+    autoTable(doc, {
+      head: [headers],
+      body: rows,
+      startY: y,
+      theme: 'grid',
+      headStyles: { fillColor: [59, 130, 246], textColor: 255, fontStyle: 'bold', fontSize: 8, halign: 'center' },
+      bodyStyles: { fontSize: 8 },
+      columnStyles: {
+        0: { halign: 'center' },
+        1: { halign: 'left' },
+        2: { halign: 'center' },
+        3: { halign: 'center' },
+        4: { halign: 'center' },
+        5: { halign: 'right' },
+        6: { halign: 'right' },
+        7: { halign: 'right' },
+        8: { halign: 'center' },
+      },
+      styles: { cellPadding: 2, overflow: 'linebreak' },
+      margin: { left: 14, right: 14 },
+      didDrawPage: (data) => {
+        const pageCount = doc.internal.getNumberOfPages();
+        doc.setFontSize(8);
+        doc.setFont(undefined, 'normal');
+        doc.text(`Halaman ${data.pageNumber} dari ${pageCount}`, pw / 2, doc.internal.pageSize.getHeight() - 10, { align: 'center' });
+      },
+    });
 
-    exportTableToPDF(
-      `Laporan Proyek — ${project.name}`,
-      headers,
-      rows,
-      `laporan-proyek-${project.name.toLowerCase().replace(/\s+/g, '-')}.pdf`,
-      {
-        subtitle,
-        columnStyles: ['center', 'left', 'center', 'center', 'center', 'right', 'right', 'right', 'center'],
-      }
+    // ─── Tanggal cetak ──────────────────────────
+    const finalY = doc.lastAutoTable.finalY + 8;
+    doc.setFontSize(8);
+    doc.setFont(undefined, 'normal');
+    const now = new Date();
+    doc.text(
+      `Dicetak: ${now.toLocaleDateString('id-ID')} ${now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}`,
+      pw - 14, finalY, { align: 'right' }
     );
+
+    doc.save(`laporan-proyek-${project.name.toLowerCase().replace(/\s+/g, '-')}.pdf`);
   };
 
   if (isLoading) return <Loading text="Memuat detail proyek..." />;
