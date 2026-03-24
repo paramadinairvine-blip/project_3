@@ -240,7 +240,7 @@ const getTrendReport = async ({ startDate, endDate, groupBy = 'month' } = {}) =>
     .map((m) => ({ ...m, netTotal: m.total - m.returnTotal }))
     .sort((a, b) => a.month.localeCompare(b.month));
 
-  // 3b. Top 10 most issued products
+  // 3b. All issued products sorted by quantity
   const topProducts = await prisma.transactionItem.groupBy({
     by: ['productId'],
     where: {
@@ -251,7 +251,6 @@ const getTrendReport = async ({ startDate, endDate, groupBy = 'month' } = {}) =>
     },
     _sum: { quantity: true, subtotal: true },
     orderBy: { _sum: { quantity: 'desc' } },
-    take: 10,
   });
 
   const topProductIds = topProducts.map((tp) => tp.productId);
