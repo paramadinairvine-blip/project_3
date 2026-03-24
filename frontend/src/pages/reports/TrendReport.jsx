@@ -86,13 +86,13 @@ export default function TrendReport() {
       </div>
 
       {/* Filter Bulan + Pagination Bar */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 bg-white border border-gray-300 rounded-lg px-4 py-3">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         {/* Left: Filter Bulan */}
         <div className="flex items-center gap-2">
           <select
             value={month}
             onChange={(e) => { setMonth(parseInt(e.target.value)); setPage(1); }}
-            className="rounded-lg border-gray-300 text-sm py-2 px-3 focus:border-blue-500 focus:ring-blue-500"
+            className="rounded-lg border border-gray-300 text-sm py-2 px-4 focus:border-blue-500 focus:ring-blue-500 bg-white"
           >
             {MONTHS.map((m, i) => (
               <option key={i} value={i}>{m}</option>
@@ -101,7 +101,7 @@ export default function TrendReport() {
           <select
             value={year}
             onChange={(e) => { setYear(parseInt(e.target.value)); setPage(1); }}
-            className="rounded-lg border-gray-300 text-sm py-2 px-3 focus:border-blue-500 focus:ring-blue-500"
+            className="rounded-lg border border-gray-300 text-sm py-2 px-4 focus:border-blue-500 focus:ring-blue-500 bg-white"
           >
             {getYears().map((y) => (
               <option key={y} value={y}>{y}</option>
@@ -110,34 +110,34 @@ export default function TrendReport() {
         </div>
 
         {/* Right: Pagination */}
-        <div className="flex items-center gap-3 text-sm">
-          <span className="text-gray-500">Baris</span>
+        <div className="flex items-center gap-2 text-sm">
+          <span className="text-gray-500 border border-gray-300 rounded-lg px-3 py-2 bg-white">Baris</span>
           <select
             value={rowsPerPage}
             onChange={(e) => { setRowsPerPage(Number(e.target.value)); setPage(1); }}
-            className="rounded-lg border-gray-300 text-sm py-1.5 px-2 focus:border-blue-500 focus:ring-blue-500"
+            className="rounded-lg border border-gray-300 text-sm py-2 px-3 focus:border-blue-500 focus:ring-blue-500 bg-white"
           >
             {[10, 25, 50, 100].map((n) => (
               <option key={n} value={n}>{n}</option>
             ))}
           </select>
-          <span className="text-gray-600">
+          <span className="text-gray-600 border border-gray-300 rounded-lg px-3 py-2 bg-white">
             {totalItems === 0 ? '0' : `${startIdx + 1}-${endIdx}`} of {totalItems}
           </span>
           <button
             onClick={() => setPage(Math.max(1, page - 1))}
             disabled={page <= 1}
-            className="p-1.5 rounded-lg border border-gray-300 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            className="p-2 rounded-lg border border-gray-300 bg-white hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
           >
             <HiChevronLeft className="w-4 h-4 text-gray-600" />
           </button>
-          <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-blue-600 text-white text-sm font-semibold">
+          <span className="inline-flex items-center justify-center w-9 h-9 rounded-full bg-blue-600 text-white text-sm font-semibold">
             {page}
           </span>
           <button
             onClick={() => setPage(Math.min(totalPages, page + 1))}
             disabled={page >= totalPages}
-            className="p-1.5 rounded-lg border border-gray-300 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            className="p-2 rounded-lg border border-gray-300 bg-white hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
           >
             <HiChevronRight className="w-4 h-4 text-gray-600" />
           </button>
