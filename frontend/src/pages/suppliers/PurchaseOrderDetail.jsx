@@ -270,19 +270,21 @@ export default function PurchaseOrderDetail() {
         );
       },
     },
-    ...(['RECEIVED', 'PARTIALLY_RECEIVED'].includes(po.status) ? [{
+    ...(['RECEIVED', 'PARTIALLY_RECEIVED', 'CANCELLED'].includes(po.status) ? [{
       key: 'receivedQty',
       header: 'Diterima',
       render: (v, row) => {
         const qty = v ?? 0;
         const isShort = qty < row.quantity;
+        const isCancelled = po.status === 'CANCELLED';
         const factor = getItemConversionFactor(row);
         const baseUnit = getBaseUnitName(row);
         return (
           <div>
-            <span className={`font-medium ${isShort ? 'text-amber-600' : 'text-green-600'}`}>
+            <span className={`font-medium ${isCancelled ? (qty > 0 ? 'text-blue-600' : 'text-gray-400') : isShort ? 'text-amber-600' : 'text-green-600'}`}>
               {qty} / {row.quantity}
-              {isShort && <span className="text-xs text-amber-500 ml-1">(sisa {row.quantity - qty})</span>}
+              {isCancelled && qty < row.quantity && <span className="text-xs text-red-500 ml-1">(batal {row.quantity - qty})</span>}
+              {!isCancelled && isShort && <span className="text-xs text-amber-500 ml-1">(sisa {row.quantity - qty})</span>}
             </span>
             {factor > 1 && (
               <div className="text-xs text-gray-400">
@@ -385,6 +387,16 @@ export default function PurchaseOrderDetail() {
               <div className="pt-3 border-t border-gray-100">
                 <p className="text-xs text-gray-500 mb-1">Catatan</p>
                 <p className="text-sm text-gray-700">{po.notes}</p>
+              </div>
+            )}
+            {po.status === 'CANCELLED' && po.items?.some((i) => (i.receivedQty || 0) > 0) && (
+              <div className="pt-3 border-t border-gray-100">
+                <div className="px-3 py-2 bg-amber-50 border border-amber-200 rounded-lg">
+                  <p className="text-sm font-medium text-amber-800">Diterima sebagian, sisa pesanan dibatalkan</p>
+                  <p className="text-xs text-amber-600 mt-1">
+                    Barang yang sudah diterima tetap masuk stok. Sisa yang belum diterima dibatalkan.
+                  </p>
+                </div>
               </div>
             )}
           </div>
