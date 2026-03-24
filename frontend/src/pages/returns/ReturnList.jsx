@@ -90,16 +90,16 @@ export default function ReturnList() {
 
       <Card padding="none">
         <div className="p-4 border-b border-gray-200 flex flex-col sm:flex-row sm:items-center gap-3">
-          <SearchBar
-            value={search}
-            onChange={(val) => { setSearch(val); setPage(1); }}
-            placeholder="Cari nomor retur atau transaksi..."
-            className="flex-1"
-          />
           <CalendarPicker
             mode="single"
             dateFrom={filterDate}
             onChange={(date) => { setFilterDate(date); setPage(1); }}
+          />
+          <SearchBar
+            value={search}
+            onChange={(val) => { setSearch(val); setPage(1); }}
+            placeholder="Cari nomor retur atau transaksi..."
+            className="flex-1 max-w-md"
           />
         </div>
         <Table
