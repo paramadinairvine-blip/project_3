@@ -172,6 +172,24 @@ export default function Dashboard() {
     value: tp.totalValue || 0,
   }));
 
+  // ─── Prepare Daily Revenue Chart Data ────────────────
+  const dailyRevenueData = (() => {
+    const perCashier = financialData?.perCashier || [];
+    // Group by date, sum all cashiers
+    const dailyMap = {};
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    for (let i = 1; i <= daysInMonth; i++) {
+      const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(i).padStart(2, '0')}`;
+      dailyMap[dateStr] = { date: dateStr, day: i, total: 0 };
+    }
+    perCashier.forEach((row) => {
+      if (dailyMap[row.date]) {
+        dailyMap[row.date].total += row.netTotal || 0;
+      }
+    });
+    return Object.values(dailyMap).sort((a, b) => a.day - b.day);
+  })();
+
   if (isLoading) {
     return (
       <div className="space-y-6">
@@ -476,45 +494,63 @@ export default function Dashboard() {
         </div>
       )}
 
-      {/* Row 4: Produk Stok Rendah */}
-      {d.lowStockItems?.length > 0 && (
+      {/* Row 4: Pendapatan Harian */}
+      {canViewFinancial && (
         <Card>
           <div className="mb-4">
-            <h3 className="text-lg font-bold text-gray-900">Produk Stok Minimum</h3>
-            <p className="text-sm text-gray-500">Perlu restock segera</p>
+            <h3 className="text-lg font-bold text-gray-900">
+              Pendapatan Harian {MONTHS[month]} {year}
+            </h3>
+            <p className="text-sm text-gray-500">Nominal pendapatan per tanggal</p>
           </div>
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-gray-200 bg-gray-50">
-                  <th className="text-left px-4 py-3 text-xs font-semibold text-gray-600 uppercase">Produk</th>
-                  <th className="text-center px-4 py-3 text-xs font-semibold text-gray-600 uppercase">Stok</th>
-                  <th className="text-center px-4 py-3 text-xs font-semibold text-gray-600 uppercase">Minimum</th>
-                  <th className="text-center px-4 py-3 text-xs font-semibold text-gray-600 uppercase">Kekurangan</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-50">
-                {d.lowStockItems.slice(0, 10).map((item) => (
-                  <tr key={item.id} className="hover:bg-gray-50">
-                    <td className="px-4 py-3">
-                      <p className="font-medium text-gray-900">{item.name}</p>
-                    </td>
-                    <td className="text-center px-4 py-3 font-semibold text-red-600">
-                      {item.stock} {item.unit}
-                    </td>
-                    <td className="text-center px-4 py-3 text-gray-600">
-                      {item.minStock} {item.unit}
-                    </td>
-                    <td className="text-center px-4 py-3">
-                      <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-red-100 text-red-700">
-                        -{item.minStock - item.stock} {item.unit}
-                      </span>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          {dailyRevenueData.some((d) => d.total > 0) ? (
+            <ResponsiveContainer width="100%" height={350}>
+              <LineChart data={dailyRevenueData} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                <XAxis
+                  dataKey="day"
+                  tick={{ fontSize: 11, fill: '#6b7280' }}
+                  axisLine={{ stroke: '#e5e7eb' }}
+                  tickLine={false}
+                  label={{ value: 'Tanggal', position: 'insideBottom', offset: -2, fontSize: 12, fill: '#9ca3af' }}
+                />
+                <YAxis
+                  tick={{ fontSize: 11, fill: '#6b7280' }}
+                  axisLine={false}
+                  tickLine={false}
+                  tickFormatter={(v) => v >= 1000000 ? `${(v / 1000000).toFixed(0)}jt` : v >= 1000 ? `${(v / 1000).toFixed(0)}rb` : v}
+                  label={{ value: 'Nominal Pendapatan', angle: -90, position: 'insideLeft', offset: 10, fontSize: 12, fill: '#9ca3af' }}
+                />
+                <Tooltip
+                  content={({ active, payload, label }) => {
+                    if (!active || !payload?.length) return null;
+                    const data = payload[0].payload;
+                    return (
+                      <div className="bg-white border border-gray-200 rounded-lg shadow-lg px-4 py-3">
+                        <p className="text-sm font-bold text-gray-900 mb-1">Tanggal {label}</p>
+                        <p className="text-sm text-blue-600">
+                          Pendapatan: <span className="font-semibold">{formatRupiah(data.total)}</span>
+                        </p>
+                      </div>
+                    );
+                  }}
+                />
+                <Line
+                  type="monotone"
+                  dataKey="total"
+                  name="Pendapatan"
+                  stroke="#3b82f6"
+                  strokeWidth={2.5}
+                  dot={{ fill: '#3b82f6', strokeWidth: 2, r: 3 }}
+                  activeDot={{ r: 6, fill: '#3b82f6', stroke: '#fff', strokeWidth: 2 }}
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          ) : (
+            <div className="flex items-center justify-center h-[350px] text-gray-400 text-sm">
+              Belum ada data pendapatan di bulan ini
+            </div>
+          )}
         </Card>
       )}
     </div>
