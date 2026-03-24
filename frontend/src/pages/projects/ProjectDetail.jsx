@@ -91,12 +91,9 @@ function UpdateUsageModal({ material, projectId, onClose }) {
           type="number"
           min={minQty}
           value={usedQty}
-          onChange={(e) => {
-            const val = parseInt(e.target.value, 10);
-            if (!isNaN(val) && val < minQty) return;
-            setUsedQty(e.target.value);
-          }}
+          onChange={(e) => setUsedQty(e.target.value)}
           helperText={`Minimal ${minQty} (tidak bisa dikurangi)`}
+          error={(parseFloat(usedQty) || 0) < minQty ? `Tidak boleh kurang dari ${minQty}` : ''}
         />
       </div>
     </Modal>

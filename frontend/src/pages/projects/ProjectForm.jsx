@@ -209,6 +209,16 @@ export default function ProjectForm() {
     if (!form.name.trim()) errs.name = 'Nama proyek wajib diisi';
     if (!form.startDate) errs.startDate = 'Tanggal mulai wajib diisi';
     if (!form.budget || parseFloat(form.budget) <= 0) errs.budget = 'Budget harus lebih dari 0';
+
+    if (isEdit) {
+      const invalid = materials.find((m) => m.savedUsedQty > 0 && (parseFloat(m.usedQty) || 0) < m.savedUsedQty);
+      if (invalid) {
+        const productName = invalid.product?.name || 'Material';
+        toast.error(`${productName}: Terpakai tidak boleh kurang dari ${invalid.savedUsedQty}`);
+        return false;
+      }
+    }
+
     setErrors(errs);
     return Object.keys(errs).length === 0;
   };
@@ -500,15 +510,13 @@ export default function ProjectForm() {
                               min={mat.savedUsedQty || 0}
                               step="1"
                               value={mat.usedQty}
-                              onChange={(e) => {
-                                const val = parseInt(e.target.value, 10);
-                                const minVal = mat.savedUsedQty || 0;
-                                if (!isNaN(val) && val < minVal) return;
-                                updateMaterial(idx, 'usedQty', e.target.value);
-                              }}
+                              onChange={(e) => updateMaterial(idx, 'usedQty', e.target.value)}
                               className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-500"
                               placeholder="0"
                             />
+                            {isEdit && mat.savedUsedQty > 0 && (parseFloat(mat.usedQty) || 0) < mat.savedUsedQty && (
+                              <p className="text-xs text-red-500 mt-1">Minimal {mat.savedUsedQty}</p>
+                            )}
                           </td>
                           <td className="px-4 py-3">
                             <span className={`text-sm font-medium whitespace-nowrap ${remaining < 0 ? 'text-red-600' : remaining === 0 && estQty > 0 ? 'text-green-600' : 'text-gray-700'}`}>
