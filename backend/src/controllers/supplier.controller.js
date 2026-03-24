@@ -22,6 +22,9 @@ const getAll = async (req, res) => {
     const [data, total] = await Promise.all([
       prisma.supplier.findMany({
         where,
+        include: {
+          _count: { select: { purchaseOrders: true } },
+        },
         orderBy: { name: 'asc' },
         skip,
         take: limit,
