@@ -39,7 +39,7 @@ export default function ProductList() {
   const deleteMutation = useMutation({
     mutationFn: (id) => productAPI.remove(id),
     onSuccess: () => {
-      toast.success('Produk berhasil dinonaktifkan');
+      toast.success('Produk berhasil dihapus');
       queryClient.invalidateQueries({ queryKey: ['products'] });
       setDeleteTarget(null);
     },
@@ -194,9 +194,9 @@ export default function ProductList() {
         }
       >
         <p className="text-sm text-gray-600">
-          Apakah Anda yakin ingin menonaktifkan produk{' '}
+          Apakah Anda yakin ingin menghapus produk{' '}
           <span className="font-semibold text-gray-900">{deleteTarget?.name}</span>?
-          Produk tidak akan dihapus permanen.
+          Produk akan dihapus dari daftar dan tidak dapat dikembalikan.
         </p>
       </Modal>
     </div>

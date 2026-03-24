@@ -27,9 +27,8 @@ const productIncludes = {
 const getAll = async ({ page = 1, limit = DEFAULT_PAGE_SIZE, search, categoryId, brandId, isActive } = {}) => {
   const where = {};
 
-  if (typeof isActive === 'boolean') {
-    where.isActive = isActive;
-  }
+  // Default: hanya tampilkan produk aktif, kecuali diminta semua
+  where.isActive = typeof isActive === 'boolean' ? isActive : true;
   if (categoryId) {
     where.categoryId = categoryId;
   }
