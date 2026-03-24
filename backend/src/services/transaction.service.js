@@ -503,8 +503,8 @@ const sendBonNotification = async (transaction) => {
     await prisma.notification.createMany({
       data: admins.map((admin) => ({
         userId: admin.id,
-        title: 'Transaksi BON Baru',
-        message: `Transaksi BON ${transaction.transactionNumber} sebesar Rp ${Number(transaction.total).toLocaleString('id-ID')} oleh ${transaction.customerName || 'pelanggan'}.`,
+        title: 'Transaksi Overbooking TU Baru',
+        message: `Transaksi Overbooking TU ${transaction.transactionNumber} sebesar Rp ${Number(transaction.total).toLocaleString('id-ID')} oleh ${transaction.customerName || 'pelanggan'}.`,
         type: 'TRANSACTION_BON',
         status: 'PENDING',
       })),
