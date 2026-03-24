@@ -175,6 +175,11 @@ export default function PurchaseOrderDetail() {
       itemId: item.id,
       receivedQty: parseInt(receivedQtys[item.id]) || 0,
     }));
+    const hasAnyQty = items.some((i) => i.receivedQty > 0);
+    if (!hasAnyQty) {
+      toast.error('Isi minimal 1 item yang diterima');
+      return;
+    }
     receiveMutation.mutate(items);
   };
 
@@ -343,11 +348,9 @@ export default function PurchaseOrderDetail() {
                 <Button size="sm" icon={HiCheck} onClick={() => setActionModal('receive')}>
                   Terima Barang
                 </Button>
-                {po.status === PO_STATUS.SENT && (
-                  <Button variant="danger" size="sm" icon={HiBan} onClick={() => setActionModal('cancel')}>
-                    Batalkan
-                  </Button>
-                )}
+                <Button variant="danger" size="sm" icon={HiBan} onClick={() => setActionModal('cancel')}>
+                  {po.status === PO_STATUS.PARTIALLY_RECEIVED ? 'Batalkan Sisa' : 'Batalkan'}
+                </Button>
               </>
             )}
           </div>

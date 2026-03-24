@@ -79,7 +79,7 @@ const getFinancialReport = async ({ startDate, endDate, type } = {}) => {
   const hasDateFilter = Object.keys(dateFilter).length > 0;
 
   // 2a. Total purchases from received POs
-  const poWhere = { status: 'RECEIVED' };
+  const poWhere = { status: { in: ['RECEIVED', 'PARTIALLY_RECEIVED'] } };
   if (hasDateFilter) poWhere.receivedAt = dateFilter;
 
   const purchaseAgg = await prisma.purchaseOrder.aggregate({

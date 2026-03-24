@@ -165,7 +165,7 @@ export default function PurchaseOrderForm() {
   const calcItemTotal = (item) => {
     const qty = parseFloat(item.quantity) || 0;
     const price = parseFloat(item.unitPrice) || 0;
-    const disc = parseFloat(item.discount) || 0;
+    const disc = Math.min(Math.max(parseFloat(item.discount) || 0, 0), 100);
     const subtotal = qty * price;
     return subtotal - (subtotal * disc / 100);
   };
@@ -405,7 +405,10 @@ export default function PurchaseOrderForm() {
                         min="0"
                         max="100"
                         value={item.discount}
-                        onChange={(e) => updateItem(idx, 'discount', e.target.value)}
+                        onChange={(e) => {
+                          const val = Math.min(Math.max(parseFloat(e.target.value) || 0, 0), 100);
+                          updateItem(idx, 'discount', String(val));
+                        }}
                         className="w-full px-2 py-1.5 border border-gray-300 rounded-lg text-sm text-center focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                         placeholder="0"
                       />

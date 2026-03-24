@@ -190,6 +190,13 @@ export default function History() {
           </div>
         </div>
 
+        {/* Truncation warning */}
+        {(transactions || []).length >= 500 && (
+          <div className="px-5 py-2 bg-amber-50 border-b border-amber-200 text-amber-700 text-xs font-medium">
+            Menampilkan 500 transaksi terbaru. Gunakan filter tanggal untuk melihat data lainnya.
+          </div>
+        )}
+
         {/* Table */}
         <div className="flex-1 overflow-auto">
           {isLoading ? (

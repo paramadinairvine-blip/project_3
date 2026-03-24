@@ -488,8 +488,8 @@ const cancel = async (id, userId) => {
   const existing = await prisma.purchaseOrder.findUnique({ where: { id } });
 
   if (!existing) throw new AppError('Purchase order tidak ditemukan', 404);
-  if (!['DRAFT', 'SENT'].includes(existing.status)) {
-    throw new AppError('Hanya PO berstatus DRAFT atau SENT yang dapat dibatalkan', 400);
+  if (!['DRAFT', 'SENT', 'PARTIALLY_RECEIVED'].includes(existing.status)) {
+    throw new AppError('PO yang sudah diterima sepenuhnya tidak dapat dibatalkan', 400);
   }
 
   const po = await prisma.purchaseOrder.update({
