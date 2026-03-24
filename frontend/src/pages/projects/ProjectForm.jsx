@@ -387,7 +387,7 @@ export default function ProjectForm() {
                 <label className="block text-sm font-semibold text-gray-700 mb-1.5">Tanggal Mulai *</label>
                 <CalendarPicker
                   mode="single"
-                  dateFrom={form.startDate}
+                  value={form.startDate}
                   onChange={(date) => updateField('startDate', date)}
                 />
                 {errors.startDate && <p className="text-xs text-red-500 mt-1">{errors.startDate}</p>}
