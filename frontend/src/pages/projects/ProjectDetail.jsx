@@ -77,7 +77,7 @@ function UpdateUsageModal({ material, projectId, onClose }) {
           <div className="flex justify-between">
             <span className="text-gray-500">Sisa Kebutuhan</span>
             <span className="font-medium">
-              {Math.max((material.estimatedQty || 0) - (material.usedQty || 0), 0)} {material.unit?.name || ''}
+              {(material.estimatedQty || 0) - (material.usedQty || 0)} {material.unit?.name || ''}
             </span>
           </div>
         </div>
@@ -141,7 +141,7 @@ function ProjectReportPrint({ project, report, printRef }) {
                 <td style={{ border: '1px solid #d1d5db', padding: '4px 6px' }}>{m.product?.name || '-'}</td>
                 <td style={{ border: '1px solid #d1d5db', padding: '4px 6px', textAlign: 'center' }}>{m.estimatedQty} {m.unit?.name || ''}</td>
                 <td style={{ border: '1px solid #d1d5db', padding: '4px 6px', textAlign: 'center' }}>{m.usedQty || 0}</td>
-                <td style={{ border: '1px solid #d1d5db', padding: '4px 6px', textAlign: 'center' }}>{Math.max(m.estimatedQty - (m.usedQty || 0), 0)}</td>
+                <td style={{ border: '1px solid #d1d5db', padding: '4px 6px', textAlign: 'center' }}>{m.estimatedQty - (m.usedQty || 0)}</td>
                 <td style={{ border: '1px solid #d1d5db', padding: '4px 6px', textAlign: 'center' }}>{pct}%</td>
               </tr>
             );
@@ -316,7 +316,7 @@ export default function ProjectDetail() {
               {materials.map((mat, idx) => {
                 const used = mat.usedQty || 0;
                 const estimated = mat.estimatedQty || 0;
-                const remaining = Math.max(estimated - used, 0);
+                const remaining = estimated - used;
                 const pct = estimated > 0 ? Math.round((used / estimated) * 100) : 0;
                 const unitName = mat.unit?.name || mat.product?.unit || '';
 
@@ -335,7 +335,7 @@ export default function ProjectDetail() {
                       {used} {unitName}
                     </td>
                     <td className="text-center px-4 py-3">
-                      <span className={remaining === 0 && estimated > 0 ? 'text-green-600 font-medium' : 'text-gray-700'}>
+                      <span className={remaining < 0 ? 'text-red-600 font-medium' : remaining === 0 && estimated > 0 ? 'text-green-600 font-medium' : 'text-gray-700'}>
                         {remaining} {unitName}
                       </span>
                     </td>

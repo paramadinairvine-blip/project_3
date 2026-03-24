@@ -463,7 +463,7 @@ const getMaterialReport = async (projectId) => {
   if (!project) throw new AppError('Proyek tidak ditemukan', 404);
 
   const report = project.materials.map((m) => {
-    const remaining = Math.max(0, m.estimatedQty - m.usedQty);
+    const remaining = m.estimatedQty - m.usedQty;
     const estimatedCost = m.estimatedQty * Number(m.unitPrice);
     const usedCost = m.usedQty * Number(m.unitPrice);
     const remainingCost = remaining * Number(m.unitPrice);

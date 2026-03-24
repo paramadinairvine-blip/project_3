@@ -446,7 +446,7 @@ export default function ProjectForm() {
                   const usedQty = parseFloat(mat.usedQty) || 0;
                   const price = parseFloat(mat.unitPrice) || 0;
                   const subtotal = estQty * price;
-                  const remaining = Math.max(0, estQty - usedQty);
+                  const remaining = estQty - usedQty;
                   const matPercent = estQty > 0 ? Math.round((usedQty / estQty) * 100) : 0;
 
                   return (
@@ -498,7 +498,6 @@ export default function ProjectForm() {
                               type="number"
                               min="0"
                               step="1"
-                              max={estQty || undefined}
                               value={mat.usedQty}
                               onChange={(e) => updateMaterial(idx, 'usedQty', e.target.value)}
                               className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-500"
@@ -506,7 +505,7 @@ export default function ProjectForm() {
                             />
                           </td>
                           <td className="px-4 py-3">
-                            <span className={`text-sm font-medium whitespace-nowrap ${remaining === 0 && estQty > 0 ? 'text-green-600' : 'text-gray-700'}`}>
+                            <span className={`text-sm font-medium whitespace-nowrap ${remaining < 0 ? 'text-red-600' : remaining === 0 && estQty > 0 ? 'text-green-600' : 'text-gray-700'}`}>
                               {estQty > 0 ? remaining : '-'}
                             </span>
                           </td>
