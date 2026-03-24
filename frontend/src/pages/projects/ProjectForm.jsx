@@ -8,7 +8,7 @@ import {
 } from 'recharts';
 import { projectAPI, productAPI } from '../../api/endpoints';
 import { getErrorMessage } from '../../utils/handleError';
-import { Card, Button, Input, Select } from '../../components/common';
+import { Card, Button, Input, Select, CalendarPicker } from '../../components/common';
 import { PROJECT_STATUS, PROJECT_STATUS_LABELS } from '../../utils/constants';
 import useUnsavedChanges from '../../hooks/useUnsavedChanges';
 import { formatRupiah } from '../../utils/formatCurrency';
@@ -383,13 +383,15 @@ export default function ProjectForm() {
                 onChange={(val) => updateField('status', val)}
                 options={statusOptions}
               />
-              <Input
-                label="Tanggal Mulai *"
-                type="date"
-                value={form.startDate}
-                onChange={(e) => updateField('startDate', e.target.value)}
-                error={errors.startDate}
-              />
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-1.5">Tanggal Mulai *</label>
+                <CalendarPicker
+                  mode="single"
+                  dateFrom={form.startDate}
+                  onChange={(date) => updateField('startDate', date)}
+                />
+                {errors.startDate && <p className="text-xs text-red-500 mt-1">{errors.startDate}</p>}
+              </div>
             </div>
 
             <div>
