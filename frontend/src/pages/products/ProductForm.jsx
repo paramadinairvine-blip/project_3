@@ -221,6 +221,8 @@ export default function ProductForm() {
     const errs = {};
     if (!form.name.trim()) errs.name = 'Nama produk wajib diisi';
     if (!form.categoryId) errs.categoryId = 'Kategori wajib dipilih';
+    if (!form.buyPrice || parseFloat(form.buyPrice) <= 0) errs.buyPrice = 'Harga beli wajib diisi';
+    if (!form.sellPrice || parseFloat(form.sellPrice) <= 0) errs.sellPrice = 'Harga jual wajib diisi';
     if (barcodeMode === 'manual' && form.barcode && form.barcode.trim().length < 3) {
       errs.barcode = 'Barcode minimal 3 karakter';
     }
