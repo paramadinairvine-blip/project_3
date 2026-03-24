@@ -390,14 +390,9 @@ export default function PurchaseOrderForm() {
                       />
                     </td>
                     <td className="px-3 py-2">
-                      <input
-                        type="number"
-                        min="0"
-                        value={item.unitPrice}
-                        onChange={(e) => updateItem(idx, 'unitPrice', e.target.value)}
-                        className="w-full px-2 py-1.5 border border-gray-300 rounded-lg text-sm text-center focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-                        placeholder="0"
-                      />
+                      <div className="px-2 py-1.5 bg-gray-50 border border-gray-200 rounded-lg text-sm text-center text-gray-700">
+                        {parseFloat(item.unitPrice) > 0 ? `Rp ${parseFloat(item.unitPrice).toLocaleString('id-ID')}` : '-'}
+                      </div>
                     </td>
                     <td className="px-3 py-2">
                       <input
