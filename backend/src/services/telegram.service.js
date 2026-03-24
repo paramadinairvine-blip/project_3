@@ -142,6 +142,13 @@ const sendDailyReport = async () => {
       },
     });
 
+    // Fetch today's returns
+    const returns = await prisma.transactionReturn.findMany({
+      where: {
+        createdAt: { gte: startOfDay, lte: endOfDay },
+      },
+    });
+
     const totalCount = transactions.length;
     const cashTrx = transactions.filter((t) => t.type === 'CASH');
     const bonTrx = transactions.filter((t) => t.type === 'BON');
@@ -150,6 +157,10 @@ const sendDailyReport = async () => {
     const cashRevenue = cashTrx.reduce((sum, t) => sum + Number(t.total), 0);
     const bonRevenue = bonTrx.reduce((sum, t) => sum + Number(t.total), 0);
     const totalDiscount = transactions.reduce((sum, t) => sum + Number(t.discount || 0), 0);
+
+    const totalReturnCount = returns.length;
+    const totalRefund = returns.reduce((sum, r) => sum + Number(r.refundAmount), 0);
+    const netRevenue = totalRevenue - totalRefund;
 
     // Group by kasir
     const kasirMap = {};
@@ -164,7 +175,7 @@ const sendDailyReport = async () => {
     text += `━━━━━━━━━━━━━━━━━━\n`;
     text += `📅 ${dateLabel}\n\n`;
 
-    if (totalCount === 0) {
+    if (totalCount === 0 && totalReturnCount === 0) {
       text += `📭 Tidak ada transaksi hari ini.\n`;
     } else {
       text += `📈 <b>RINGKASAN:</b>\n`;
@@ -177,6 +188,18 @@ const sendDailyReport = async () => {
       }
 
       text += `\n💰 <b>TOTAL PENDAPATAN: ${formatCurrency(totalRevenue)}</b>\n`;
+
+      // Retur section
+      text += `\n🔄 <b>RETUR:</b>\n`;
+      if (totalReturnCount > 0) {
+        text += `   Total Retur: <b>${totalReturnCount}</b>\n`;
+        text += `   Total Refund: ${formatCurrency(totalRefund)}\n`;
+      } else {
+        text += `   Tidak ada retur hari ini\n`;
+      }
+
+      // Net revenue
+      text += `\n💎 <b>PENDAPATAN BERSIH: ${formatCurrency(netRevenue)}</b>\n`;
 
       // Kasir breakdown
       const kasirNames = Object.keys(kasirMap);
