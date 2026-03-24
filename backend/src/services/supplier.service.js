@@ -18,6 +18,9 @@ const getAll = async ({ page = 1, limit = DEFAULT_PAGE_SIZE, search } = {}) => {
   const [data, total] = await Promise.all([
     prisma.supplier.findMany({
       where,
+      include: {
+        _count: { select: { purchaseOrders: true } },
+      },
       orderBy: { name: 'asc' },
       skip,
       take: limit,
