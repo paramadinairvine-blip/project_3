@@ -2,13 +2,14 @@ import { useState, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useReactToPrint } from 'react-to-print';
-import { HiArrowLeft, HiPencil, HiPrinter } from 'react-icons/hi';
+import { HiArrowLeft, HiPencil, HiPrinter, HiDocumentDownload } from 'react-icons/hi';
 import toast from 'react-hot-toast';
 import { projectAPI } from '../../api/endpoints';
 import { getErrorMessage } from '../../utils/handleError';
 import { Card, Badge, Button, Loading, Modal, Input } from '../../components/common';
-import { formatRupiah } from '../../utils/formatCurrency';
+import { formatRupiah, formatNumber } from '../../utils/formatCurrency';
 import { formatTanggal, formatTanggalPanjang, formatTanggalWaktu } from '../../utils/formatDate';
+import { exportTableToPDF } from '../../utils/exportPDF';
 import { PROJECT_STATUS_LABELS, PROJECT_STATUS_COLORS, STORE_INFO } from '../../utils/constants';
 import useAuth from '../../hooks/useAuth';
 
@@ -188,6 +189,50 @@ export default function ProjectDetail() {
     documentTitle: `Laporan-Proyek-${project?.name || ''}`,
   });
 
+  const handleExportPDF = () => {
+    if (!project) return;
+    const mats = project.materials || [];
+    const headers = ['No', 'Material', 'Estimasi', 'Terpakai', 'Sisa', 'Harga', 'Subtotal Estimasi', 'Subtotal Aktual', 'Progress'];
+    const rows = mats.map((m, i) => {
+      const est = m.estimatedQty || 0;
+      const used = m.usedQty || 0;
+      const remaining = est - used;
+      const price = parseFloat(m.unitPrice) || 0;
+      const pct = est > 0 ? Math.round((used / est) * 100) : 0;
+      const unitName = m.unit?.name || m.product?.unit || '';
+      return [
+        i + 1,
+        m.product?.name || '-',
+        `${est} ${unitName}`,
+        `${used} ${unitName}`,
+        `${remaining} ${unitName}`,
+        formatNumber(price),
+        formatNumber(est * price),
+        formatNumber(used * price),
+        `${pct}%`,
+      ];
+    });
+
+    const budgetEst = Number(project.budget) || 0;
+    const budgetAct = mats.reduce((sum, m) => sum + (parseFloat(m.usedQty) || 0) * (parseFloat(m.unitPrice) || 0), 0);
+    const subtitle = [
+      `Status: ${PROJECT_STATUS_LABELS[project.status]}`,
+      `Periode: ${formatTanggal(project.startDate)} — ${project.endDate ? formatTanggal(project.endDate) : 'Belum ditentukan'}`,
+      `Budget: ${formatRupiah(budgetEst)} | Aktual: ${formatRupiah(budgetAct)} | Sisa: ${formatRupiah(budgetEst - budgetAct)}`,
+    ].join('  |  ');
+
+    exportTableToPDF(
+      `Laporan Proyek — ${project.name}`,
+      headers,
+      rows,
+      `laporan-proyek-${project.name.toLowerCase().replace(/\s+/g, '-')}.pdf`,
+      {
+        subtitle,
+        columnStyles: ['center', 'left', 'center', 'center', 'center', 'right', 'right', 'right', 'center'],
+      }
+    );
+  };
+
   if (isLoading) return <Loading text="Memuat detail proyek..." />;
   if (!project) return <p className="text-center text-gray-500 py-12">Proyek tidak ditemukan</p>;
 
@@ -218,6 +263,9 @@ export default function ProjectDetail() {
           </div>
         </div>
         <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm" icon={HiDocumentDownload} onClick={handleExportPDF}>
+            Cetak PDF
+          </Button>
           <Button variant="outline" size="sm" icon={HiPrinter} onClick={handlePrint}>
             Cetak Laporan
           </Button>
