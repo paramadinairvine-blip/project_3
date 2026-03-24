@@ -104,10 +104,14 @@ export default function Cart() {
             <input
               type="number"
               value={discount || ''}
-              onChange={(e) => setDiscount(Math.max(0, parseInt(e.target.value) || 0))}
+              onChange={(e) => {
+                const val = parseInt(e.target.value) || 0;
+                setDiscount(Math.max(0, Math.min(val, subtotal)));
+              }}
               placeholder="0"
               className="w-24 text-right text-sm border border-gray-200 rounded-lg px-2 py-1 outline-none focus:ring-1 focus:ring-blue-500"
               min="0"
+              max={subtotal}
             />
           </div>
         </div>

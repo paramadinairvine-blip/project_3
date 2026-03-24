@@ -262,7 +262,7 @@ const create = async (data, userId) => {
       processedItems.push({ ...item, discount: itemDiscount, subtotal: itemSubtotal, baseQty: qty });
     }
 
-    const discount = header.discount || 0;
+    const discount = Math.min(Math.max(header.discount || 0, 0), subtotal);
     const tax = header.tax || 0;
     const total = subtotal - discount + tax;
     const paidAmount = header.paidAmount || 0;

@@ -42,7 +42,7 @@ export default function Checkout() {
   // Keyboard shortcut: CTRL+Enter to submit
   useEffect(() => {
     const handleKeyDown = (e) => {
-      if (e.ctrlKey && e.key === 'Enter') {
+      if (e.ctrlKey && e.key === 'Enter' && !createMutation.isPending) {
         e.preventDefault();
         handleSubmit();
       }

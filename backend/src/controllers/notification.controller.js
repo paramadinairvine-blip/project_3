@@ -12,6 +12,10 @@ const getAll = async (req, res) => {
     const skip = (pageNum - 1) * limitNum;
 
     const where = {};
+    // Admin bisa lihat semua, user lain hanya miliknya sendiri
+    if (req.user.role !== 'ADMIN') {
+      where.userId = req.user.id;
+    }
     if (type) where.type = type;
 
     const [data, total] = await Promise.all([
