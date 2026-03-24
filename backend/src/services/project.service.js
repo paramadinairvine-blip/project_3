@@ -93,6 +93,8 @@ const getById = async (id) => {
     (sum, m) => sum + m.usedQty * Number(m.unitPrice),
     0
   );
+  const totalEstimatedQty = project.materials.reduce((s, m) => s + m.estimatedQty, 0);
+  const totalUsedQty = project.materials.reduce((s, m) => s + m.usedQty, 0);
   const materialsWithEst = project.materials.filter((m) => m.estimatedQty > 0);
   const progressPercent = materialsWithEst.length > 0
     ? Math.round(materialsWithEst.reduce((s, m) => s + (m.usedQty / m.estimatedQty) * 100, 0) / materialsWithEst.length)
