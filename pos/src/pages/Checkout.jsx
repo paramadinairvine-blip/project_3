@@ -216,23 +216,23 @@ export default function Checkout() {
             {paymentType === 'BON' && (
               <div className="space-y-3">
                 <div>
-                  <label className="block text-sm text-gray-600 mb-1">Kepanitiaan/Kegiatan <span className="text-red-500">*</span></label>
-                  <input
-                    type="text"
-                    value={unitLembagaId}
-                    onChange={(e) => setUnitLembagaId(e.target.value)}
-                    placeholder="Nama kepanitiaan atau kegiatan"
-                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
-
-                <div>
                   <label className="block text-sm text-gray-600 mb-1">Nama Pengambil <span className="text-red-500">*</span></label>
                   <input
                     type="text"
                     value={customerName}
                     onChange={(e) => setCustomerName(e.target.value)}
                     placeholder="Nama pengambil barang"
+                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm text-gray-600 mb-1">Kepanitiaan/Kegiatan <span className="text-red-500">*</span></label>
+                  <input
+                    type="text"
+                    value={unitLembagaId}
+                    onChange={(e) => setUnitLembagaId(e.target.value)}
+                    placeholder="Nama kepanitiaan atau kegiatan"
                     className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
