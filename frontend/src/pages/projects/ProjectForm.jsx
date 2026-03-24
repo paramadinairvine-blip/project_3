@@ -465,15 +465,21 @@ export default function ProjectForm() {
                         {mat.product?.unit || '-'}
                       </td>
                       <td className="px-4 py-3">
-                        <input
-                          type="number"
-                          min="0"
-                          step="1"
-                          value={mat.estimatedQty}
-                          onChange={(e) => updateMaterial(idx, 'estimatedQty', e.target.value)}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-500"
-                          placeholder="0"
-                        />
+                        {isEdit ? (
+                          <div className="px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-700">
+                            {estQty > 0 ? estQty : '-'}
+                          </div>
+                        ) : (
+                          <input
+                            type="number"
+                            min="0"
+                            step="1"
+                            value={mat.estimatedQty}
+                            onChange={(e) => updateMaterial(idx, 'estimatedQty', e.target.value)}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-500"
+                            placeholder="0"
+                          />
+                        )}
                       </td>
                       <td className="px-4 py-3">
                         <div className="px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-700">
