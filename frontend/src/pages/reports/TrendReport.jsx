@@ -86,7 +86,7 @@ export default function TrendReport() {
       </div>
 
       {/* Filter Bulan + Pagination Bar */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 bg-white border border-gray-200 rounded-xl px-4 py-3">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 bg-white border-2 border-blue-500 rounded-xl px-4 py-3">
         {/* Left: Filter Bulan */}
         <div className="flex items-center gap-2">
           <select
