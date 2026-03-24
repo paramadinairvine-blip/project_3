@@ -1,5 +1,5 @@
 const request = require('supertest');
-const { adminToken, kasirToken, viewerToken, mockPrisma, resetMocks } = require('./helpers/setup');
+const { adminToken, kasirToken, viewerToken, mockPrisma, resetMocks, mockUserFindUnique } = require('./helpers/setup');
 
 jest.mock('../src/lib/prisma', () => require('./helpers/setup').mockPrisma);
 
@@ -59,7 +59,7 @@ describe('GET /api/users', () => {
 
 describe('GET /api/users/:id', () => {
   test('should return user by id', async () => {
-    mockPrisma.user.findUnique.mockResolvedValue(sampleUser);
+    mockUserFindUnique(sampleUser);
 
     const res = await request(app)
       .get('/api/users/user-1')
@@ -71,7 +71,7 @@ describe('GET /api/users/:id', () => {
   });
 
   test('should return 404 for non-existent user', async () => {
-    mockPrisma.user.findUnique.mockResolvedValue(null);
+    mockUserFindUnique(null);
 
     const res = await request(app)
       .get('/api/users/non-existent')
@@ -121,7 +121,7 @@ describe('POST /api/users', () => {
 
 describe('PUT /api/users/:id', () => {
   test('should update user', async () => {
-    mockPrisma.user.findUnique.mockResolvedValue(sampleUser);
+    mockUserFindUnique(sampleUser);
     mockPrisma.user.update.mockResolvedValue({ ...sampleUser, fullName: 'Updated Name' });
     mockPrisma.auditLog.create.mockResolvedValue({});
 
@@ -135,7 +135,7 @@ describe('PUT /api/users/:id', () => {
   });
 
   test('should return 404 for non-existent user', async () => {
-    mockPrisma.user.findUnique.mockResolvedValue(null);
+    mockUserFindUnique(null);
 
     const res = await request(app)
       .put('/api/users/non-existent')
@@ -148,7 +148,7 @@ describe('PUT /api/users/:id', () => {
 
 describe('DELETE /api/users/:id', () => {
   test('should deactivate user', async () => {
-    mockPrisma.user.findUnique.mockResolvedValue({ ...sampleUser, id: 'user-other' });
+    mockUserFindUnique({ ...sampleUser, id: 'user-other' });
     mockPrisma.user.update.mockResolvedValue({});
     mockPrisma.auditLog.create.mockResolvedValue({});
 
@@ -160,7 +160,7 @@ describe('DELETE /api/users/:id', () => {
   });
 
   test('should prevent self-deletion', async () => {
-    mockPrisma.user.findUnique.mockResolvedValue({ ...sampleUser, id: 'user-test-1' });
+    mockUserFindUnique({ ...sampleUser, id: 'user-test-1' });
 
     const res = await request(app)
       .delete('/api/users/user-test-1')

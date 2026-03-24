@@ -62,6 +62,33 @@ const resetMocks = () => {
   });
   // Restore $transaction default behavior
   mockPrisma.$transaction.mockImplementation((fn) => fn(mockPrisma));
+
+  // Auth middleware cek user.findUnique — return active user for test tokens
+  const authUsers = {
+    'user-test-1': { id: 'user-test-1', email: 'admin@test.com', role: 'ADMIN', isActive: true },
+    'user-test-2': { id: 'user-test-2', email: 'kasir@test.com', role: 'KASIR', isActive: true },
+    'user-test-3': { id: 'user-test-3', email: 'viewer@test.com', role: 'VIEWER', isActive: true },
+  };
+  mockPrisma.user.findUnique.mockImplementation(({ where }) => {
+    if (authUsers[where.id]) return Promise.resolve(authUsers[where.id]);
+    return Promise.resolve(null);
+  });
+};
+
+/**
+ * Mock user.findUnique while preserving auth middleware users.
+ * Use this instead of mockPrisma.user.findUnique.mockResolvedValue()
+ */
+const mockUserFindUnique = (returnValue) => {
+  const authUsers = {
+    'user-test-1': { id: 'user-test-1', email: 'admin@test.com', role: 'ADMIN', isActive: true },
+    'user-test-2': { id: 'user-test-2', email: 'kasir@test.com', role: 'KASIR', isActive: true },
+    'user-test-3': { id: 'user-test-3', email: 'viewer@test.com', role: 'VIEWER', isActive: true },
+  };
+  mockPrisma.user.findUnique.mockImplementation(({ where }) => {
+    if (authUsers[where.id]) return Promise.resolve(authUsers[where.id]);
+    return Promise.resolve(typeof returnValue === 'function' ? returnValue(where) : returnValue);
+  });
 };
 
 module.exports = {
@@ -72,4 +99,5 @@ module.exports = {
   viewerToken,
   mockPrisma,
   resetMocks,
+  mockUserFindUnique,
 };

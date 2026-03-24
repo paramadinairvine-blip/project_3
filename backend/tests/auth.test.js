@@ -1,8 +1,14 @@
 const request = require('supertest');
 const express = require('express');
+const jwt = require('jsonwebtoken');
+
+// Mock Prisma before importing auth middleware
+jest.mock('../src/lib/prisma', () => ({
+  user: { findUnique: jest.fn() },
+}));
+const mockPrisma = require('../src/lib/prisma');
 const { authenticate } = require('../src/middlewares/auth');
 const { authorize } = require('../src/middlewares/roleGuard');
-const jwt = require('jsonwebtoken');
 
 // Setup minimal express app for testing middleware
 const createApp = () => {
@@ -64,6 +70,10 @@ describe('authenticate middleware', () => {
   test('should accept valid token and set req.user', async () => {
     const app = createApp();
     app.get('/test', authenticate, (req, res) => res.json({ user: req.user }));
+
+    mockPrisma.user.findUnique.mockResolvedValue({
+      id: 'user-1', email: 'admin@test.com', role: 'ADMIN', isActive: true,
+    });
 
     const token = jwt.sign(
       { id: 'user-1', email: 'admin@test.com', role: 'ADMIN' },
