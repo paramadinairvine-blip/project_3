@@ -88,7 +88,7 @@ export default function History() {
 
       // Auto-print via Recta if configured
       if (isRectaConfigured()) {
-        const result = await printReceipt(txData);
+        const result = await printReceipt(txData, txData.paidAmount || 0, txData.changeAmount || 0);
         if (result.success) {
           toast.success(result.message);
         } else {
@@ -298,6 +298,8 @@ export default function History() {
       {receiptData && (
         <ReceiptPrint
           transaction={receiptData}
+          paidAmount={receiptData.paidAmount || 0}
+          change={receiptData.changeAmount || 0}
           onClose={() => setReceiptData(null)}
         />
       )}

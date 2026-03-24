@@ -154,7 +154,11 @@ const getAll = async ({
   if (startDate || endDate) {
     where.createdAt = {};
     if (startDate) where.createdAt.gte = new Date(startDate);
-    if (endDate) where.createdAt.lte = new Date(endDate);
+    if (endDate) {
+      const end = new Date(endDate);
+      if (!String(endDate).includes('T')) end.setHours(23, 59, 59, 999);
+      where.createdAt.lte = end;
+    }
   }
   if (search) {
     where.transactionNumber = { contains: search, mode: 'insensitive' };
@@ -455,7 +459,11 @@ const getByUnitLembaga = async (unitLembagaId, { startDate, endDate, page = 1, l
   if (startDate || endDate) {
     where.createdAt = {};
     if (startDate) where.createdAt.gte = new Date(startDate);
-    if (endDate) where.createdAt.lte = new Date(endDate);
+    if (endDate) {
+      const end = new Date(endDate);
+      if (!String(endDate).includes('T')) end.setHours(23, 59, 59, 999);
+      where.createdAt.lte = end;
+    }
   }
 
   const skip = (page - 1) * limit;
@@ -481,7 +489,7 @@ const getByUnitLembaga = async (unitLembagaId, { startDate, endDate, page = 1, l
  */
 const sendBonNotification = async (transaction) => {
   const admins = await prisma.user.findMany({
-    where: { role: 'ADMIN', isActive: true, phone: { not: null } },
+    where: { role: 'ADMIN', isActive: true },
     select: { id: true },
   });
 

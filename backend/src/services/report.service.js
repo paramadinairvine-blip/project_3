@@ -307,7 +307,7 @@ const getTrendReport = async ({ startDate, endDate, groupBy = 'month' } = {}) =>
   const previousTotal = Math.round(prevTransactions.reduce((s, t) => s + Number(t.total), 0) - Number(prevReturns._sum.refundAmount || 0));
   const changePercent = previousTotal > 0
     ? Math.round(((currentTotal - previousTotal) / previousTotal) * 100)
-    : 0;
+    : currentTotal > 0 ? 100 : 0;
 
   return {
     period: { startDate: start, endDate: end },

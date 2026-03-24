@@ -103,19 +103,26 @@ const create = async (data, userId) => {
     }
   }
 
-  // Auto-generate SKU if not provided
+  // Auto-generate SKU if not provided (with duplicate check)
   if (!productData.sku) {
     const nameCode = productData.name
       .toUpperCase()
       .replace(/[^A-Z0-9]/g, '')
       .slice(0, 3) || 'PRD';
-    const random = String(Math.floor(10000 + Math.random() * 90000));
-    productData.sku = `SKU-${nameCode}-${random}`;
+    for (let i = 0; i < 10; i++) {
+      const random = String(Math.floor(10000 + Math.random() * 90000));
+      const sku = `SKU-${nameCode}-${random}`;
+      const exists = await prisma.product.findFirst({ where: { sku } });
+      if (!exists) { productData.sku = sku; break; }
+    }
+    if (!productData.sku) {
+      productData.sku = `SKU-${nameCode}-${Date.now().toString().slice(-6)}`;
+    }
   }
 
   // Auto-generate barcode if not provided
   if (!productData.barcode) {
-    productData.barcode = generateBarcode(categoryCode);
+    productData.barcode = await generateBarcode(categoryCode);
   }
 
   const product = await prisma.$transaction(async (tx) => {
@@ -230,11 +237,33 @@ const update = async (id, data, userId) => {
       },
     });
 
-    // Replace variants if provided
+    // Upsert variants if provided (preserve existing IDs & stock)
     if (variants !== undefined) {
-      await tx.productVariant.deleteMany({ where: { productId: id } });
-      if (variants.length > 0) {
-        for (const v of variants) {
+      const existingVariants = await tx.productVariant.findMany({ where: { productId: id } });
+      const existingIds = existingVariants.map((v) => v.id);
+      const incomingIds = variants.filter((v) => v.id).map((v) => v.id);
+
+      // Delete variants that are no longer in the list
+      const toDelete = existingIds.filter((vid) => !incomingIds.includes(vid));
+      if (toDelete.length > 0) {
+        await tx.productVariant.deleteMany({ where: { id: { in: toDelete } } });
+      }
+
+      // Upsert each variant
+      for (const v of variants) {
+        if (v.id && existingIds.includes(v.id)) {
+          await tx.productVariant.update({
+            where: { id: v.id },
+            data: {
+              name: v.name,
+              sku: v.sku,
+              barcode: v.barcode || null,
+              buyPrice: v.buyPrice || 0,
+              sellPrice: v.sellPrice || 0,
+              ...(v.stock !== undefined ? { stock: v.stock } : {}),
+            },
+          });
+        } else {
           await tx.productVariant.create({
             data: {
               productId: id,
@@ -365,7 +394,7 @@ const generateProductBarcode = async (productId) => {
   }
 
   const categoryCode = product.category ? product.category.name.substring(0, 3) : 'GEN';
-  const barcode = generateBarcode(categoryCode);
+  const barcode = await generateBarcode(categoryCode);
 
   const updated = await prisma.product.update({
     where: { id: productId },

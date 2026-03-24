@@ -81,8 +81,8 @@ app.get('/api/health', (req, res) => {
 // API Routes
 app.use('/api', routes);
 
-// Global error handler (for API errors)
-app.use('/api', errorHandler);
+// Global error handler
+app.use(errorHandler);
 
 // ─── Serve frontend in production ────────────────────
 const frontendDist = path.join(__dirname, '..', '..', 'frontend', 'dist');

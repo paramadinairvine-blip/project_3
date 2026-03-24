@@ -56,11 +56,12 @@ const getAll = async ({ page = 1, limit = DEFAULT_PAGE_SIZE, status, search } = 
     prisma.project.count({ where }),
   ]);
 
-  // Enrich with progress summary
+  // Enrich with progress summary (rata-rata progress per material)
   const enriched = data.map((p) => {
-    const totalEstimated = p.materials.reduce((s, m) => s + m.estimatedQty, 0);
-    const totalUsed = p.materials.reduce((s, m) => s + m.usedQty, 0);
-    const progressPercent = totalEstimated > 0 ? Math.round((totalUsed / totalEstimated) * 100) : 0;
+    const materialsWithProgress = p.materials.filter((m) => m.estimatedQty > 0);
+    const progressPercent = materialsWithProgress.length > 0
+      ? Math.round(materialsWithProgress.reduce((s, m) => s + (m.usedQty / m.estimatedQty) * 100, 0) / materialsWithProgress.length)
+      : 0;
 
     return {
       ...p,
@@ -92,10 +93,9 @@ const getById = async (id) => {
     (sum, m) => sum + m.usedQty * Number(m.unitPrice),
     0
   );
-  const totalEstimatedQty = project.materials.reduce((s, m) => s + m.estimatedQty, 0);
-  const totalUsedQty = project.materials.reduce((s, m) => s + m.usedQty, 0);
-  const progressPercent = totalEstimatedQty > 0
-    ? Math.round((totalUsedQty / totalEstimatedQty) * 100)
+  const materialsWithEst = project.materials.filter((m) => m.estimatedQty > 0);
+  const progressPercent = materialsWithEst.length > 0
+    ? Math.round(materialsWithEst.reduce((s, m) => s + (m.usedQty / m.estimatedQty) * 100, 0) / materialsWithEst.length)
     : 0;
 
   return {
@@ -419,9 +419,10 @@ const getProgressSummary = async (projectId) => {
 
   const totalEstimatedCost = materials.reduce((s, m) => s + m.estimatedCost, 0);
   const totalUsedCost = materials.reduce((s, m) => s + m.usedCost, 0);
-  const totalEstimated = materials.reduce((s, m) => s + m.estimatedQty, 0);
-  const totalUsed = materials.reduce((s, m) => s + m.usedQty, 0);
-  const overallPercent = totalEstimated > 0 ? Math.round((totalUsed / totalEstimated) * 100) : 0;
+  const materialsWithEst = materials.filter((m) => m.estimatedQty > 0);
+  const overallPercent = materialsWithEst.length > 0
+    ? Math.round(materialsWithEst.reduce((s, m) => s + m.percentUsed, 0) / materialsWithEst.length)
+    : 0;
 
   return {
     projectId: project.id,

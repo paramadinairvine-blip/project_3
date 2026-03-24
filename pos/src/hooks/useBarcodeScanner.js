@@ -1,19 +1,27 @@
 import { useEffect, useRef, useCallback } from 'react';
 
-// Play a short beep using Web Audio API
+// Shared AudioContext — reuse to prevent leak
+let sharedAudioCtx = null;
+
 function playBeep() {
   try {
-    const ctx = new (window.AudioContext || window.webkitAudioContext)();
-    const oscillator = ctx.createOscillator();
-    const gain = ctx.createGain();
+    if (!sharedAudioCtx) {
+      sharedAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+    // Resume if suspended (browser autoplay policy)
+    if (sharedAudioCtx.state === 'suspended') {
+      sharedAudioCtx.resume();
+    }
+    const oscillator = sharedAudioCtx.createOscillator();
+    const gain = sharedAudioCtx.createGain();
     oscillator.connect(gain);
-    gain.connect(ctx.destination);
+    gain.connect(sharedAudioCtx.destination);
     oscillator.type = 'sine';
     oscillator.frequency.value = 1200;
     gain.gain.value = 0.3;
     oscillator.start();
-    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.15);
-    oscillator.stop(ctx.currentTime + 0.15);
+    gain.gain.exponentialRampToValueAtTime(0.001, sharedAudioCtx.currentTime + 0.15);
+    oscillator.stop(sharedAudioCtx.currentTime + 0.15);
   } catch {
     // Audio not available, skip silently
   }

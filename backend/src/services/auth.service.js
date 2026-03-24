@@ -62,6 +62,17 @@ const login = async (email, password) => {
   const expiresAt = new Date();
   expiresAt.setDate(expiresAt.getDate() + REFRESH_TOKEN_EXPIRES_DAYS);
 
+  // Cleanup: hapus token expired/revoked milik user ini
+  await prisma.refreshToken.deleteMany({
+    where: {
+      userId: user.id,
+      OR: [
+        { expiresAt: { lt: new Date() } },
+        { revoked: true },
+      ],
+    },
+  });
+
   // Save refresh token to database
   await prisma.refreshToken.create({
     data: {

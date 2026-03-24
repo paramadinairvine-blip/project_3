@@ -514,7 +514,7 @@ const cancel = async (id, userId) => {
 
 const sendReceiveNotification = async (po) => {
   const admins = await prisma.user.findMany({
-    where: { role: 'ADMIN', isActive: true, phone: { not: null } },
+    where: { role: 'ADMIN', isActive: true },
     select: { id: true },
   });
 
