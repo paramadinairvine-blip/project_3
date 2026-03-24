@@ -172,6 +172,13 @@ const getFinancialReport = async ({ startDate, endDate, type } = {}) => {
     }))
     .sort((a, b) => b.date.localeCompare(a.date) || a.cashierName.localeCompare(b.cashierName));
 
+  // Pendapatan per tipe transaksi (untuk pie chart dashboard)
+  const expenditureByType = [
+    { type: 'CASH', label: 'Tunai', total: cashTotal },
+    { type: 'BON', label: 'Overbooking TU', total: bonTotal },
+  ];
+  const totalExpenditure = Math.round(cashTotal + bonTotal);
+
   return {
     summary: {
       totalPurchase: Number(purchaseAgg._sum.totalAmount || 0),
@@ -180,6 +187,8 @@ const getFinancialReport = async ({ startDate, endDate, type } = {}) => {
       totalReturn,
       netRevenue: Math.round(cashTotal + bonTotal - totalReturn),
     },
+    expenditureByType,
+    totalExpenditure,
     perCashier,
   };
 };
