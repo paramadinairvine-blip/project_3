@@ -394,14 +394,16 @@ export default function ProductForm() {
                         <td className="px-3 py-2">
                           <div className="flex items-center gap-1">
                             <span className="text-gray-400 text-xs">Rp.</span>
-                            <input type="text" inputMode="numeric" value={formatThousands(form.buyPrice)} onChange={(e) => handlePriceChange('buyPrice', e.target.value)} placeholder="0" className="w-28 rounded border-gray-300 text-sm py-1.5 px-2 focus:border-blue-500 focus:ring-blue-500" />
+                            <input type="text" inputMode="numeric" value={formatThousands(form.buyPrice)} onChange={(e) => handlePriceChange('buyPrice', e.target.value)} placeholder="0" className={`w-28 rounded text-sm py-1.5 px-2 focus:border-blue-500 focus:ring-blue-500 ${errors.buyPrice ? 'border-red-400' : 'border-gray-300'}`} />
                           </div>
+                          {errors.buyPrice && <p className="text-xs text-red-500 mt-1">{errors.buyPrice}</p>}
                         </td>
                         <td className="px-3 py-2">
                           <div className="flex items-center gap-1">
                             <span className="text-gray-400 text-xs">Rp.</span>
-                            <input type="text" inputMode="numeric" value={formatThousands(form.sellPrice)} onChange={(e) => handlePriceChange('sellPrice', e.target.value)} placeholder="0" className="w-28 rounded border-gray-300 text-sm py-1.5 px-2 focus:border-blue-500 focus:ring-blue-500" />
+                            <input type="text" inputMode="numeric" value={formatThousands(form.sellPrice)} onChange={(e) => handlePriceChange('sellPrice', e.target.value)} placeholder="0" className={`w-28 rounded text-sm py-1.5 px-2 focus:border-blue-500 focus:ring-blue-500 ${errors.sellPrice ? 'border-red-400' : 'border-gray-300'}`} />
                           </div>
+                          {errors.sellPrice && <p className="text-xs text-red-500 mt-1">{errors.sellPrice}</p>}
                         </td>
                         <td className="px-3 py-2">
                           <span className="text-sm text-gray-500 font-mono">{calcMargin(form.buyPrice, form.sellPrice) ? `${calcMargin(form.buyPrice, form.sellPrice)}%` : '-'}</span>
@@ -430,8 +432,8 @@ export default function ProductForm() {
                         <td className="px-2 py-2 text-center"><span className="text-gray-400 text-xs">1</span></td>
                         <td className="px-3 py-2"><span className="text-gray-700 font-medium capitalize">{form.unit}</span><span className="text-xs text-blue-500 ml-1">(dasar)</span></td>
                         <td className="px-3 py-2"><span className="text-gray-500">1 {form.unit}</span></td>
-                        <td className="px-3 py-2"><div className="flex items-center gap-1"><span className="text-gray-400 text-xs">Rp.</span><input type="text" inputMode="numeric" value={formatThousands(form.buyPrice)} onChange={(e) => handlePriceChange('buyPrice', e.target.value)} placeholder="0" className="w-24 rounded border-gray-300 text-sm py-1.5 px-2 focus:border-blue-500 focus:ring-blue-500" /></div></td>
-                        <td className="px-3 py-2"><div className="flex items-center gap-1"><span className="text-gray-400 text-xs">Rp.</span><input type="text" inputMode="numeric" value={formatThousands(form.sellPrice)} onChange={(e) => handlePriceChange('sellPrice', e.target.value)} placeholder="0" className="w-24 rounded border-gray-300 text-sm py-1.5 px-2 focus:border-blue-500 focus:ring-blue-500" /></div></td>
+                        <td className="px-3 py-2"><div className="flex items-center gap-1"><span className="text-gray-400 text-xs">Rp.</span><input type="text" inputMode="numeric" value={formatThousands(form.buyPrice)} onChange={(e) => handlePriceChange('buyPrice', e.target.value)} placeholder="0" className={`w-24 rounded text-sm py-1.5 px-2 focus:border-blue-500 focus:ring-blue-500 ${errors.buyPrice ? 'border-red-400' : 'border-gray-300'}`} /></div>{errors.buyPrice && <p className="text-xs text-red-500 mt-1">{errors.buyPrice}</p>}</td>
+                        <td className="px-3 py-2"><div className="flex items-center gap-1"><span className="text-gray-400 text-xs">Rp.</span><input type="text" inputMode="numeric" value={formatThousands(form.sellPrice)} onChange={(e) => handlePriceChange('sellPrice', e.target.value)} placeholder="0" className={`w-24 rounded text-sm py-1.5 px-2 focus:border-blue-500 focus:ring-blue-500 ${errors.sellPrice ? 'border-red-400' : 'border-gray-300'}`} /></div>{errors.sellPrice && <p className="text-xs text-red-500 mt-1">{errors.sellPrice}</p>}</td>
                         <td className="px-3 py-2"><span className="text-sm text-gray-500 font-mono">{calcMargin(form.buyPrice, form.sellPrice) ? `${calcMargin(form.buyPrice, form.sellPrice)}%` : '-'}</span></td>
                         <td className="px-3 py-2 text-center"><input type="radio" name="defaultUnit" checked={!sellUnits.some(u => u.isDefault)} onChange={() => setSellUnits(prev => prev.map(u => ({ ...u, isDefault: false })))} className="text-blue-600 focus:ring-blue-500" /></td>
                         <td className="px-2 py-2"></td>
