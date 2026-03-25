@@ -39,11 +39,11 @@ export default function UserList() {
     onError: (err) => toast.error(getErrorMessage(err, 'Gagal mengubah status user')),
   });
 
-  // Delete user permanen
+  // Delete user (soft delete)
   const deleteMutation = useMutation({
     mutationFn: (id) => userAPI.remove(id),
     onSuccess: () => {
-      toast.success('User berhasil dihapus permanen');
+      toast.success('User berhasil dihapus');
       queryClient.invalidateQueries({ queryKey: ['users'] });
       setDeleteTarget(null);
     },
@@ -247,7 +247,7 @@ export default function UserList() {
       <Modal
         isOpen={!!deleteTarget}
         onClose={() => setDeleteTarget(null)}
-        title="Hapus User Permanen"
+        title="Hapus User"
         size="sm"
         footer={
           <>
@@ -257,17 +257,17 @@ export default function UserList() {
               loading={deleteMutation.isPending}
               onClick={() => deleteMutation.mutate(deleteTarget.id)}
             >
-              Hapus Permanen
+              Hapus User
             </Button>
           </>
         }
       >
         <div className="space-y-2">
           <p className="text-sm text-gray-600">
-            Apakah Anda yakin ingin menghapus user <span className="font-semibold">{deleteTarget?.fullName}</span> secara permanen?
+            Apakah Anda yakin ingin menghapus user <span className="font-semibold">{deleteTarget?.fullName}</span>?
           </p>
-          <p className="text-sm text-red-600 font-medium">
-            Tindakan ini tidak dapat dibatalkan.
+          <p className="text-sm text-gray-500">
+            User tidak akan bisa login dan dihapus dari daftar pengguna. Semua data historis (transaksi, PO, stok, dll) tetap tersimpan dengan aman.
           </p>
         </div>
       </Modal>

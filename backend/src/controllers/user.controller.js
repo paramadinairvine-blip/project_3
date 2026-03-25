@@ -14,6 +14,7 @@ const userSelect = {
   role: true,
   isActive: true,
   avatar: true,
+  deletedAt: true,
   createdAt: true,
   updatedAt: true,
 };
@@ -26,7 +27,7 @@ const getAll = async (req, res) => {
     const role = req.query.role;
     const skip = (page - 1) * limit;
 
-    const where = {};
+    const where = { deletedAt: null };
     if (role) where.role = role;
     if (search) {
       where.OR = [
@@ -140,60 +141,14 @@ const remove = async (req, res) => {
       return errorResponse(res, 'Tidak dapat menghapus akun sendiri', 400);
     }
 
-    // Cek semua relasi — jika user sudah punya data apapun, tolak penghapusan
-    const byUser = { createdBy: id };
-    const [
-      transactions,
-      purchaseOrders,
-      stockOpnames,
-      stockMovements,
-      projects,
-      products,
-      transactionReturns,
-      categories,
-      suppliers,
-    ] = await Promise.all([
-      prisma.transaction.count({ where: { OR: [{ createdBy: id }, { updatedBy: id }] } }),
-      prisma.purchaseOrder.count({ where: { OR: [{ createdBy: id }, { updatedBy: id }] } }),
-      prisma.stockOpname.count({ where: { OR: [{ createdBy: id }, { updatedBy: id }] } }),
-      prisma.stockMovement.count({ where: byUser }),
-      prisma.project.count({ where: { OR: [{ createdBy: id }, { updatedBy: id }] } }),
-      prisma.product.count({ where: { OR: [{ createdBy: id }, { updatedBy: id }] } }),
-      prisma.transactionReturn.count({ where: byUser }),
-      prisma.category.count({ where: { OR: [{ createdBy: id }, { updatedBy: id }] } }),
-      prisma.supplier.count({ where: { OR: [{ createdBy: id }, { updatedBy: id }] } }),
-    ]);
-
-    const hasData = transactions || purchaseOrders || stockOpnames || stockMovements
-      || projects || products || transactionReturns || categories || suppliers;
-
-    if (hasData) {
-      // Buat pesan detail relasi yang ada
-      const details = [];
-      if (transactions) details.push(`${transactions} transaksi`);
-      if (purchaseOrders) details.push(`${purchaseOrders} purchase order`);
-      if (stockOpnames) details.push(`${stockOpnames} stock opname`);
-      if (stockMovements) details.push(`${stockMovements} pergerakan stok`);
-      if (projects) details.push(`${projects} proyek`);
-      if (products) details.push(`${products} produk`);
-      if (transactionReturns) details.push(`${transactionReturns} retur`);
-      if (categories) details.push(`${categories} kategori`);
-      if (suppliers) details.push(`${suppliers} supplier`);
-
-      return errorResponse(
-        res,
-        `User tidak dapat dihapus karena memiliki data: ${details.join(', ')}. Gunakan fitur non-aktifkan sebagai gantinya agar data tetap aman.`,
-        400
-      );
+    if (existing.deletedAt) {
+      return errorResponse(res, 'User sudah dihapus sebelumnya', 400);
     }
 
-    // User belum punya data apapun — aman untuk dihapus
-    await prisma.$transaction(async (tx) => {
-      await Promise.all([
-        tx.auditLog.updateMany({ where: { userId: id }, data: { userId: null } }),
-        tx.notification.deleteMany({ where: { userId: id } }),
-      ]);
-      await tx.user.delete({ where: { id } });
+    // Soft delete: tandai sebagai dihapus, nonaktifkan akun
+    await prisma.user.update({
+      where: { id },
+      data: { deletedAt: new Date(), isActive: false },
     });
 
     await createLog({
@@ -206,7 +161,7 @@ const remove = async (req, res) => {
       userAgent: req.get('user-agent'),
     });
 
-    return successResponse(res, null, 'User berhasil dihapus permanen');
+    return successResponse(res, null, 'User berhasil dihapus');
   } catch (err) {
     return errorResponse(res, err.message, err.status || 500);
   }
