@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
-import { NavLink, Outlet } from 'react-router-dom';
+import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { HiCash, HiClipboardList, HiCube, HiChartBar, HiPrinter, HiLogout, HiChevronRight } from 'react-icons/hi';
+import { useQueryClient } from '@tanstack/react-query';
 import useAuth from '../hooks/useAuth';
 import { ROLE_LABELS, STORE_INFO } from '../utils/constants';
 import PrinterSettingModal from '../components/PrinterSettingModal';
@@ -17,6 +18,13 @@ export default function POSLayout() {
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [showPrinterModal, setShowPrinterModal] = useState(false);
   const menuRef = useRef(null);
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
+
+  const handleLogoClick = () => {
+    navigate('/kasir');
+    queryClient.invalidateQueries();
+  };
 
   const handleLogout = async () => {
     setShowProfileMenu(false);
@@ -47,7 +55,7 @@ export default function POSLayout() {
       <header className="bg-gray-900 text-white shadow-lg flex-shrink-0">
         <div className="flex items-center justify-between px-4 h-14">
           {/* Left: Logo + Institution badge */}
-          <div className="flex items-center gap-3">
+          <button onClick={handleLogoClick} className="flex items-center gap-3 cursor-pointer hover:opacity-80 transition-opacity">
             <div className="flex items-center gap-2.5">
               <img src="/logo-white.svg" alt="Logo" className="w-8 h-8" />
               <div className="hidden sm:flex items-center gap-2">
@@ -57,7 +65,7 @@ export default function POSLayout() {
                 </span>
               </div>
             </div>
-          </div>
+          </button>
 
           {/* Center: Navigation tabs */}
           <nav className="flex items-center gap-1">
