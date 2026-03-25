@@ -140,22 +140,25 @@ const remove = async (req, res) => {
       return errorResponse(res, 'Tidak dapat menghapus akun sendiri', 400);
     }
 
-    await prisma.user.update({
-      where: { id },
-      data: { isActive: false },
-    });
+    // Check if user has transactions
+    const transactionCount = await prisma.transaction.count({ where: { userId: id } });
+    if (transactionCount > 0) {
+      return errorResponse(res, 'User tidak dapat dihapus karena memiliki riwayat transaksi. Gunakan fitur non-aktifkan sebagai gantinya.', 400);
+    }
+
+    await prisma.user.delete({ where: { id } });
 
     await createLog({
       userId: req.user.id,
       action: ACTION_TYPES.DELETE,
       tableName: 'users',
       recordId: id,
-      oldData: { username: existing.username, email: existing.email, isActive: true },
+      oldData: { username: existing.username, email: existing.email, fullName: existing.fullName, role: existing.role },
       ipAddress: req.ip,
       userAgent: req.get('user-agent'),
     });
 
-    return successResponse(res, null, 'User berhasil dinonaktifkan');
+    return successResponse(res, null, 'User berhasil dihapus permanen');
   } catch (err) {
     return errorResponse(res, err.message, err.status || 500);
   }

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { HiPlus, HiPencil, HiLockClosed, HiBan, HiCheck } from 'react-icons/hi';
+import { HiPlus, HiPencil, HiLockClosed, HiBan, HiCheck, HiTrash } from 'react-icons/hi';
 import toast from 'react-hot-toast';
 import { userAPI } from '../../api/endpoints';
 import { getErrorMessage } from '../../utils/handleError';
@@ -18,6 +18,7 @@ export default function UserList() {
   const [toggleTarget, setToggleTarget] = useState(null);
   const [resetTarget, setResetTarget] = useState(null);
   const [newPassword, setNewPassword] = useState('');
+  const [deleteTarget, setDeleteTarget] = useState(null);
 
   const { data, isLoading } = useQuery({
     queryKey: ['users', { page, search }],
@@ -36,6 +37,17 @@ export default function UserList() {
       setToggleTarget(null);
     },
     onError: (err) => toast.error(getErrorMessage(err, 'Gagal mengubah status user')),
+  });
+
+  // Delete user permanen
+  const deleteMutation = useMutation({
+    mutationFn: (id) => userAPI.remove(id),
+    onSuccess: () => {
+      toast.success('User berhasil dihapus permanen');
+      queryClient.invalidateQueries({ queryKey: ['users'] });
+      setDeleteTarget(null);
+    },
+    onError: (err) => toast.error(getErrorMessage(err, 'Gagal menghapus user')),
   });
 
   // Reset password
@@ -113,7 +125,7 @@ export default function UserList() {
     {
       key: 'actions',
       header: 'Aksi',
-      width: '150px',
+      width: '180px',
       render: (_, row) => (
         <div className="flex items-center gap-1">
           <button
@@ -143,6 +155,14 @@ export default function UserList() {
             aria-label="Reset password"
           >
             <HiLockClosed className="w-4 h-4" />
+          </button>
+          <button
+            onClick={(e) => { e.stopPropagation(); setDeleteTarget(row); }}
+            className="p-1.5 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+            title="Hapus Permanen"
+            aria-label="Hapus user permanen"
+          >
+            <HiTrash className="w-4 h-4" />
           </button>
         </div>
       ),
@@ -221,6 +241,35 @@ export default function UserList() {
             <>Aktifkan kembali akun <span className="font-semibold">{toggleTarget?.fullName}</span>?</>
           )}
         </p>
+      </Modal>
+
+      {/* Delete User Modal */}
+      <Modal
+        isOpen={!!deleteTarget}
+        onClose={() => setDeleteTarget(null)}
+        title="Hapus User Permanen"
+        size="sm"
+        footer={
+          <>
+            <Button variant="outline" onClick={() => setDeleteTarget(null)}>Batal</Button>
+            <Button
+              variant="danger"
+              loading={deleteMutation.isPending}
+              onClick={() => deleteMutation.mutate(deleteTarget.id)}
+            >
+              Hapus Permanen
+            </Button>
+          </>
+        }
+      >
+        <div className="space-y-2">
+          <p className="text-sm text-gray-600">
+            Apakah Anda yakin ingin menghapus user <span className="font-semibold">{deleteTarget?.fullName}</span> secara permanen?
+          </p>
+          <p className="text-sm text-red-600 font-medium">
+            Tindakan ini tidak dapat dibatalkan.
+          </p>
+        </div>
       </Modal>
 
       {/* Reset Password Modal */}
