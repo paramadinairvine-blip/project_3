@@ -141,12 +141,43 @@ const remove = async (req, res) => {
     }
 
     // Check if user has transactions
-    const transactionCount = await prisma.transaction.count({ where: { userId: id } });
+    const transactionCount = await prisma.transaction.count({
+      where: { OR: [{ createdBy: id }, { updatedBy: id }] },
+    });
     if (transactionCount > 0) {
       return errorResponse(res, 'User tidak dapat dihapus karena memiliki riwayat transaksi. Gunakan fitur non-aktifkan sebagai gantinya.', 400);
     }
 
-    await prisma.user.delete({ where: { id } });
+    // Delete user and clean up relations in a transaction
+    await prisma.$transaction(async (tx) => {
+      // Nullify createdBy/updatedBy references
+      const nullifyCreatedBy = { createdBy: null };
+      const nullifyUpdatedBy = { updatedBy: null };
+      const whereCreated = { where: { createdBy: id }, data: nullifyCreatedBy };
+      const whereUpdated = { where: { updatedBy: id }, data: nullifyUpdatedBy };
+
+      await Promise.all([
+        tx.product.updateMany(whereCreated),
+        tx.product.updateMany(whereUpdated),
+        tx.category.updateMany(whereCreated),
+        tx.category.updateMany(whereUpdated),
+        tx.supplier.updateMany(whereCreated),
+        tx.supplier.updateMany(whereUpdated),
+        tx.purchaseOrder.updateMany(whereCreated),
+        tx.purchaseOrder.updateMany(whereUpdated),
+        tx.project.updateMany(whereCreated),
+        tx.project.updateMany(whereUpdated),
+        tx.stockMovement.updateMany(whereCreated),
+        tx.stockOpname.updateMany(whereCreated),
+        tx.stockOpname.updateMany(whereUpdated),
+        tx.transactionReturn.updateMany(whereCreated),
+        tx.priceHistory.updateMany({ where: { changedBy: id }, data: { changedBy: null } }),
+        tx.auditLog.updateMany({ where: { userId: id }, data: { userId: null } }),
+        tx.notification.deleteMany({ where: { userId: id } }),
+      ]);
+
+      await tx.user.delete({ where: { id } });
+    });
 
     await createLog({
       userId: req.user.id,

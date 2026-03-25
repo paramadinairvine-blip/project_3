@@ -150,7 +150,6 @@ describe('DELETE /api/users/:id', () => {
   test('should delete user permanently', async () => {
     mockUserFindUnique({ ...sampleUser, id: 'user-other' });
     mockPrisma.transaction.count.mockResolvedValue(0);
-    mockPrisma.user.delete.mockResolvedValue({});
     mockPrisma.auditLog.create.mockResolvedValue({});
 
     const res = await request(app)
