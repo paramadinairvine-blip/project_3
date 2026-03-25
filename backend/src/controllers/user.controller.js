@@ -140,42 +140,59 @@ const remove = async (req, res) => {
       return errorResponse(res, 'Tidak dapat menghapus akun sendiri', 400);
     }
 
-    // Check if user has transactions
-    const transactionCount = await prisma.transaction.count({
-      where: { OR: [{ createdBy: id }, { updatedBy: id }] },
-    });
-    if (transactionCount > 0) {
-      return errorResponse(res, 'User tidak dapat dihapus karena memiliki riwayat transaksi. Gunakan fitur non-aktifkan sebagai gantinya.', 400);
+    // Cek semua relasi — jika user sudah punya data apapun, tolak penghapusan
+    const byUser = { createdBy: id };
+    const [
+      transactions,
+      purchaseOrders,
+      stockOpnames,
+      stockMovements,
+      projects,
+      products,
+      transactionReturns,
+      categories,
+      suppliers,
+    ] = await Promise.all([
+      prisma.transaction.count({ where: { OR: [{ createdBy: id }, { updatedBy: id }] } }),
+      prisma.purchaseOrder.count({ where: { OR: [{ createdBy: id }, { updatedBy: id }] } }),
+      prisma.stockOpname.count({ where: { OR: [{ createdBy: id }, { updatedBy: id }] } }),
+      prisma.stockMovement.count({ where: byUser }),
+      prisma.project.count({ where: { OR: [{ createdBy: id }, { updatedBy: id }] } }),
+      prisma.product.count({ where: { OR: [{ createdBy: id }, { updatedBy: id }] } }),
+      prisma.transactionReturn.count({ where: byUser }),
+      prisma.category.count({ where: { OR: [{ createdBy: id }, { updatedBy: id }] } }),
+      prisma.supplier.count({ where: { OR: [{ createdBy: id }, { updatedBy: id }] } }),
+    ]);
+
+    const hasData = transactions || purchaseOrders || stockOpnames || stockMovements
+      || projects || products || transactionReturns || categories || suppliers;
+
+    if (hasData) {
+      // Buat pesan detail relasi yang ada
+      const details = [];
+      if (transactions) details.push(`${transactions} transaksi`);
+      if (purchaseOrders) details.push(`${purchaseOrders} purchase order`);
+      if (stockOpnames) details.push(`${stockOpnames} stock opname`);
+      if (stockMovements) details.push(`${stockMovements} pergerakan stok`);
+      if (projects) details.push(`${projects} proyek`);
+      if (products) details.push(`${products} produk`);
+      if (transactionReturns) details.push(`${transactionReturns} retur`);
+      if (categories) details.push(`${categories} kategori`);
+      if (suppliers) details.push(`${suppliers} supplier`);
+
+      return errorResponse(
+        res,
+        `User tidak dapat dihapus karena memiliki data: ${details.join(', ')}. Gunakan fitur non-aktifkan sebagai gantinya agar data tetap aman.`,
+        400
+      );
     }
 
-    // Delete user and clean up relations in a transaction
+    // User belum punya data apapun — aman untuk dihapus
     await prisma.$transaction(async (tx) => {
-      // Nullify createdBy/updatedBy references
-      const nullifyCreatedBy = { createdBy: null };
-      const nullifyUpdatedBy = { updatedBy: null };
-      const whereCreated = { where: { createdBy: id }, data: nullifyCreatedBy };
-      const whereUpdated = { where: { updatedBy: id }, data: nullifyUpdatedBy };
-
       await Promise.all([
-        tx.product.updateMany(whereCreated),
-        tx.product.updateMany(whereUpdated),
-        tx.category.updateMany(whereCreated),
-        tx.category.updateMany(whereUpdated),
-        tx.supplier.updateMany(whereCreated),
-        tx.supplier.updateMany(whereUpdated),
-        tx.purchaseOrder.updateMany(whereCreated),
-        tx.purchaseOrder.updateMany(whereUpdated),
-        tx.project.updateMany(whereCreated),
-        tx.project.updateMany(whereUpdated),
-        tx.stockMovement.updateMany(whereCreated),
-        tx.stockOpname.updateMany(whereCreated),
-        tx.stockOpname.updateMany(whereUpdated),
-        tx.transactionReturn.updateMany(whereCreated),
-        tx.priceHistory.updateMany({ where: { changedBy: id }, data: { changedBy: null } }),
         tx.auditLog.updateMany({ where: { userId: id }, data: { userId: null } }),
         tx.notification.deleteMany({ where: { userId: id } }),
       ]);
-
       await tx.user.delete({ where: { id } });
     });
 

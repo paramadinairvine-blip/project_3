@@ -147,9 +147,18 @@ describe('PUT /api/users/:id', () => {
 });
 
 describe('DELETE /api/users/:id', () => {
-  test('should delete user permanently', async () => {
+  test('should delete user permanently if no related data', async () => {
     mockUserFindUnique({ ...sampleUser, id: 'user-other' });
+    // All relation counts return 0
     mockPrisma.transaction.count.mockResolvedValue(0);
+    mockPrisma.purchaseOrder.count.mockResolvedValue(0);
+    mockPrisma.stockOpname.count.mockResolvedValue(0);
+    mockPrisma.stockMovement.count.mockResolvedValue(0);
+    mockPrisma.project.count.mockResolvedValue(0);
+    mockPrisma.product.count.mockResolvedValue(0);
+    mockPrisma.transactionReturn.count.mockResolvedValue(0);
+    mockPrisma.category.count.mockResolvedValue(0);
+    mockPrisma.supplier.count.mockResolvedValue(0);
     mockPrisma.auditLog.create.mockResolvedValue({});
 
     const res = await request(app)
@@ -162,12 +171,41 @@ describe('DELETE /api/users/:id', () => {
   test('should reject deletion if user has transactions', async () => {
     mockUserFindUnique({ ...sampleUser, id: 'user-other' });
     mockPrisma.transaction.count.mockResolvedValue(5);
+    mockPrisma.purchaseOrder.count.mockResolvedValue(0);
+    mockPrisma.stockOpname.count.mockResolvedValue(0);
+    mockPrisma.stockMovement.count.mockResolvedValue(0);
+    mockPrisma.project.count.mockResolvedValue(0);
+    mockPrisma.product.count.mockResolvedValue(0);
+    mockPrisma.transactionReturn.count.mockResolvedValue(0);
+    mockPrisma.category.count.mockResolvedValue(0);
+    mockPrisma.supplier.count.mockResolvedValue(0);
 
     const res = await request(app)
       .delete('/api/users/user-other')
       .set('Authorization', `Bearer ${adminToken}`);
 
     expect(res.status).toBe(400);
+    expect(res.body.message).toContain('transaksi');
+  });
+
+  test('should reject deletion if user has purchase orders', async () => {
+    mockUserFindUnique({ ...sampleUser, id: 'user-other' });
+    mockPrisma.transaction.count.mockResolvedValue(0);
+    mockPrisma.purchaseOrder.count.mockResolvedValue(3);
+    mockPrisma.stockOpname.count.mockResolvedValue(0);
+    mockPrisma.stockMovement.count.mockResolvedValue(0);
+    mockPrisma.project.count.mockResolvedValue(0);
+    mockPrisma.product.count.mockResolvedValue(0);
+    mockPrisma.transactionReturn.count.mockResolvedValue(0);
+    mockPrisma.category.count.mockResolvedValue(0);
+    mockPrisma.supplier.count.mockResolvedValue(0);
+
+    const res = await request(app)
+      .delete('/api/users/user-other')
+      .set('Authorization', `Bearer ${adminToken}`);
+
+    expect(res.status).toBe(400);
+    expect(res.body.message).toContain('purchase order');
   });
 
   test('should prevent self-deletion', async () => {
