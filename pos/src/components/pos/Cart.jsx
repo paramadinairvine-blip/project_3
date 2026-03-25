@@ -16,7 +16,17 @@ export default function Cart() {
   const grandTotal = getGrandTotal();
   const itemCount = getItemCount();
 
-  const hasOverStock = items.some((i) => i.quantity > (i.product?.stock || 0));
+  // Aggregate base qty per product across all units
+  const productBaseQtyMap = {};
+  items.forEach((i) => {
+    const factor = i.conversionFactor || 1;
+    productBaseQtyMap[i.productId] = (productBaseQtyMap[i.productId] || 0) + i.quantity * factor;
+  });
+
+  const hasOverStock = items.some((i) => {
+    const stock = i.product?.stock || 0;
+    return productBaseQtyMap[i.productId] > stock;
+  });
 
   if (items.length === 0) {
     return (
@@ -85,6 +95,7 @@ export default function Cart() {
             item={item}
             onUpdateQty={updateQuantity}
             onRemove={removeItem}
+            productBaseQtyMap={productBaseQtyMap}
           />
         ))}
       </div>

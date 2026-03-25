@@ -1,10 +1,16 @@
 import { HiMinus, HiPlus, HiTrash } from 'react-icons/hi';
 import { formatRupiah } from '../../utils/formatCurrency';
 
-export default function CartItem({ item, onUpdateQty, onRemove }) {
+export default function CartItem({ item, onUpdateQty, onRemove, productBaseQtyMap }) {
   const total = item.quantity * item.unitPrice;
   const stock = item.product?.stock || 0;
-  const isOverStock = item.quantity > stock;
+  const conversionFactor = item.conversionFactor || 1;
+
+  // Check if total base qty of this product across all units exceeds stock
+  const totalBaseQty = productBaseQtyMap?.[item.productId] || (item.quantity * conversionFactor);
+  const isOverStock = totalBaseQty > stock;
+
+  const baseUnitName = item.product?.unitOfMeasure?.abbreviation || item.product?.unit || 'pcs';
 
   return (
     <div className={`flex items-start gap-3 py-3 border-b border-gray-100 last:border-0 ${isOverStock ? 'bg-red-50 -mx-3 px-3 rounded-lg' : ''}`}>
@@ -15,7 +21,9 @@ export default function CartItem({ item, onUpdateQty, onRemove }) {
           {formatRupiah(item.unitPrice)} / {item.unitName}
         </p>
         {isOverStock && (
-          <p className="text-xs text-red-600 mt-0.5">Stok tersedia: {stock}</p>
+          <p className="text-xs text-red-600 mt-0.5">
+            Stok tersedia: {stock} {baseUnitName} (terpakai: {totalBaseQty} {baseUnitName})
+          </p>
         )}
       </div>
 

@@ -40,13 +40,24 @@ export default function Cashier() {
       setUnitPickerProduct(product);
       return;
     }
-    addItem(product);
+    const result = addItem(product);
+    if (result?.error) {
+      const baseUnit = product.unitOfMeasure?.abbreviation || product.unit || 'pcs';
+      toast.error(`Stok ${product.name} tidak cukup (sisa ${result.stock} ${baseUnit})`, { duration: 2500, position: 'bottom-center' });
+      return;
+    }
     toast.success(`${product.name} ditambahkan`, { duration: 1500, position: 'bottom-center' });
   };
 
   const handleUnitSelected = (unitInfo) => {
     if (unitPickerProduct) {
-      addItem(unitPickerProduct, unitInfo);
+      const result = addItem(unitPickerProduct, unitInfo);
+      if (result?.error) {
+        const baseUnit = unitPickerProduct.unitOfMeasure?.abbreviation || unitPickerProduct.unit || 'pcs';
+        toast.error(`Stok ${unitPickerProduct.name} tidak cukup (sisa ${result.stock} ${baseUnit})`, { duration: 2500, position: 'bottom-center' });
+        setUnitPickerProduct(null);
+        return;
+      }
       toast.success(`${unitPickerProduct.name} (${unitInfo.unitName}) ditambahkan`, { duration: 1500, position: 'bottom-center' });
       setUnitPickerProduct(null);
     }
