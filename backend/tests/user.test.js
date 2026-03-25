@@ -147,9 +147,10 @@ describe('PUT /api/users/:id', () => {
 });
 
 describe('DELETE /api/users/:id', () => {
-  test('should deactivate user', async () => {
+  test('should delete user permanently', async () => {
     mockUserFindUnique({ ...sampleUser, id: 'user-other' });
-    mockPrisma.user.update.mockResolvedValue({});
+    mockPrisma.transaction.count.mockResolvedValue(0);
+    mockPrisma.user.delete.mockResolvedValue({});
     mockPrisma.auditLog.create.mockResolvedValue({});
 
     const res = await request(app)
@@ -157,6 +158,17 @@ describe('DELETE /api/users/:id', () => {
       .set('Authorization', `Bearer ${adminToken}`);
 
     expect(res.status).toBe(200);
+  });
+
+  test('should reject deletion if user has transactions', async () => {
+    mockUserFindUnique({ ...sampleUser, id: 'user-other' });
+    mockPrisma.transaction.count.mockResolvedValue(5);
+
+    const res = await request(app)
+      .delete('/api/users/user-other')
+      .set('Authorization', `Bearer ${adminToken}`);
+
+    expect(res.status).toBe(400);
   });
 
   test('should prevent self-deletion', async () => {
