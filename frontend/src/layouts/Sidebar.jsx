@@ -1,5 +1,6 @@
-import { NavLink, useLocation } from 'react-router-dom';
+import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import {
   HiHome,
   HiCube,
@@ -180,6 +181,13 @@ function MenuItem({ item, collapsed, closeMobile }) {
 export default function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose }) {
   const { user } = useAuth();
   const [profileOpen, setProfileOpen] = useState(false);
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
+
+  const handleLogoClick = () => {
+    navigate('/');
+    queryClient.invalidateQueries();
+  };
 
   const handleLogout = () => {
     localStorage.clear();
@@ -191,9 +199,9 @@ export default function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose
       {/* Header — Logo + Version */}
       <div className="flex items-center justify-between px-4 py-4 border-b border-gray-700">
         {!collapsed ? (
-          <div className="flex items-center gap-2.5 min-w-0">
+          <button onClick={handleLogoClick} className="flex items-center gap-2.5 min-w-0 cursor-pointer hover:opacity-80 transition-opacity">
             <img src="/logo-white.svg" alt="Logo" className="w-10 h-10 flex-shrink-0 opacity-90" />
-            <div className="min-w-0">
+            <div className="min-w-0 text-left">
               <h1 className="text-white font-bold text-sm leading-tight tracking-wide">
                 {STORE_INFO.SHORT_NAME}
               </h1>
@@ -205,11 +213,11 @@ export default function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose
               </p>
               <p className="text-gray-500 text-[9px] mt-0.5">V.1.0.0</p>
             </div>
-          </div>
+          </button>
         ) : (
-          <div className="mx-auto">
+          <button onClick={handleLogoClick} className="mx-auto cursor-pointer hover:opacity-80 transition-opacity">
             <img src="/logo-white.svg" alt="Logo" className="w-8 h-8 opacity-90" />
-          </div>
+          </button>
         )}
         <button
           onClick={onMobileClose}
