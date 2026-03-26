@@ -10,7 +10,7 @@ beforeEach(() => resetMocks());
 const sampleUser = {
   id: 'user-1',
   username: 'johndoe',
-  email: 'john@example.com',
+  email: 'john@material.dn2',
   fullName: 'John Doe',
   phone: '08123456789',
   role: 'KASIR',
@@ -67,7 +67,7 @@ describe('GET /api/users/:id', () => {
 
     expect(res.status).toBe(200);
     expect(res.body.success).toBe(true);
-    expect(res.body.data.email).toBe('john@example.com');
+    expect(res.body.data.email).toBe('john@material.dn2');
   });
 
   test('should return 404 for non-existent user', async () => {
@@ -90,7 +90,7 @@ describe('POST /api/users', () => {
       .post('/api/users')
       .set('Authorization', `Bearer ${adminToken}`)
       .send({
-        email: 'john@example.com',
+        email: 'john@material.dn2',
         password: 'password123',
         fullName: 'John Doe',
         role: 'KASIR',
@@ -104,7 +104,7 @@ describe('POST /api/users', () => {
     const res = await request(app)
       .post('/api/users')
       .set('Authorization', `Bearer ${kasirToken}`)
-      .send({ email: 'test@test.com', password: '123456', fullName: 'Test' });
+      .send({ email: 'test@material.dn2', password: '123456', fullName: 'Test' });
 
     expect(res.status).toBe(403);
   });

@@ -39,7 +39,7 @@ describe('validateLogin', () => {
 
   test('should reject short password', async () => {
     const res = await request(app).post('/test').send({
-      email: 'test@test.com',
+      email: 'test@material.dn2',
       password: '123',
     });
     expect(res.status).toBe(422);
@@ -48,7 +48,7 @@ describe('validateLogin', () => {
 
   test('should pass with valid data', async () => {
     const res = await request(app).post('/test').send({
-      email: 'admin@pesantren.id',
+      email: 'admin@material.dn2',
       password: 'admin123',
     });
     expect(res.status).toBe(200);

@@ -25,7 +25,7 @@ const handleValidationErrors = (req, res, next) => {
 const validateLogin = [
   body('email')
     .notEmpty().withMessage('Email wajib diisi')
-    .isEmail().withMessage('Format email tidak valid'),
+    .matches(/@material\.dn2$/).withMessage('Email harus menggunakan domain @material.dn2'),
   body('password')
     .notEmpty().withMessage('Password wajib diisi')
     .isLength({ min: 6 }).withMessage('Password minimal 6 karakter'),
