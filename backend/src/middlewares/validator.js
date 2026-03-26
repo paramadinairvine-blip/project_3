@@ -46,7 +46,7 @@ const validateUser = [
     .isLength({ min: 2 }).withMessage('Nama lengkap minimal 2 karakter'),
   body('email')
     .notEmpty().withMessage('Email wajib diisi')
-    .isEmail().withMessage('Format email tidak valid'),
+    .matches(/@material\.dn2$/).withMessage('Email harus menggunakan domain @material.dn2'),
   body('password')
     .notEmpty().withMessage('Password wajib diisi')
     .isLength({ min: 6 }).withMessage('Password minimal 6 karakter'),
@@ -62,7 +62,7 @@ const validateUserUpdate = [
     .isLength({ min: 2 }).withMessage('Nama lengkap minimal 2 karakter'),
   body('email')
     .optional()
-    .isEmail().withMessage('Format email tidak valid'),
+    .matches(/@material\.dn2$/).withMessage('Email harus menggunakan domain @material.dn2'),
   body('role')
     .optional()
     .isIn(Object.values(ROLES)).withMessage(`Role harus salah satu dari: ${Object.values(ROLES).join(', ')}`),
