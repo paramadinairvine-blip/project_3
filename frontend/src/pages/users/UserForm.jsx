@@ -134,7 +134,7 @@ export default function UserForm({ user, onClose }) {
 
         <Input
           label="Email *"
-          type="email"
+          type="text"
           value={form.email}
           onChange={(e) => updateField('email', e.target.value)}
           placeholder="email@material.dn2"
