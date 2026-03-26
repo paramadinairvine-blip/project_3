@@ -76,7 +76,7 @@ export default function UserForm({ user, onClose }) {
     const errs = {};
     if (!form.fullName.trim()) errs.fullName = 'Nama wajib diisi';
     if (!form.email.trim()) errs.email = 'Email wajib diisi';
-    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) errs.email = 'Format email tidak valid';
+    else if (!form.email.trim().endsWith('@material.dn2')) errs.email = 'Email harus menggunakan domain @material.dn2';
     if (!isEdit && (!form.password || form.password.length < 6)) errs.password = 'Password minimal 6 karakter';
     if (isEdit && form.newPassword && form.newPassword.length < 6) errs.newPassword = 'Password minimal 6 karakter';
     if (!form.role) errs.role = 'Role wajib dipilih';
@@ -137,7 +137,7 @@ export default function UserForm({ user, onClose }) {
           type="email"
           value={form.email}
           onChange={(e) => updateField('email', e.target.value)}
-          placeholder="email@pesantren.id"
+          placeholder="email@material.dn2"
           error={errors.email}
         />
 
