@@ -96,6 +96,11 @@ export default function Checkout() {
       return;
     }
 
+    if (paymentType === 'BON' && !/^08\d{8,12}$/.test(customerPhone.trim())) {
+      toast.error('Format nomor telepon harus 08xxxxxxxxxx (10-14 digit)');
+      return;
+    }
+
     const payload = {
       type: paymentType,
       items: items.map((item) => ({
@@ -240,12 +245,23 @@ export default function Checkout() {
                 <div>
                   <label className="block text-sm text-gray-600 mb-1">No. Telepon <span className="text-red-500">*</span></label>
                   <input
-                    type="text"
+                    type="tel"
                     value={customerPhone}
-                    onChange={(e) => setCustomerPhone(e.target.value)}
+                    onChange={(e) => {
+                      const val = e.target.value.replace(/[^0-9]/g, '');
+                      setCustomerPhone(val);
+                    }}
+                    maxLength={14}
                     placeholder="08xxxxxxxxxx"
-                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-500"
+                    className={`w-full px-4 py-2.5 border rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-500 ${
+                      customerPhone && !/^08\d{8,12}$/.test(customerPhone)
+                        ? 'border-red-400'
+                        : 'border-gray-300'
+                    }`}
                   />
+                  {customerPhone && !/^08\d{8,12}$/.test(customerPhone) && (
+                    <p className="text-xs text-red-500 mt-1">Format: 08xxxxxxxxxx (10-14 digit)</p>
+                  )}
                 </div>
               </div>
             )}
@@ -337,7 +353,7 @@ export default function Checkout() {
         </button>
         <button
           onClick={handleSubmit}
-          disabled={createMutation.isPending || (paymentType === 'CASH' && paidAmount < grandTotal) || (paymentType === 'BON' && (!unitLembagaId.trim() || !customerName.trim() || !customerPhone.trim()))}
+          disabled={createMutation.isPending || (paymentType === 'CASH' && paidAmount < grandTotal) || (paymentType === 'BON' && (!unitLembagaId.trim() || !customerName.trim() || !customerPhone.trim() || !/^08\d{8,12}$/.test(customerPhone.trim())))}
           className="px-6 py-2.5 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex flex-col items-center leading-tight"
         >
           <span>Proses Pembayaran</span>
