@@ -29,8 +29,15 @@ export default function StockCheck() {
       } else {
         toast.error('Produk tidak ditemukan');
       }
-    } catch {
-      toast.error('Produk dengan barcode tersebut tidak ditemukan');
+    } catch (err) {
+      const status = err?.response?.status;
+      if (status === 404) {
+        toast.error('Produk dengan barcode tersebut tidak ditemukan');
+      } else if (!navigator.onLine || !status) {
+        toast.error('Gagal terhubung ke server. Periksa koneksi jaringan.');
+      } else {
+        toast.error('Terjadi kesalahan saat mengambil data produk');
+      }
     }
   };
 

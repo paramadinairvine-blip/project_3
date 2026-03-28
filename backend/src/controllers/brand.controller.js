@@ -130,29 +130,22 @@ const remove = async (req, res) => {
       return errorResponse(res, 'Brand tidak ditemukan', 404);
     }
 
-    if (existing._count.products > 0) {
-      // Soft delete - set inactive
-      await prisma.brand.update({
-        where: { id },
-        data: { isActive: false },
-      });
-
-      return successResponse(res, null, 'Brand berhasil dinonaktifkan (memiliki produk terkait)');
-    }
-
-    await prisma.brand.delete({ where: { id } });
+    await prisma.brand.update({
+      where: { id },
+      data: { isActive: false },
+    });
 
     await createLog({
       userId: req.user.id,
       action: ACTION_TYPES.DELETE,
       tableName: 'brands',
       recordId: id,
-      oldData: existing,
+      oldData: { name: existing.name, isActive: true },
       ipAddress: req.ip,
       userAgent: req.get('user-agent'),
     });
 
-    return successResponse(res, null, 'Brand berhasil dihapus');
+    return successResponse(res, null, 'Brand berhasil dinonaktifkan');
   } catch (err) {
     return errorResponse(res, err.message, err.status || 500);
   }

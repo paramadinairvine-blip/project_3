@@ -80,16 +80,11 @@ const remove = async (id) => {
     throw new AppError('Brand tidak ditemukan', 404);
   }
 
-  if (existing._count.products > 0) {
-    await prisma.brand.update({
-      where: { id },
-      data: { isActive: false },
-    });
-    return { softDeleted: true, oldData: existing };
-  }
-
-  await prisma.brand.delete({ where: { id } });
-  return { softDeleted: false, oldData: existing };
+  await prisma.brand.update({
+    where: { id },
+    data: { isActive: false },
+  });
+  return { oldData: { name: existing.name, isActive: true } };
 };
 
 module.exports = { getAll, getById, create, update, remove };

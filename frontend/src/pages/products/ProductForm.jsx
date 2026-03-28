@@ -356,7 +356,7 @@ export default function ProductForm() {
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-1.5">Satuan Terkecil</label>
                 <select value={form.unit} onChange={(e) => updateForm('unit', e.target.value)} className="w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm">
-                  {commonUnits.map((u) => (
+                  {(unitMeasures?.length > 0 ? unitMeasures.map((u) => u.name.toLowerCase()) : commonUnits).map((u) => (
                     <option key={u} value={u}>{u.charAt(0).toUpperCase() + u.slice(1)}</option>
                   ))}
                 </select>

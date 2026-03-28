@@ -40,9 +40,19 @@ const MODULE_OPTIONS = [
 ];
 
 // ─── Diff Viewer ──────────────────────────────────────
+function safeParse(data) {
+  if (!data) return {};
+  if (typeof data !== 'string') return data;
+  try {
+    return JSON.parse(data);
+  } catch {
+    return { _raw: data };
+  }
+}
+
 function JsonDiff({ oldData, newData }) {
-  const oldObj = typeof oldData === 'string' ? JSON.parse(oldData || '{}') : (oldData || {});
-  const newObj = typeof newData === 'string' ? JSON.parse(newData || '{}') : (newData || {});
+  const oldObj = safeParse(oldData);
+  const newObj = safeParse(newData);
   const allKeys = [...new Set([...Object.keys(oldObj), ...Object.keys(newObj)])];
 
   if (allKeys.length === 0) {

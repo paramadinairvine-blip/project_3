@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { HiPlus, HiEye, HiCheck, HiQrcode, HiFilter, HiSearch, HiCamera } from 'react-icons/hi';
 import toast from 'react-hot-toast';
@@ -21,6 +21,8 @@ function ActiveOpnameDetail({ opnameId, onBack }) {
   const [nameSearch, setNameSearch] = useState('');
   const [cartItemIds, setCartItemIds] = useState(new Set());
   const [localActualStock, setLocalActualStock] = useState({});
+  const [focusItemId, setFocusItemId] = useState(null);
+  const focusInputRef = useRef(null);
 
   const { data: opname, isLoading } = useQuery({
     queryKey: ['opname', opnameId],
@@ -75,6 +77,15 @@ function ActiveOpnameDetail({ opnameId, onBack }) {
     });
   };
 
+  // Auto-focus input stok aktual setelah scan barcode
+  useEffect(() => {
+    if (focusItemId && focusInputRef.current) {
+      focusInputRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      focusInputRef.current.focus();
+      setFocusItemId(null);
+    }
+  }, [focusItemId, cartItemIds]);
+
   const handleBarcodeScan = (barcodeValue) => {
     setShowScanner(false);
     const items = opname?.items || [];
@@ -87,6 +98,7 @@ function ActiveOpnameDetail({ opnameId, onBack }) {
       found.forEach((f) => {
         if (!cartItemIds.has(f.id)) addToCart(f);
       });
+      setFocusItemId(found[0].id);
       toast.success(`Ditemukan ${found.length} produk`);
     } else {
       toast.error(`Produk dengan barcode "${barcodeValue}" tidak ditemukan`);
@@ -263,6 +275,7 @@ function ActiveOpnameDetail({ opnameId, onBack }) {
                         <td className="text-center px-4 py-2.5">
                           {isActive ? (
                             <input
+                              ref={focusItemId === item.id ? focusInputRef : undefined}
                               type="number"
                               min="0"
                               value={localActualStock[item.id] !== undefined ? localActualStock[item.id] : (item.actualStock ?? '')}

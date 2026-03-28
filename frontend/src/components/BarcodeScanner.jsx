@@ -27,7 +27,7 @@ export default function BarcodeScanner({ onScan, onClose }) {
       setIsScanning(true);
     } catch (err) {
       setError('Gagal mengakses kamera. Pastikan izin kamera sudah diberikan.');
-      console.error('Scanner error:', err);
+      // error already shown to user via setError() above
     }
   };
 
@@ -39,7 +39,7 @@ export default function BarcodeScanner({ onScan, onClose }) {
       html5QrCodeRef.current = null;
       setIsScanning(false);
     } catch (err) {
-      console.error('Stop scanner error:', err);
+      // silently ignore — stop scanner failure is non-critical
     }
   };
 

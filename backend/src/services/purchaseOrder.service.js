@@ -3,6 +3,7 @@ const { format } = require('date-fns');
 const { DEFAULT_PAGE_SIZE } = require('../utils/constants');
 const { createLog, ACTION_TYPES } = require('./auditLog.service');
 const AppError = require('../utils/AppError');
+const logger = require('../utils/logger');
 
 const formatWIB = (date, fmt) => {
   const wib = new Date(date.getTime() + 7 * 60 * 60 * 1000);
@@ -61,7 +62,11 @@ const convertToBaseQty = async (tx, productId, unitId, quantity) => {
     return { baseQty: Math.round(quantity * factor), conversionFactor: factor };
   }
 
-  // Tidak ditemukan ProductUnit, anggap 1:1
+  // Tidak ditemukan ProductUnit, anggap 1:1 — log warning agar admin tahu
+  logger.warn(
+    { productId, unitId, quantity },
+    'ProductUnit conversion not found, falling back to 1:1. Periksa konfigurasi satuan produk ini.'
+  );
   return { baseQty: quantity, conversionFactor: 1 };
 };
 

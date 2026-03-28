@@ -19,7 +19,7 @@ function BarcodeLabel({ product }) {
           margin: 5,
         });
       } catch (err) {
-        console.error('Barcode render error:', err);
+        // silently ignore — barcode render failure is non-critical
       }
     }
   }, [product.barcode]);
