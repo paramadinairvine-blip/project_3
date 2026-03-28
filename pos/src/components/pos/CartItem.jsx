@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { HiMinus, HiPlus, HiTrash } from 'react-icons/hi';
 import { formatRupiah } from '../../utils/formatCurrency';
 
@@ -5,6 +6,8 @@ export default function CartItem({ item, onUpdateQty, onRemove, productBaseQtyMa
   const total = item.quantity * item.unitPrice;
   const stock = item.product?.stock || 0;
   const conversionFactor = item.conversionFactor || 1;
+  const maxQty = Math.floor(stock / conversionFactor);
+  const [editValue, setEditValue] = useState(null);
 
   // Check if total base qty of this product across all units exceeds stock
   const totalBaseQty = productBaseQtyMap?.[item.productId] || (item.quantity * conversionFactor);
@@ -37,10 +40,29 @@ export default function CartItem({ item, onUpdateQty, onRemove, productBaseQtyMa
         </button>
         <input
           type="number"
-          value={item.quantity}
+          value={editValue !== null ? editValue : item.quantity}
+          onFocus={(e) => {
+            setEditValue(e.target.value);
+            e.target.select();
+          }}
           onChange={(e) => {
-            const val = parseInt(e.target.value) || 1;
+            const raw = e.target.value;
+            setEditValue(raw);
+            // Update store langsung agar warning merah muncul real-time
+            const val = parseInt(raw) || 1;
             onUpdateQty(item.cartKey, Math.max(1, val));
+          }}
+          onBlur={() => {
+            // Auto-cap ke stok maksimal saat keluar input
+            const val = parseInt(editValue) || 1;
+            const capped = Math.max(1, Math.min(val, maxQty));
+            onUpdateQty(item.cartKey, capped);
+            setEditValue(null);
+          }}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') {
+              e.target.blur();
+            }
           }}
           className={`w-10 h-7 text-center text-sm font-medium border rounded-lg outline-none ${
             isOverStock ? 'border-red-300 text-red-600' : 'border-gray-200'
@@ -48,8 +70,18 @@ export default function CartItem({ item, onUpdateQty, onRemove, productBaseQtyMa
           min="1"
         />
         <button
-          onClick={() => onUpdateQty(item.cartKey, item.quantity + 1)}
-          className="w-7 h-7 flex items-center justify-center rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-600 transition-colors"
+          onClick={() => {
+            const maxQty = Math.floor(stock / conversionFactor);
+            if (item.quantity < maxQty) {
+              onUpdateQty(item.cartKey, item.quantity + 1);
+            }
+          }}
+          disabled={item.quantity >= Math.floor(stock / conversionFactor)}
+          className={`w-7 h-7 flex items-center justify-center rounded-lg transition-colors ${
+            item.quantity >= Math.floor(stock / conversionFactor)
+              ? 'bg-gray-50 text-gray-300 cursor-not-allowed'
+              : 'bg-gray-100 hover:bg-gray-200 text-gray-600'
+          }`}
         >
           <HiPlus className="w-3.5 h-3.5" />
         </button>

@@ -10,11 +10,11 @@ async function main() {
   const hashedViewer = await bcrypt.hash('viewer123', 10);
 
   const admin = await prisma.user.upsert({
-    where: { email: 'admin@pesantren.id' },
+    where: { email: 'admin@material.dn2' },
     update: {},
     create: {
       username: 'admin',
-      email: 'admin@pesantren.id',
+      email: 'admin@material.dn2',
       password: hashedAdmin,
       fullName: 'Administrator',
       phone: '081234567890',
@@ -23,11 +23,11 @@ async function main() {
   });
 
   const kasir = await prisma.user.upsert({
-    where: { email: 'kasir@pesantren.id' },
+    where: { email: 'kasir@material.dn2' },
     update: {},
     create: {
       username: 'kasir',
-      email: 'kasir@pesantren.id',
+      email: 'kasir@material.dn2',
       password: hashedKasir,
       fullName: 'Kasir Toko',
       phone: '081234567891',
@@ -36,11 +36,11 @@ async function main() {
   });
 
   const viewer = await prisma.user.upsert({
-    where: { email: 'viewer@pesantren.id' },
+    where: { email: 'viewer@material.dn2' },
     update: {},
     create: {
       username: 'viewer',
-      email: 'viewer@pesantren.id',
+      email: 'viewer@material.dn2',
       password: hashedViewer,
       fullName: 'Pimpinan Pesantren',
       phone: '081234567892',
