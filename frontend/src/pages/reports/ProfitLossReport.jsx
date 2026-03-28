@@ -8,7 +8,7 @@ import {
 import { reportAPI } from '../../api/endpoints';
 import { Card, Button, Skeleton, CalendarPicker } from '../../components/common';
 import { formatRupiah, formatNumber } from '../../utils/formatCurrency';
-import { formatTanggal } from '../../utils/formatDate';
+import { formatTanggal, startOfDayWIB, endOfDayWIB } from '../../utils/formatDate';
 import { STORE_INFO } from '../../utils/constants';
 import { exportTableToPDF } from '../../utils/exportPDF';
 import { exportToExcel } from '../../utils/exportExcel';
@@ -62,10 +62,8 @@ export default function ProfitLossReport() {
     queryFn: async () => {
       const params = {};
       if (selectedDate) {
-        const s = new Date(selectedDate + 'T00:00:00+07:00');
-        const e = new Date(selectedDate + 'T23:59:59.999+07:00');
-        params.startDate = s.toISOString();
-        params.endDate = e.toISOString();
+        params.startDate = startOfDayWIB(selectedDate);
+        params.endDate = endOfDayWIB(selectedDate);
       }
       const { data: res } = await reportAPI.getLabaRugi(params);
       const raw = res.data;

@@ -17,6 +17,7 @@ import { Card } from '../components/common';
 import { formatRupiah } from '../utils/formatCurrency';
 import useAuth from '../hooks/useAuth';
 import { ROLES } from '../utils/constants';
+import { startOfMonthWIB, endOfMonthWIB } from '../utils/formatDate';
 
 // ─── Helpers ──────────────────────────────────────────
 const MONTHS = [
@@ -124,11 +125,9 @@ export default function Dashboard() {
   const { data: trendData } = useQuery({
     queryKey: ['trend-dashboard', year, month],
     queryFn: async () => {
-      const startDate = new Date(year, month, 1);
-      const endDate = new Date(year, month + 1, 0, 23, 59, 59);
       const { data } = await reportAPI.getTrend({
-        startDate: startDate.toISOString(),
-        endDate: endDate.toISOString(),
+        startDate: startOfMonthWIB(year, month),
+        endDate: endOfMonthWIB(year, month),
       });
       return data.data;
     },
@@ -139,11 +138,9 @@ export default function Dashboard() {
   const { data: financialData } = useQuery({
     queryKey: ['financial-dashboard', year, month],
     queryFn: async () => {
-      const startDate = new Date(year, month, 1);
-      const endDate = new Date(year, month + 1, 0, 23, 59, 59);
       const { data } = await reportAPI.getFinancial({
-        startDate: startDate.toISOString(),
-        endDate: endDate.toISOString(),
+        startDate: startOfMonthWIB(year, month),
+        endDate: endOfMonthWIB(year, month),
       });
       return data.data;
     },

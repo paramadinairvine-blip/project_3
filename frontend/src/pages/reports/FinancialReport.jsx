@@ -8,7 +8,7 @@ import {
 import { reportAPI } from '../../api/endpoints';
 import { Card, Button, Select, Loading, Table, Skeleton, CalendarPicker } from '../../components/common';
 import { formatRupiah, formatNumber } from '../../utils/formatCurrency';
-import { formatTanggal } from '../../utils/formatDate';
+import { formatTanggal, startOfDayWIB, endOfDayWIB } from '../../utils/formatDate';
 import { TRANSACTION_TYPE_LABELS, STORE_INFO } from '../../utils/constants';
 import { exportTableToPDF } from '../../utils/exportPDF';
 import { exportToExcel } from '../../utils/exportExcel';
@@ -53,10 +53,8 @@ export default function FinancialReport() {
     queryFn: async () => {
       const params = {};
       if (selectedDate) {
-        const s = new Date(selectedDate + 'T00:00:00+07:00');
-        const e = new Date(selectedDate + 'T23:59:59.999+07:00');
-        params.startDate = s.toISOString();
-        params.endDate = e.toISOString();
+        params.startDate = startOfDayWIB(selectedDate);
+        params.endDate = endOfDayWIB(selectedDate);
       }
       if (typeFilter) params.type = typeFilter;
       const { data: res } = await reportAPI.getFinancial(params);

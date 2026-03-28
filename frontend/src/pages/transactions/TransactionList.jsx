@@ -5,7 +5,7 @@ import { HiEye, HiSearch } from 'react-icons/hi';
 import { transactionAPI } from '../../api/endpoints';
 import { Table, Badge, Pagination, CalendarPicker } from '../../components/common';
 import { formatRupiah } from '../../utils/formatCurrency';
-import { formatTanggalWaktu } from '../../utils/formatDate';
+import { formatTanggalWaktu, startOfDayWIB, endOfDayWIB } from '../../utils/formatDate';
 import {
   TRANSACTION_TYPE_LABELS, TRANSACTION_TYPE_COLORS,
   TRANSACTION_STATUS_LABELS, TRANSACTION_STATUS_COLORS,
@@ -41,9 +41,8 @@ export default function TransactionList() {
       if (appliedFilters.search) params.search = appliedFilters.search;
       if (appliedFilters.customerName) params.customerName = appliedFilters.customerName;
       if (appliedFilters.date) {
-        params.startDate = appliedFilters.date;
-        // End of selected day
-        params.endDate = appliedFilters.date + 'T23:59:59+07:00';
+        params.startDate = startOfDayWIB(appliedFilters.date);
+        params.endDate = endOfDayWIB(appliedFilters.date);
       }
       const { data: res } = await transactionAPI.getAll(params);
       return res;

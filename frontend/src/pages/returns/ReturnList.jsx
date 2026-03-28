@@ -5,7 +5,7 @@ import { HiEye } from 'react-icons/hi';
 import { returnAPI } from '../../api/endpoints';
 import { Card, Table, Loading, Pagination, SearchBar, CalendarPicker } from '../../components/common';
 import { formatRupiah } from '../../utils/formatCurrency';
-import { formatTanggalWaktu } from '../../utils/formatDate';
+import { formatTanggalWaktu, startOfDayWIB, endOfDayWIB } from '../../utils/formatDate';
 
 export default function ReturnList() {
   const navigate = useNavigate();
@@ -20,9 +20,8 @@ export default function ReturnList() {
       const params = { page, limit };
       if (search) params.search = search;
       if (filterDate) {
-        const [y, m, d] = filterDate.split('-').map(Number);
-        params.startDate = new Date(y, m - 1, d, 0, 0, 0, 0).toISOString();
-        params.endDate = new Date(y, m - 1, d, 23, 59, 59, 999).toISOString();
+        params.startDate = startOfDayWIB(filterDate);
+        params.endDate = endOfDayWIB(filterDate);
       }
       const { data: res } = await returnAPI.getAll(params);
       return res;

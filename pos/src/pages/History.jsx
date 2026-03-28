@@ -10,6 +10,7 @@ import ReceiptPrint from '../components/receipt/ReceiptPrint';
 import ReturModal from '../components/ReturModal';
 import { printReceipt, isRectaConfigured } from '../utils/printerService';
 import CalendarPicker from '../components/common/CalendarPicker';
+import { startOfDayWIB, endOfDayWIB } from '../utils/formatDate';
 
 export default function History() {
   const [search, setSearch] = useState('');
@@ -27,10 +28,8 @@ export default function History() {
   const queryParams = useMemo(() => {
     const params = { limit: 500, sortBy: 'createdAt', sortOrder: 'desc' };
     if (filterStart && filterEnd) {
-      const [sy, sm, sd] = filterStart.split('-').map(Number);
-      const [ey, em, ed] = filterEnd.split('-').map(Number);
-      params.startDate = new Date(sy, sm - 1, sd, 0, 0, 0, 0).toISOString();
-      params.endDate = new Date(ey, em - 1, ed, 23, 59, 59, 999).toISOString();
+      params.startDate = startOfDayWIB(filterStart);
+      params.endDate = endOfDayWIB(filterEnd);
     }
     return params;
   }, [filterStart, filterEnd]);

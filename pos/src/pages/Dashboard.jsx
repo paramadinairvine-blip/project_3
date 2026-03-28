@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { HiCash, HiShoppingCart, HiCube, HiExclamation, HiRefresh, HiDatabase, HiClipboardList } from 'react-icons/hi';
 import { reportAPI, transactionAPI, returnAPI } from '../api/endpoints';
 import { formatRupiah } from '../utils/formatCurrency';
-import { formatTanggalPanjang } from '../utils/formatDate';
+import { formatTanggalPanjang, startOfDayWIB, endOfDayWIB } from '../utils/formatDate';
 import { Loading } from '../components/common';
 import CalendarPicker from '../components/common/CalendarPicker';
 
@@ -38,15 +38,9 @@ export default function Dashboard() {
   });
 
   // Fetch transactions filtered by date — this is the source of truth for count & total
-  // Use local timezone (WIB) — "2026-03-04" → start of day local, end of day local
-  const startISO = useMemo(() => {
-    const [y, m, d] = appliedStart.split('-').map(Number);
-    return new Date(y, m - 1, d, 0, 0, 0, 0).toISOString();
-  }, [appliedStart]);
-  const endISO = useMemo(() => {
-    const [y, m, d] = appliedEnd.split('-').map(Number);
-    return new Date(y, m - 1, d, 23, 59, 59, 999).toISOString();
-  }, [appliedEnd]);
+  // Gunakan WIB (UTC+7) secara eksplisit
+  const startISO = useMemo(() => startOfDayWIB(appliedStart), [appliedStart]);
+  const endISO = useMemo(() => endOfDayWIB(appliedEnd), [appliedEnd]);
 
   const { data: filteredTx, isLoading: txLoading, refetch: refetchTx } = useQuery({
     queryKey: ['dashboard-transactions', appliedStart, appliedEnd],

@@ -8,6 +8,7 @@ import { formatNumber } from '../../utils/formatCurrency';
 import { exportTableToPDF } from '../../utils/exportPDF';
 import { exportToExcel } from '../../utils/exportExcel';
 import { STORE_INFO } from '../../utils/constants';
+import { startOfMonthWIB, endOfMonthWIB } from '../../utils/formatDate';
 
 const MONTHS = [
   'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
@@ -28,8 +29,8 @@ export default function TrendReport() {
   const [page, setPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(10);
 
-  const startDate = new Date(year, month, 1).toISOString();
-  const endDate = new Date(year, month + 1, 0, 23, 59, 59).toISOString();
+  const startDate = startOfMonthWIB(year, month);
+  const endDate = endOfMonthWIB(year, month);
   const periodLabel = `${MONTHS[month]} ${year}`;
 
   const { data, isLoading } = useQuery({
