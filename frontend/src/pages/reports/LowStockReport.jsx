@@ -37,7 +37,7 @@ function StatCard({ title, value, icon: Icon, color }) {
 export default function LowStockReport() {
   const printRef = useRef();
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, isError } = useQuery({
     queryKey: ['report-low-stock'],
     queryFn: async () => {
       const { data: res } = await reportAPI.getStock({ lowStockOnly: true });
@@ -128,7 +128,9 @@ export default function LowStockReport() {
       </div>
 
       {/* Summary & Table */}
-      {isLoading ? (
+      {isError ? (
+        <Card><p className="text-center text-red-500 py-8">Gagal memuat data laporan. Silakan coba lagi.</p></Card>
+      ) : isLoading ? (
         <>
           <Skeleton.Card count={3} />
           <Skeleton.Table rows={8} cols={5} />

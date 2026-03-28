@@ -45,7 +45,7 @@ export default function StockReport() {
     queryFn: async () => { const { data } = await categoryAPI.getAll(); return data.data; },
   });
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, isError } = useQuery({
     queryKey: ['report-stock', { categoryId, lowStockOnly }],
     queryFn: async () => {
       const params = {};
@@ -182,7 +182,9 @@ export default function StockReport() {
       </div>
 
       {/* Summary & Table */}
-      {isLoading ? (
+      {isError ? (
+        <Card><p className="text-center text-red-500 py-8">Gagal memuat data laporan. Silakan coba lagi.</p></Card>
+      ) : isLoading ? (
         <>
           <Skeleton.Card count={3} />
           <Skeleton.Table rows={8} cols={5} />

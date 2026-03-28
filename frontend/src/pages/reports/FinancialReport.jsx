@@ -48,7 +48,7 @@ export default function FinancialReport() {
   const [selectedDate, setSelectedDate] = useState(today);
   const [typeFilter, setTypeFilter] = useState('');
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, isError } = useQuery({
     queryKey: ['report-financial', { date: selectedDate, type: typeFilter }],
     queryFn: async () => {
       const params = {};
@@ -186,7 +186,9 @@ export default function FinancialReport() {
         </div>
       </div>
 
-      {isLoading ? (
+      {isError ? (
+        <Card><p className="text-center text-red-500 py-8">Gagal memuat data laporan. Silakan coba lagi.</p></Card>
+      ) : isLoading ? (
         <>
           <Skeleton.Card count={3} />
           <Skeleton.Table rows={8} cols={7} />

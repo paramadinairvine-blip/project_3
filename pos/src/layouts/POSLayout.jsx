@@ -3,6 +3,8 @@ import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { HiCash, HiClipboardList, HiCube, HiChartBar, HiPrinter, HiLogout, HiChevronRight } from 'react-icons/hi';
 import { useQueryClient } from '@tanstack/react-query';
 import useAuth from '../hooks/useAuth';
+import useHoldStore from '../stores/holdStore';
+import useCartStore from '../stores/cartStore';
 import { ROLE_LABELS, STORE_INFO } from '../utils/constants';
 import PrinterSettingModal from '../components/PrinterSettingModal';
 
@@ -33,6 +35,9 @@ export default function POSLayout() {
     } catch {
       // ignore logout API errors
     }
+    // Clear hold dan cart data saat logout
+    useHoldStore.getState().clearAllHolds();
+    useCartStore.getState().clearCart();
     window.location.href = '/login';
   };
 

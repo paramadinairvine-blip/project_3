@@ -248,10 +248,9 @@ export async function printReceipt(transaction, paidAmount, change) {
     const buffer = r.toBuffer();
     socket.send(buffer.buffer);
 
-    // Disconnect after brief delay
-    setTimeout(() => {
-      try { socket.close(); } catch { /* ok */ }
-    }, 1000);
+    // Tutup koneksi setelah data terkirim
+    socket.addEventListener('close', () => { /* cleanup done */ });
+    try { socket.close(); } catch { /* ok */ }
 
     return { success: true, message: 'Struk berhasil dicetak' };
   } catch (err) {
@@ -286,9 +285,7 @@ export async function testPrinterConnection(settings) {
 
     socket.send(r.toBuffer().buffer);
 
-    setTimeout(() => {
-      try { socket.close(); } catch { /* ok */ }
-    }, 500);
+    try { socket.close(); } catch { /* ok */ }
 
     return { connected: true, message: `Terhubung ke Recta Host (port ${settings.socketPort})` };
   } catch (err) {

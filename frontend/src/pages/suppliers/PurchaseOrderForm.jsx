@@ -200,7 +200,8 @@ export default function PurchaseOrderForm() {
         await purchaseOrderAPI.update(id, data);
       } else {
         const res = await purchaseOrderAPI.create(data);
-        poId = res.data.data.id;
+        poId = res.data?.data?.id;
+        if (!poId) throw new Error('Gagal mendapatkan ID PO dari server');
       }
       await purchaseOrderAPI.send(poId);
       return poId;

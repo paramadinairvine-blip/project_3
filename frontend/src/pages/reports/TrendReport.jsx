@@ -33,7 +33,7 @@ export default function TrendReport() {
   const endDate = endOfMonthWIB(year, month);
   const periodLabel = `${MONTHS[month]} ${year}`;
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, isError } = useQuery({
     queryKey: ['report-trend', { year, month }],
     queryFn: async () => {
       const { data: res } = await reportAPI.getTrend({ startDate, endDate });
@@ -145,7 +145,9 @@ export default function TrendReport() {
         </div>
       </div>
 
-      {isLoading ? (
+      {isError ? (
+        <Card><p className="text-center text-red-500 py-8">Gagal memuat data laporan. Silakan coba lagi.</p></Card>
+      ) : isLoading ? (
         <Skeleton.Table rows={10} cols={3} />
       ) : (
         <Card padding="none">

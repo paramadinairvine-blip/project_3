@@ -27,6 +27,7 @@ export default function UserForm({ user, onClose }) {
         fullName: user.fullName || '',
         email: user.email || '',
         password: '',
+        newPassword: '',
         role: user.role || ROLES.KASIR,
         phone: user.phone || '',
       });

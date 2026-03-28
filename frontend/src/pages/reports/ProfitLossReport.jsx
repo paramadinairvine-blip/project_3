@@ -57,7 +57,7 @@ export default function ProfitLossReport() {
 
   const [selectedDate, setSelectedDate] = useState(today);
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, isError } = useQuery({
     queryKey: ['report-laba-rugi', { date: selectedDate }],
     queryFn: async () => {
       const params = {};
@@ -143,7 +143,9 @@ export default function ProfitLossReport() {
         </div>
       </div>
 
-      {isLoading ? (
+      {isError ? (
+        <Card><p className="text-center text-red-500 py-8">Gagal memuat data laporan. Silakan coba lagi.</p></Card>
+      ) : isLoading ? (
         <>
           <Skeleton.Card count={4} />
           <Skeleton.Table rows={6} cols={2} />
