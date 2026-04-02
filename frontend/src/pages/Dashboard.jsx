@@ -118,7 +118,7 @@ export default function Dashboard() {
       const { data } = await reportAPI.getDashboard();
       return data.data;
     },
-    refetchInterval: 60000,
+    refetchInterval: 30000,
   });
 
   // Trend report for selected period (only for ADMIN/VIEWER)

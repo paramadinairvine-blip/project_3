@@ -34,7 +34,7 @@ export default function Dashboard() {
     queryKey: ['dashboard'],
     queryFn: () => reportAPI.getDashboard(),
     select: (res) => res.data.data || {},
-    refetchInterval: 60000,
+    refetchInterval: 30000,
   });
 
   // Fetch transactions filtered by date — this is the source of truth for count & total
@@ -51,7 +51,7 @@ export default function Dashboard() {
       const total = list.reduce((sum, trx) => sum + (parseFloat(trx.total) || 0), 0);
       return { count, total };
     },
-    refetchInterval: 60000,
+    refetchInterval: 30000,
   });
 
   const { data: returData, isLoading: returLoading, refetch: refetchRetur } = useQuery({
@@ -62,7 +62,7 @@ export default function Dashboard() {
       const totalRetur = list.reduce((sum, r) => sum + (parseFloat(r.refundAmount) || 0), 0);
       return { totalRetur, count: list.length };
     },
-    refetchInterval: 60000,
+    refetchInterval: 30000,
   });
 
   const isLoading = dashLoading || txLoading || returLoading;

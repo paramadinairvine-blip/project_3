@@ -72,7 +72,10 @@ const errorHandler = (err, req, res, next) => {
 
   // --- AppError (custom) ---
   if (err instanceof AppError) {
-    return errorResponse(res, err.message, err.status);
+    const body = { success: false, message: err.message };
+    if (err.code) body.code = err.code;
+    if (err.priceChanges) body.priceChanges = err.priceChanges;
+    return res.status(err.status).json(body);
   }
 
   // --- Generic / unknown errors ---

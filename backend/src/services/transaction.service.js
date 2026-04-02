@@ -246,10 +246,31 @@ const create = async (data, userId) => {
       remainingStock[p.id] = p.stock;
     }
 
+    const priceChanges = [];
     for (const item of items) {
       const product = productMap[item.productId];
       if (!product) {
         throw new AppError(`Produk tidak ditemukan: ${item.productId}`, 404);
+      }
+
+      // Validate price against current database price
+      let currentPrice = Number(product.sellPrice);
+      if (item.unitId) {
+        const pu = product.productUnits.find(
+          (u) => u.unitId === item.unitId && !u.isBaseUnit
+        );
+        if (pu) {
+          currentPrice = Number(pu.unitPrice || product.sellPrice) * Number(pu.conversionFactor);
+        }
+      }
+      const sentPrice = Number(item.price);
+      if (Math.abs(sentPrice - currentPrice) >= 1) {
+        priceChanges.push({
+          productId: item.productId,
+          productName: product.name,
+          oldPrice: sentPrice,
+          newPrice: currentPrice,
+        });
       }
 
       // Convert quantity to base unit if a non-base unit is selected
@@ -270,6 +291,17 @@ const create = async (data, userId) => {
       const itemSubtotal = item.quantity * item.price - itemDiscount;
       subtotal += itemSubtotal;
       processedItems.push({ ...item, discount: itemDiscount, subtotal: itemSubtotal, baseQty: qty });
+    }
+
+    if (priceChanges.length > 0) {
+      const names = priceChanges.map((p) => p.productName).join(', ');
+      const err = new AppError(
+        `Harga ${names} sudah berubah. Silakan refresh data produk.`,
+        409
+      );
+      err.code = 'PRICE_CHANGED';
+      err.priceChanges = priceChanges;
+      throw err;
     }
 
     const discount = Math.min(Math.max(header.discount || 0, 0), subtotal);

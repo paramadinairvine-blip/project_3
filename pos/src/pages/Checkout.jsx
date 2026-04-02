@@ -76,7 +76,17 @@ export default function Checkout() {
       }
     },
     onError: (error) => {
-      toast.error(error.response?.data?.message || 'Gagal membuat transaksi');
+      const resData = error.response?.data;
+      if (resData?.code === 'PRICE_CHANGED') {
+        const changes = resData.priceChanges || [];
+        const detail = changes.map(
+          (p) => `${p.productName}: Rp ${Number(p.oldPrice).toLocaleString('id-ID')} → Rp ${Number(p.newPrice).toLocaleString('id-ID')}`
+        ).join('\n');
+        toast.error(`Harga berubah!\n${detail}\nSilakan refresh keranjang.`, { duration: 6000 });
+        queryClient.invalidateQueries({ queryKey: ['products'] });
+      } else {
+        toast.error(resData?.message || 'Gagal membuat transaksi');
+      }
     },
   });
 

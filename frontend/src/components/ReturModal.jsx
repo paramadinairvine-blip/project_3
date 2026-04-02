@@ -38,6 +38,8 @@ export default function ReturModal({ transaction, onClose }) {
       queryClient.invalidateQueries({ queryKey: ['transactions'] });
       queryClient.invalidateQueries({ queryKey: ['returns'] });
       queryClient.invalidateQueries({ queryKey: ['products'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+      queryClient.invalidateQueries({ queryKey: ['stock'] });
       onClose();
     },
     onError: (err) => toast.error(getErrorMessage(err, 'Gagal memproses retur')),

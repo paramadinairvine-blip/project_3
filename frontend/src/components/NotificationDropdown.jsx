@@ -66,7 +66,7 @@ export default function NotificationDropdown() {
       const { data: res } = await notificationAPI.getMe({ limit: 10 });
       return res;
     },
-    refetchInterval: 60000,
+    refetchInterval: 30000,
   });
 
   const notifications = data?.data || [];

@@ -48,6 +48,8 @@ function ActiveOpnameDetail({ opnameId, onBack }) {
       queryClient.invalidateQueries({ queryKey: ['opname', opnameId] });
       queryClient.invalidateQueries({ queryKey: ['opname-list'] });
       queryClient.invalidateQueries({ queryKey: ['stock'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+      queryClient.invalidateQueries({ queryKey: ['products'] });
       setShowComplete(false);
     },
     onError: (err) => toast.error(getErrorMessage(err, 'Gagal menyelesaikan opname')),

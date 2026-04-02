@@ -150,6 +150,9 @@ export default function PurchaseOrderDetail() {
     onSuccess: () => {
       toast.success('Barang berhasil diterima, stok diperbarui');
       queryClient.invalidateQueries({ queryKey: ['purchase-order', id] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+      queryClient.invalidateQueries({ queryKey: ['products'] });
+      queryClient.invalidateQueries({ queryKey: ['stock'] });
       setActionModal(null);
     },
     onError: (err) => toast.error(getErrorMessage(err, 'Gagal menerima barang')),
