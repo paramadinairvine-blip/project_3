@@ -1,9 +1,19 @@
 const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
+const compression = require('compression');
 const rateLimit = require('express-rate-limit');
 const path = require('path');
 require('dotenv').config();
+
+// Validasi JWT_SECRET di production
+if (process.env.NODE_ENV === 'production') {
+  const unsafeSecrets = ['your-super-secret-jwt-key-change-this', 'secret', 'jwt-secret', ''];
+  if (!process.env.JWT_SECRET || unsafeSecrets.includes(process.env.JWT_SECRET)) {
+    console.error('❌ ERROR: JWT_SECRET tidak aman! Ganti dengan secret yang kuat sebelum deploy ke production.');
+    process.exit(1);
+  }
+}
 
 const { errorHandler } = require('./middlewares/errorHandler');
 const routes = require('./routes');
@@ -63,6 +73,9 @@ const authLimiter = rateLimit({
   legacyHeaders: false,
 });
 app.use('/api/auth', authLimiter);
+
+// ─── Compression ────────────────────────────────────
+app.use(compression());
 
 // ─── Body Parser ─────────────────────────────────────
 app.use(express.json({ limit: '10mb' }));

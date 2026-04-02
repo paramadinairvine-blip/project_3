@@ -413,6 +413,9 @@ const create = async (data, userId) => {
   // Send Telegram notification (fire-and-forget)
   sendTransactionNotification(transaction).catch((err) => logger.error('Telegram notification failed:', err.message));
 
+  // Check low stock & out of stock after transaction (fire-and-forget)
+  checkStockAfterTransaction(processedItems.map(i => i.productId)).catch((err) => logger.error('Stock notification failed:', err.message));
+
   return transaction;
 };
 
@@ -525,6 +528,49 @@ const getByUnitLembaga = async (unitLembagaId, { startDate, endDate, page = 1, l
 /**
  * Create in-app notification about a BON transaction for admins.
  */
+/**
+ * Check stock levels after transaction and notify admins if low/out of stock.
+ */
+const checkStockAfterTransaction = async (productIds) => {
+  const products = await prisma.product.findMany({
+    where: { id: { in: productIds } },
+    select: { id: true, name: true, stock: true, minStock: true, sku: true },
+  });
+
+  const admins = await prisma.user.findMany({
+    where: { role: 'ADMIN', isActive: true, deletedAt: null },
+    select: { id: true },
+  });
+
+  if (admins.length === 0) return;
+
+  const notifications = [];
+
+  for (const product of products) {
+    if (product.stock <= 0) {
+      notifications.push(...admins.map((admin) => ({
+        userId: admin.id,
+        title: 'Stok Habis!',
+        message: `Stok ${product.name} (${product.sku}) sudah habis! Segera lakukan restok.`,
+        type: 'LOW_STOCK',
+        status: 'PENDING',
+      })));
+    } else if (product.minStock > 0 && product.stock <= product.minStock) {
+      notifications.push(...admins.map((admin) => ({
+        userId: admin.id,
+        title: 'Stok Menipis',
+        message: `Stok ${product.name} (${product.sku}) tinggal ${product.stock} (minimum: ${product.minStock}).`,
+        type: 'LOW_STOCK',
+        status: 'PENDING',
+      })));
+    }
+  }
+
+  if (notifications.length > 0) {
+    await prisma.notification.createMany({ data: notifications });
+  }
+};
+
 const sendBonNotification = async (transaction) => {
   const admins = await prisma.user.findMany({
     where: { role: 'ADMIN', isActive: true },

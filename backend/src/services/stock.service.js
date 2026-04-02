@@ -3,6 +3,7 @@ const { DEFAULT_PAGE_SIZE } = require('../utils/constants');
 const { createLog, ACTION_TYPES } = require('./auditLog.service');
 const { format } = require('date-fns');
 const AppError = require('../utils/AppError');
+const logger = require('../utils/logger');
 
 const formatWIB = (date, fmt) => {
   const wib = new Date(date.getTime() + 7 * 60 * 60 * 1000);
@@ -243,6 +244,9 @@ const adjustStock = async ({ productId, variantId, unitId, quantity, notes, user
     newData: movement,
   });
 
+  // Check low stock after adjustment (fire-and-forget)
+  notifyLowStock(productId).catch((err) => logger.error('Stock notification failed:', err.message));
+
   return movement;
 };
 
@@ -471,7 +475,52 @@ const completeOpname = async (opnameId, userId) => {
     },
   });
 
+  // Check low stock for all adjusted products after opname (fire-and-forget)
+  const adjustedProductIds = result.adjustments.map((a) => a.productId);
+  for (const pid of adjustedProductIds) {
+    notifyLowStock(pid).catch((err) => logger.error('Opname stock notification failed:', err.message));
+  }
+
   return result;
+};
+
+/**
+ * Notify admins if a product's stock is low or out of stock.
+ */
+const notifyLowStock = async (productId) => {
+  const product = await prisma.product.findUnique({
+    where: { id: productId },
+    select: { id: true, name: true, sku: true, stock: true, minStock: true },
+  });
+
+  if (!product) return;
+
+  const isOutOfStock = product.stock <= 0;
+  const isLowStock = product.minStock > 0 && product.stock <= product.minStock;
+
+  if (!isOutOfStock && !isLowStock) return;
+
+  const admins = await prisma.user.findMany({
+    where: { role: 'ADMIN', isActive: true, deletedAt: null },
+    select: { id: true },
+  });
+
+  if (admins.length === 0) return;
+
+  const title = isOutOfStock ? 'Stok Habis!' : 'Stok Menipis';
+  const message = isOutOfStock
+    ? `Stok ${product.name} (${product.sku}) sudah habis! Segera lakukan restok.`
+    : `Stok ${product.name} (${product.sku}) tinggal ${product.stock} (minimum: ${product.minStock}).`;
+
+  await prisma.notification.createMany({
+    data: admins.map((admin) => ({
+      userId: admin.id,
+      title,
+      message,
+      type: 'LOW_STOCK',
+      status: 'PENDING',
+    })),
+  });
 };
 
 module.exports = {

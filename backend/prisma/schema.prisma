@@ -147,6 +147,9 @@ model User {
   priceChanges          PriceHistory[]      @relation("PriceChangedBy")
   createdReturns        TransactionReturn[] @relation("ReturnCreatedBy")
 
+  @@index([role])
+  @@index([deletedAt])
+  @@index([isActive])
   @@map("users")
 }
 
@@ -240,7 +243,9 @@ model Product {
   @@index([categoryId])
   @@index([brandId])
   @@index([supplierId])
+  @@index([unitId])
   @@index([isActive])
+  @@index([createdAt])
   @@map("products")
 }
 
@@ -329,10 +334,12 @@ model Transaction {
   returns     TransactionReturn[]
 
   @@index([transactionNumber])
+  @@index([type])
   @@index([unitLembagaId])
   @@index([createdAt])
   @@index([status])
   @@index([projectId])
+  @@index([createdBy])
   @@map("transactions")
 }
 
@@ -453,6 +460,8 @@ model Project {
   transactions Transaction[]
   materials    ProjectMaterial[]
 
+  @@index([status])
+  @@index([createdAt])
   @@map("projects")
 }
 
@@ -494,6 +503,8 @@ model StockOpname {
   items   StockOpnameItem[]
 
   @@index([opnameNumber])
+  @@index([status])
+  @@index([createdAt])
   @@map("stock_opnames")
 }
 
@@ -605,6 +616,8 @@ model Notification {
   user User @relation(fields: [userId], references: [id])
 
   @@index([userId])
+  @@index([status])
   @@index([readAt])
+  @@index([createdAt])
   @@map("notifications")
 }
