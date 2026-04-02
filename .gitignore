@@ -41,3 +41,10 @@ coverage/
 .parcel-cache/
 .vercel
 .env*.local
+
+# Claude Code
+.claude/
+
+# Generated reports & scripts
+generate_*.py
+*.pdf
