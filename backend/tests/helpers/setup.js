@@ -46,6 +46,7 @@ const mockPrisma = {
   productVariant: { findUnique: jest.fn(), update: jest.fn() },
   refreshToken: { findUnique: jest.fn(), create: jest.fn(), delete: jest.fn(), deleteMany: jest.fn() },
   $transaction: jest.fn((fn) => fn(mockPrisma)),
+  $queryRaw: jest.fn().mockResolvedValue([]),
   $queryRawUnsafe: jest.fn(),
 };
 
