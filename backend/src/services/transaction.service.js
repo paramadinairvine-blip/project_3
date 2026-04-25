@@ -216,12 +216,12 @@ const getById = async (id) => {
  */
 const create = async (data, userId) => {
   const { items, ...header } = data;
+  const productIds = [...new Set(items.map((i) => i.productId))];
 
   // Everything runs inside a single transaction with row-level locking
   // to prevent race conditions on stock checks & deductions.
   const transaction = await prisma.$transaction(async (tx) => {
     // ── 1. Lock & fetch products using SELECT ... FOR UPDATE ──
-    const productIds = [...new Set(items.map((i) => i.productId))];
 
     // Step 1a: Lock product rows (FOR UPDATE not allowed with GROUP BY)
     await tx.$queryRaw`SELECT id FROM "products" WHERE id IN (${Prisma.join(productIds)}) FOR UPDATE`;
@@ -414,7 +414,7 @@ const create = async (data, userId) => {
   sendTransactionNotification(transaction).catch((err) => logger.error('Telegram notification failed:', err.message));
 
   // Check low stock & out of stock after transaction (fire-and-forget)
-  checkStockAfterTransaction(processedItems.map(i => i.productId)).catch((err) => logger.error('Stock notification failed:', err.message));
+  checkStockAfterTransaction(productIds).catch((err) => logger.error('Stock notification failed:', err.message));
 
   return transaction;
 };
