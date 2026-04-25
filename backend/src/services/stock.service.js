@@ -131,6 +131,8 @@ const getAllStock = async ({ page = 1, limit = DEFAULT_PAGE_SIZE, categoryId, se
  */
 const addMovement = async ({ productId, variantId, unitId, quantity, movementType, referenceType, referenceId, notes, userId }) => {
   return prisma.$transaction(async (tx) => {
+    // Lock product row to prevent lost-update race on concurrent stock writes
+    await tx.$queryRaw`SELECT id FROM "products" WHERE id = ${productId} FOR UPDATE`;
     const product = await tx.product.findUnique({ where: { id: productId } });
     if (!product) {
       throw new AppError('Produk tidak ditemukan', 404);
@@ -195,6 +197,7 @@ const addMovement = async ({ productId, variantId, unitId, quantity, movementTyp
 
     // Also update variant stock if specified
     if (variantId) {
+      await tx.$queryRaw`SELECT id FROM "product_variants" WHERE id = ${variantId} FOR UPDATE`;
       const variant = await tx.productVariant.findUnique({ where: { id: variantId } });
       if (variant) {
         let variantNewStock;

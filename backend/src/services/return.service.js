@@ -1,4 +1,5 @@
 const prisma = require('../lib/prisma');
+const { Prisma } = require('@prisma/client');
 const { format } = require('date-fns');
 const { DEFAULT_PAGE_SIZE } = require('../utils/constants');
 const { createLog, ACTION_TYPES } = require('./auditLog.service');
@@ -211,6 +212,12 @@ const create = async (data, userId) => {
     });
 
     // 8. Restore stock for each item
+    // Lock product rows to prevent lost-update race with concurrent
+    // returns / transactions / adjustments on the same products.
+    const stockProductIds = [...new Set(processedItems.map((p) => p.productId))];
+    if (stockProductIds.length > 0) {
+      await tx.$queryRaw`SELECT id FROM "products" WHERE id IN (${Prisma.join(stockProductIds)}) FOR UPDATE`;
+    }
     for (const item of processedItems) {
       const product = await tx.product.findUnique({ where: { id: item.productId } });
       if (!product) continue;
