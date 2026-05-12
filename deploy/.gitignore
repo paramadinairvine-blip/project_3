@@ -1,0 +1,47 @@
+# Dependencies
+node_modules/
+
+# Environment — JANGAN commit file .env!
+.env
+.env.local
+.env.*.local
+
+# Build output
+frontend/dist/
+
+# Uploads (keep directory, ignore contents)
+backend/uploads/*
+!backend/uploads/.gitkeep
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Prisma
+backend/prisma/*.db
+backend/prisma/*.db-journal
+
+# Logs
+*.log
+npm-debug.log*
+
+# Coverage
+coverage/
+
+# Cache
+.cache/
+.parcel-cache/
+
+# WhatsApp auth (tidak dipakai di deploy)
+.wwebjs_auth/
+
+# Docker (tidak dipakai di deploy — pakai Supabase)
+docker-compose.yml
